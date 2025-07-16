@@ -12,11 +12,13 @@ import (
 	"skemr/service"
 )
 
+// runSchema drops the current schema, reads schema.sql file and executes it to set up the database schema.
 func runSchema(conn *pgx.Conn) {
 	schema, err := ioutil.ReadFile("schema.sql")
 	if err != nil {
 		log.Fatal(err)
 	}
+	_, err = conn.Exec(context.Background(), "DROP SCHEMA IF EXISTS public CASCADE")
 	_, err = conn.Exec(context.Background(), string(schema))
 	if err != nil {
 		log.Fatal(err)
@@ -42,7 +44,7 @@ func main() {
 	projectHandler := controller.NewProjectController(projectService)
 	projectHandler.RegisterRoutes(r)
 
-	//runSchema(conn)
+	runSchema(conn)
 
 	defer conn.Close(context.Background())
 	r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")

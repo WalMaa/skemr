@@ -7,6 +7,8 @@ package skemr
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createProject = `-- name: CreateProject :one
@@ -27,7 +29,7 @@ FROM projects
 WHERE id = $1
 `
 
-func (q *Queries) DeleteProject(ctx context.Context, id int64) error {
+func (q *Queries) DeleteProject(ctx context.Context, id pgtype.UUID) error {
 	_, err := q.db.Exec(ctx, deleteProject, id)
 	return err
 }
@@ -38,7 +40,7 @@ FROM projects
 WHERE id = $1 LIMIT 1
 `
 
-func (q *Queries) GetProject(ctx context.Context, id int64) (Project, error) {
+func (q *Queries) GetProject(ctx context.Context, id pgtype.UUID) (Project, error) {
 	row := q.db.QueryRow(ctx, getProject, id)
 	var i Project
 	err := row.Scan(&i.ID, &i.Name)
@@ -53,8 +55,8 @@ WHERE id = $1
 `
 
 type UpdateProjectParams struct {
-	ID   int64  `json:"id"`
-	Name string `json:"name"`
+	ID   pgtype.UUID `json:"id"`
+	Name string      `json:"name"`
 }
 
 func (q *Queries) UpdateProject(ctx context.Context, arg UpdateProjectParams) error {

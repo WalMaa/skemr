@@ -13,7 +13,7 @@ import (
 
 const createDatabase = `-- name: CreateDatabase :one
 INSERT INTO databases (name, username, password)
-VALUES ($1, $2, $3) RETURNING id, name, username, password
+VALUES ($1, $2, $3) RETURNING id, name, username, password, project_id
 `
 
 type CreateDatabaseParams struct {
@@ -30,6 +30,7 @@ func (q *Queries) CreateDatabase(ctx context.Context, arg CreateDatabaseParams) 
 		&i.Name,
 		&i.Username,
 		&i.Password,
+		&i.ProjectID,
 	)
 	return i, err
 }
@@ -40,18 +41,18 @@ FROM databases
 WHERE id = $1
 `
 
-func (q *Queries) DeleteDatabase(ctx context.Context, id int64) error {
+func (q *Queries) DeleteDatabase(ctx context.Context, id pgtype.UUID) error {
 	_, err := q.db.Exec(ctx, deleteDatabase, id)
 	return err
 }
 
 const getDatabase = `-- name: GetDatabase :one
-SELECT id, name, username, password
+SELECT id, name, username, password, project_id
 FROM databases
 WHERE id = $1 LIMIT 1
 `
 
-func (q *Queries) GetDatabase(ctx context.Context, id int64) (Database, error) {
+func (q *Queries) GetDatabase(ctx context.Context, id pgtype.UUID) (Database, error) {
 	row := q.db.QueryRow(ctx, getDatabase, id)
 	var i Database
 	err := row.Scan(
@@ -59,6 +60,7 @@ func (q *Queries) GetDatabase(ctx context.Context, id int64) (Database, error) {
 		&i.Name,
 		&i.Username,
 		&i.Password,
+		&i.ProjectID,
 	)
 	return i, err
 }
@@ -69,11 +71,11 @@ SET name = $2,
     username = $3,
     password = $4
 WHERE id = $1
-    RETURNING id, name, username, password
+    RETURNING id, name, username, password, project_id
 `
 
 type UpdateDatabaseParams struct {
-	ID       int64       `json:"id"`
+	ID       pgtype.UUID `json:"id"`
 	Name     string      `json:"name"`
 	Username pgtype.Text `json:"username"`
 	Password pgtype.Text `json:"password"`

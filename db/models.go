@@ -98,31 +98,34 @@ func (ns NullRuleType) Value() (driver.Value, error) {
 }
 
 type Database struct {
-	ID       int64       `json:"id"`
-	Name     string      `json:"name"`
-	Username pgtype.Text `json:"username"`
-	Password pgtype.Text `json:"password"`
+	ID        pgtype.UUID `json:"id"`
+	Name      string      `json:"name"`
+	Username  pgtype.Text `json:"username"`
+	Password  pgtype.Text `json:"password"`
+	ProjectID pgtype.UUID `json:"project_id"`
 }
 
 type Project struct {
-	ID   int64  `json:"id"`
-	Name string `json:"name"`
+	ID   pgtype.UUID `json:"id"`
+	Name string      `json:"name"`
 }
 
 type Rule struct {
-	ID     int64     `json:"id"`
-	Name   string    `json:"name"`
-	Type   RuleType  `json:"type"`
-	Scope  RuleScope `json:"scope"`
-	Target string    `json:"target"`
+	ID     pgtype.UUID `json:"id"`
+	Name   string      `json:"name"`
+	Type   RuleType    `json:"type"`
+	Scope  RuleScope   `json:"scope"`
+	Target string      `json:"target"`
 }
 
 type Schema struct {
-	ID   int64  `json:"id"`
-	Name string `json:"name"`
+	ID         pgtype.UUID `json:"id"`
+	Name       string      `json:"name"`
+	DatabaseID pgtype.UUID `json:"database_id"`
 }
 
 type Table struct {
-	ID   int64  `json:"id"`
-	Name string `json:"name"`
+	ID       pgtype.UUID `json:"id"`
+	Name     string      `json:"name"`
+	SchemaID pgtype.UUID `json:"schema_id"`
 }
