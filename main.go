@@ -34,6 +34,10 @@ func main() {
 		})
 	})
 
+	r.Use(gin.BasicAuth(gin.Accounts{
+		"user": "pass",
+	}))
+
 	conn, err := pgx.Connect(context.Background(), "postgres://postgres:pass@localhost:5432/postgres")
 	if err != nil {
 		log.Fatal(err)

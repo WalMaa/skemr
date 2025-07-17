@@ -65,6 +65,38 @@ func (q *Queries) GetDatabase(ctx context.Context, id pgtype.UUID) (Database, er
 	return i, err
 }
 
+const listDatabasesByProject = `-- name: ListDatabasesByProject :many
+SELECT id, name, username, password, project_id
+FROM databases
+WHERE project_id = $1
+`
+
+func (q *Queries) ListDatabasesByProject(ctx context.Context, projectID pgtype.UUID) ([]Database, error) {
+	rows, err := q.db.Query(ctx, listDatabasesByProject, projectID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Database
+	for rows.Next() {
+		var i Database
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Username,
+			&i.Password,
+			&i.ProjectID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateDatabase = `-- name: UpdateDatabase :exec
 UPDATE databases
 SET name = $2,

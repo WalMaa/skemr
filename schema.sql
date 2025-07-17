@@ -24,8 +24,8 @@ CREATE TABLE databases
     name     text NOT NULL,
     username TEXT,
     password TEXT,
-    project_id uuid NOT NULL REFERENCES projects(id) ON DELETE CASCADE
-    ADD CONSTRAINT unique_database_name_per_project UNIQUE (name, project_id)
+    project_id uuid NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    CONSTRAINT unique_database_name_per_project UNIQUE (name, project_id)
 );
 
 CREATE TABLE schemas

@@ -19,3 +19,8 @@ WHERE id = $1
 DELETE
 FROM databases
 WHERE id = $1;
+
+-- name: ListDatabasesByProject :many
+SELECT *
+FROM databases
+WHERE project_id = $1;
