@@ -2,28 +2,28 @@ package service
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/google/uuid"
 	"log/slog"
-	skemr "skemr/db"
+	"skemr/db/sqlc"
 )
 
 type ProjectService struct {
-	Queries *skemr.Queries
+	db sqlc.Querier
 }
 
-func NewProjectService(q *skemr.Queries) *ProjectService {
-	return &ProjectService{Queries: q}
+func NewProjectService(q sqlc.Querier) *ProjectService {
+	return &ProjectService{db: q}
 }
 
-func (r *ProjectService) CreateProject(c *gin.Context, name string) (skemr.Project, error) {
+func (r *ProjectService) CreateProject(c *gin.Context, name string) (sqlc.Project, error) {
 	slog.Info("Creating project", "name", name)
-	return r.Queries.CreateProject(c, name)
+	return r.db.CreateProject(c, name)
 }
 
-func (r *ProjectService) GetProject(c *gin.Context, id pgtype.UUID) (skemr.Project, error) {
-	return r.Queries.GetProject(c, id)
+func (r *ProjectService) GetProject(c *gin.Context, id uuid.UUID) (sqlc.Project, error) {
+	return r.db.GetProject(c, &id)
 }
 
-func (r *ProjectService) DeleteProject(c *gin.Context, id pgtype.UUID) error {
-	return r.Queries.DeleteProject(c, id)
+func (r *ProjectService) DeleteProject(c *gin.Context, id uuid.UUID) error {
+	return r.db.DeleteProject(c, &id)
 }

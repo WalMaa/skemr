@@ -7,6 +7,22 @@ CREATE TYPE rule_scope AS ENUM (
     'column'
 );
 
+CREATE TYPE migration_status AS ENUM (
+    'pending',
+    'in_progress',
+    'completed',
+    'failed'
+);
+
+CREATE TYPE migration_statement_action AS ENUM (
+    'create',
+    'alter',
+    'drop',
+    'insert',
+    'update',
+    'delete'
+);
+
 CREATE TYPE rule_type AS ENUM (
     'lock',
     'warn'
@@ -28,6 +44,19 @@ CREATE TABLE databases
     CONSTRAINT unique_database_name_per_project UNIQUE (name, project_id)
 );
 
+CREATE TABLE migration_statements
+(
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    schema_id uuid NOT NULL REFERENCES schemas(id) ON DELETE CASCADE,
+    raw_statement TEXT NOT NULL,
+    action migration_statement_action NOT NULL,
+    status migration_status NOT NULL DEFAULT 'pending',
+    target TEXT,
+    relation_name TEXT
+);
+
+
+
 CREATE TABLE schemas
 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -42,11 +71,15 @@ CREATE TABLE tables
     schema_id uuid NOT NULL REFERENCES databases(id) ON DELETE CASCADE
 );
 
+
+-- Rules specify the protection mechanisms for databases, schemas, tables, and columns.
+
 CREATE TABLE rules
 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
     type rule_type    NOT NULL,
     scope rule_scope   NOT NULL,
-    target text NOT NULL
+    target text NOT NULL,
+    project_id uuid NOT NULL REFERENCES projects(id) ON DELETE CASCADE
 );

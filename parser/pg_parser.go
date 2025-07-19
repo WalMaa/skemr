@@ -2,10 +2,8 @@ package parser
 
 import (
 	"fmt"
-	pg_query "github.com/pganalyze/pg_query_go/v6"
-	"log"
+	pgquery "github.com/pganalyze/pg_query_go/v6"
 	"log/slog"
-	skemr "skemr/db"
 )
 
 type StatementAction struct {
@@ -28,7 +26,7 @@ const (
 ParseSql parses the SQL statement and returns a structured representation of the SQL.
 */
 func ParseSql(sql string) (StatementAction, error) {
-	tree, err := pg_query.Parse(sql)
+	tree, err := pgquery.Parse(sql)
 	if err != nil {
 		slog.Error("Failed to parse SQL", "error", err, "sql", sql)
 		return StatementAction{
@@ -63,7 +61,7 @@ func ParseSql(sql string) (StatementAction, error) {
 	}, fmt.Errorf("unsupported SQL statement: %s", sql)
 }
 
-func parseRenameStmt(node *pg_query.Node) (StatementAction, error) {
+func parseRenameStmt(node *pgquery.Node) (StatementAction, error) {
 	renameStmt := node.GetRenameStmt()
 	relName := renameStmt.Relation.Relname
 	target := renameStmt.Subname
@@ -76,7 +74,7 @@ func parseRenameStmt(node *pg_query.Node) (StatementAction, error) {
 	}, nil
 }
 
-func parseDropDatabase(node *pg_query.Node) (StatementAction, error) {
+func parseDropDatabase(node *pgquery.Node) (StatementAction, error) {
 	dropDb := node.GetDropdbStmt()
 	dbName := dropDb.Dbname
 
@@ -87,7 +85,7 @@ func parseDropDatabase(node *pg_query.Node) (StatementAction, error) {
 	}, nil
 }
 
-func parseAlterTable(node *pg_query.Node) (StatementAction, error) {
+func parseAlterTable(node *pgquery.Node) (StatementAction, error) {
 	alterTable := node.GetAlterTableStmt()
 	relName := alterTable.Relation.Relname
 	target := ""
@@ -99,9 +97,9 @@ func parseAlterTable(node *pg_query.Node) (StatementAction, error) {
 		// Determine the action based on the subtype of the command
 		switch cmd.GetAlterTableCmd().GetSubtype() {
 
-		case pg_query.AlterTableType_AT_DropColumn:
+		case pgquery.AlterTableType_AT_DropColumn:
 			action = SqlActionDropColumn
-		case pg_query.AlterTableType_AT_AlterColumnType:
+		case pgquery.AlterTableType_AT_AlterColumnType:
 
 			action = SqlActionModifyDataType
 		}
@@ -112,39 +110,4 @@ func parseAlterTable(node *pg_query.Node) (StatementAction, error) {
 		Action:   action,
 		Relation: relName,
 	}, nil
-}
-
-func ParseRule(rule *skemr.Rule, sql string) (string, error) {
-	log.Printf("Rule: %#v", rule)
-	tree, err := pg_query.Parse(sql)
-	log.Println(tree)
-	stmts := tree.Stmts
-	log.Println(stmts)
-
-	for _, stmt := range stmts {
-		checkRule(rule, stmt.GetStmt())
-	}
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return sql, nil
-}
-
-func checkRule(rule *skemr.Rule, node *pg_query.Node) bool {
-	alterTable := node.GetAlterTableStmt()
-	log.Println(alterTable)
-	cmd := node.GetAlterTableCmd()
-	relname := alterTable.Relation.Relname
-	cmds := alterTable.Cmds
-	for _, c := range cmds {
-		log.Println(c)
-		log.Println(c.GetAlterTableCmd().Name)
-		log.Println(c.GetAlterTableCmd().GetSubtype())
-	}
-
-	log.Println(relname)
-	log.Println(cmd)
-	return true
 }

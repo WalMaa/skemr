@@ -8,7 +8,7 @@ import (
 	"log"
 	"net/http"
 	"skemr/controller"
-	skemr "skemr/db"
+	"skemr/db/sqlc"
 	"skemr/service"
 )
 
@@ -43,9 +43,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	queries := skemr.New(conn)
+	queries := sqlc.New(conn)
 	projectService := service.NewProjectService(queries)
 	projectHandler := controller.NewProjectController(projectService)
+	databaseService := service.NewDatabaseService(queries)
+	databaseHandler := controller.NewDatabaseController(databaseService)
+	databaseHandler.RegisterRoutes(r)
 	projectHandler.RegisterRoutes(r)
 
 	runSchema(conn)

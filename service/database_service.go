@@ -2,35 +2,35 @@ package service
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/google/uuid"
 	"log/slog"
-	skemr "skemr/db"
+	"skemr/db/sqlc"
 )
 
 type DatabaseService struct {
-	Queries *skemr.Queries
+	db sqlc.Querier
 }
 
-func NewDatabaseService(q *skemr.Queries) *DatabaseService {
-	return &DatabaseService{Queries: q}
+func NewDatabaseService(q sqlc.Querier) *DatabaseService {
+	return &DatabaseService{db: q}
 }
 
-func (r *DatabaseService) CreateDatabase(c *gin.Context, args skemr.CreateDatabaseParams) (skemr.Database, error) {
+func (r *DatabaseService) CreateDatabase(c *gin.Context, args sqlc.CreateDatabaseParams) (sqlc.Database, error) {
 	slog.Info("Creating database", "name", args)
-	return r.Queries.CreateDatabase(c, args)
+	return r.db.CreateDatabase(c, args)
 }
 
-func (r *DatabaseService) GetDatabase(c *gin.Context, id pgtype.UUID) (skemr.Database, error) {
+func (r *DatabaseService) GetDatabase(c *gin.Context, id uuid.UUID) (sqlc.Database, error) {
 	slog.Info("Getting database", "id", id)
-	return r.Queries.GetDatabase(c, id)
+	return r.db.GetDatabase(c, &id)
 }
 
-func (r *DatabaseService) DeleteDatabase(c *gin.Context, id pgtype.UUID) error {
+func (r *DatabaseService) DeleteDatabase(c *gin.Context, id uuid.UUID) error {
 	slog.Info("Deleting database", "id", id)
-	return r.Queries.DeleteDatabase(c, id)
+	return r.db.DeleteDatabase(c, &id)
 }
 
-func (r *DatabaseService) ListDatabasesByProject(c *gin.Context, id pgtype.UUID) ([]skemr.Database, error) {
+func (r *DatabaseService) ListDatabasesByProject(c *gin.Context, id uuid.UUID) ([]sqlc.Database, error) {
 	slog.Info("Listing databases for project", "project_id", id)
-	return r.Queries.ListDatabasesByProject(c, id)
+	return r.db.ListDatabasesByProject(c, &id)
 }

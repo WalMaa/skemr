@@ -2,8 +2,8 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5/pgtype"
-	skemr "skemr/db"
+	"github.com/google/uuid"
+	skemr "skemr/db/sqlc"
 	"skemr/service"
 )
 
@@ -25,6 +25,38 @@ func (h *DatabaseController) RegisterRoutes(r *gin.Engine) {
 	}
 }
 
+func (h *DatabaseController) deleteDatabase(c *gin.Context) {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(400, gin.H{"error": "Invalid ID format"})
+		return
+	}
+
+	err = h.Service.DeleteDatabase(c, id)
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.Status(204) // No Content
+}
+
+func (h *DatabaseController) listDatabasesByProject(c *gin.Context) {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(400, gin.H{"error": "Invalid project ID format"})
+		return
+	}
+
+	databases, err := h.Service.ListDatabasesByProject(c, id)
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(200, databases)
+}
+
 func (h *DatabaseController) createDatabase(c *gin.Context) {
 	var body struct {
 		Name     string
@@ -38,8 +70,8 @@ func (h *DatabaseController) createDatabase(c *gin.Context) {
 
 	args := skemr.CreateDatabaseParams{
 		Name:     body.Name,
-		Username: pgtype.Text.Scan(body.Username),
-		Password: body.Password,
+		Username: &body.Username,
+		Password: &body.Password,
 	}
 
 	database, err := h.Service.CreateDatabase(c, args)
@@ -52,14 +84,15 @@ func (h *DatabaseController) createDatabase(c *gin.Context) {
 }
 
 func (h *DatabaseController) getDatabase(c *gin.Context) {
-	id, err := pgtype.UUID{}.Scan(c.Param("id"))
-	pgtype.UUID{}
+
+	id, err := uuid.Parse(c.Param("id"))
+
 	if err != nil {
 		c.JSON(400, gin.H{"error": "Invalid ID format"})
 		return
 	}
 
-	database, err := h.Service.GetDatabase(c, id.(pgtype.UUID))
+	database, err := h.Service.GetDatabase(c, id)
 	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
