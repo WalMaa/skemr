@@ -63,8 +63,6 @@ CREATE TABLE migration_statements
 );
 
 
-
-
 CREATE TABLE tables
 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -82,5 +80,5 @@ CREATE TABLE rules
     scope rule_scope   NOT NULL,
     relation_name TEXT,
     target text NOT NULL,
-    project_id uuid NOT NULL REFERENCES projects(id) ON DELETE CASCADE
+    database_id uuid NOT NULL REFERENCES databases(id) ON DELETE CASCADE
 );

@@ -5,6 +5,7 @@ import (
 	"github.com/google/uuid"
 	"log/slog"
 	"skemr/db/sqlc"
+	errors "skemr/erros"
 )
 
 type DatabaseService struct {
@@ -17,6 +18,21 @@ func NewDatabaseService(q sqlc.Querier) *DatabaseService {
 
 func (r *DatabaseService) CreateDatabase(c *gin.Context, args sqlc.CreateDatabaseParams) (sqlc.Database, error) {
 	slog.Info("Creating database", "name", args)
+
+	exists, err := r.db.GetDatabaseByName(c, sqlc.GetDatabaseByNameParams{
+		ProjectID: args.ProjectID,
+		Name:      args.Name,
+	})
+
+	if err != nil {
+		slog.Error("Error checking for existing database", "name", args.Name, "err", err)
+	}
+
+	if exists != (sqlc.Database{}) {
+		slog.Warn("Database already exists", "name", args.Name, "project_id", args.ProjectID)
+		return sqlc.Database{}, errors.ErrDatabaseAlreadyExists
+	}
+
 	return r.db.CreateDatabase(c, args)
 }
 

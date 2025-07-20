@@ -14,8 +14,8 @@ func NewProjectController(s *service.ProjectService) *ProjectController {
 	return &ProjectController{Service: s}
 }
 
-func (h *ProjectController) RegisterRoutes(r *gin.Engine) {
-	group := r.Group("/projects")
+func (h *ProjectController) RegisterRoutes(g *gin.RouterGroup) {
+	group := g.Group("/projects")
 	group.POST("/", h.createProject)
 }
 

@@ -15,13 +15,13 @@ func NewDatabaseController(s *service.DatabaseService) *DatabaseController {
 	return &DatabaseController{Service: s}
 }
 
-func (h *DatabaseController) RegisterRoutes(r *gin.Engine) {
-	group := r.Group("/databases")
+func (h *DatabaseController) RegisterRoutes(g *gin.RouterGroup) {
+	group := g.Group("projects/:projectId/databases")
 	{
 		group.POST("/", h.createDatabase)
 		group.GET("/:id", h.getDatabase)
 		group.DELETE("/:id", h.deleteDatabase)
-		group.GET("/project/:id", h.listDatabasesByProject)
+		group.GET("/", h.listDatabasesByProject)
 	}
 }
 
@@ -42,7 +42,7 @@ func (h *DatabaseController) deleteDatabase(c *gin.Context) {
 }
 
 func (h *DatabaseController) listDatabasesByProject(c *gin.Context) {
-	id, err := uuid.Parse(c.Param("id"))
+	id, err := uuid.Parse(c.Param("projectId"))
 	if err != nil {
 		c.JSON(400, gin.H{"error": "Invalid project ID format"})
 		return
@@ -58,10 +58,9 @@ func (h *DatabaseController) listDatabasesByProject(c *gin.Context) {
 }
 
 func (h *DatabaseController) createDatabase(c *gin.Context) {
+	id, err := uuid.Parse(c.Param("projectId"))
 	var body struct {
-		Name     string
-		Username string
-		Password string
+		Name string `json:"name" binding:"required,min=3,max=50"`
 	}
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
@@ -69,9 +68,8 @@ func (h *DatabaseController) createDatabase(c *gin.Context) {
 	}
 
 	args := skemr.CreateDatabaseParams{
-		Name:     body.Name,
-		Username: &body.Username,
-		Password: &body.Password,
+		Name:      body.Name,
+		ProjectID: id,
 	}
 
 	database, err := h.Service.CreateDatabase(c, args)
