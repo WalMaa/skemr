@@ -1,4 +1,4 @@
-CREATE SCHEMA IF NOT EXISTS "public";
+CREATE SCHEMA IF NOT EXISTS public;
 
 CREATE TYPE rule_scope AS ENUM (
     'database',
@@ -44,6 +44,13 @@ CREATE TABLE databases
     CONSTRAINT unique_database_name_per_project UNIQUE (name, project_id)
 );
 
+CREATE TABLE schemas
+(
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    database_id uuid NOT NULL REFERENCES databases(id) ON DELETE CASCADE
+);
+
 CREATE TABLE migration_statements
 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -57,12 +64,6 @@ CREATE TABLE migration_statements
 
 
 
-CREATE TABLE schemas
-(
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name TEXT NOT NULL,
-    database_id uuid NOT NULL REFERENCES databases(id) ON DELETE CASCADE
-);
 
 CREATE TABLE tables
 (
@@ -73,13 +74,13 @@ CREATE TABLE tables
 
 
 -- Rules specify the protection mechanisms for databases, schemas, tables, and columns.
-
 CREATE TABLE rules
 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
     type rule_type    NOT NULL,
     scope rule_scope   NOT NULL,
+    relation_name TEXT,
     target text NOT NULL,
     project_id uuid NOT NULL REFERENCES projects(id) ON DELETE CASCADE
 );

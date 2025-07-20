@@ -21,9 +21,9 @@ func (r *ProjectService) CreateProject(c *gin.Context, name string) (sqlc.Projec
 }
 
 func (r *ProjectService) GetProject(c *gin.Context, id uuid.UUID) (sqlc.Project, error) {
-	return r.db.GetProject(c, &id)
+	return r.db.GetProject(c, id)
 }
 
 func (r *ProjectService) DeleteProject(c *gin.Context, id uuid.UUID) error {
-	return r.db.DeleteProject(c, &id)
+	return r.db.DeleteProject(c, id)
 }

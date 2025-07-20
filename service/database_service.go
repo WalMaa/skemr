@@ -22,15 +22,15 @@ func (r *DatabaseService) CreateDatabase(c *gin.Context, args sqlc.CreateDatabas
 
 func (r *DatabaseService) GetDatabase(c *gin.Context, id uuid.UUID) (sqlc.Database, error) {
 	slog.Info("Getting database", "id", id)
-	return r.db.GetDatabase(c, &id)
+	return r.db.GetDatabase(c, id)
 }
 
 func (r *DatabaseService) DeleteDatabase(c *gin.Context, id uuid.UUID) error {
 	slog.Info("Deleting database", "id", id)
-	return r.db.DeleteDatabase(c, &id)
+	return r.db.DeleteDatabase(c, id)
 }
 
 func (r *DatabaseService) ListDatabasesByProject(c *gin.Context, id uuid.UUID) ([]sqlc.Database, error) {
 	slog.Info("Listing databases for project", "project_id", id)
-	return r.db.ListDatabasesByProject(c, &id)
+	return r.db.ListDatabasesByProject(c, id)
 }

@@ -34,4 +34,5 @@ FROM rules
 WHERE project_id = $1
     AND (scope = $2 OR $2 IS NULL)
     AND (type = $3 OR $3 IS NULL)
-    AND (target = $4 OR $4 IS NULL);
+    AND (relation_name = $4 OR $4 IS NULL)
+    AND (target = $5 OR $5 IS NULL);

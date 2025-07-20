@@ -21,7 +21,7 @@ func (h *ProjectController) RegisterRoutes(r *gin.Engine) {
 
 func (h *ProjectController) createProject(c *gin.Context) {
 	var body struct {
-		Name string `json:"name"`
+		Name string `json:"name" binding:"required,min=3,max=50"`
 	}
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
