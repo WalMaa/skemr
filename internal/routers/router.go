@@ -6,6 +6,7 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/walmaa/skemr/docs"
 	"github.com/walmaa/skemr/internal/controller"
+	"github.com/walmaa/skemr/internal/middleware"
 	"github.com/walmaa/skemr/internal/service"
 )
 
@@ -21,6 +22,7 @@ func InitRouter(services *Services) *gin.Engine {
 	r.Use(gin.BasicAuth(gin.Accounts{
 		"user": "pass",
 	}))
+	r.Use(middleware.AuthMiddleware())
 
 	auth := r.Group("/auth")
 	{
