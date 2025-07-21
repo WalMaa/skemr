@@ -2,8 +2,8 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/walmaa/skemr/internal/service"
 	"net/http"
-	"skemr/service"
 )
 
 type ProjectController struct {

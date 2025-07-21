@@ -4,9 +4,9 @@ import (
 	"github.com/gin-gonic/gin"
 	swaggerfiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-	"skemr/controller"
-	"skemr/docs"
-	"skemr/service"
+	"github.com/walmaa/skemr/docs"
+	"github.com/walmaa/skemr/internal/controller"
+	"github.com/walmaa/skemr/internal/service"
 )
 
 type Services struct {

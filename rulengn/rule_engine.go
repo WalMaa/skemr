@@ -3,9 +3,9 @@ package rulengn
 import (
 	"context"
 	"fmt"
+	"github.com/walmaa/skemr/db/sqlc"
+	"github.com/walmaa/skemr/parser"
 	"log/slog"
-	"skemr/db/sqlc"
-	"skemr/parser"
 )
 
 type RuleEngine struct {

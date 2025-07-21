@@ -1,7 +1,7 @@
 package test
 
 import (
-	"skemr/parser"
+	"github.com/walmaa/skemr/parser"
 	"testing"
 )
 

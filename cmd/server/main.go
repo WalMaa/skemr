@@ -2,12 +2,12 @@ package main
 
 import (
 	"github.com/jackc/pgx/v5"
+	"github.com/walmaa/skemr/db/sqlc"
+	"github.com/walmaa/skemr/internal/routers"
+	"github.com/walmaa/skemr/internal/service"
 	"golang.org/x/net/context"
 	"io/ioutil"
 	"log"
-	"skemr/db/sqlc"
-	"skemr/routers"
-	"skemr/service"
 )
 
 // runSchema drops the current schema, reads schema.sql file and executes it to set up the database schema.

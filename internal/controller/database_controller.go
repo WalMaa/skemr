@@ -3,8 +3,8 @@ package controller
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	skemr "skemr/db/sqlc"
-	"skemr/service"
+	"github.com/walmaa/skemr/db/sqlc"
+	"github.com/walmaa/skemr/internal/service"
 )
 
 type DatabaseController struct {
@@ -67,7 +67,7 @@ func (h *DatabaseController) createDatabase(c *gin.Context) {
 		return
 	}
 
-	args := skemr.CreateDatabaseParams{
+	args := sqlc.CreateDatabaseParams{
 		Name:      body.Name,
 		ProjectID: id,
 	}
