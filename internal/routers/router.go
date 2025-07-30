@@ -24,6 +24,8 @@ func InitRouter(services *Services) *gin.Engine {
 	}))
 	r.Use(middleware.AuthMiddleware())
 
+	r.Use(middleware.ErrorHandler())
+
 	auth := r.Group("/auth")
 	{
 		auth.POST("/login", nil)

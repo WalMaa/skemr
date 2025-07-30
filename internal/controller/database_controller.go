@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/walmaa/skemr/db/sqlc"
@@ -74,7 +75,7 @@ func (h *DatabaseController) createDatabase(c *gin.Context) {
 
 	database, err := h.Service.CreateDatabase(c, args)
 	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
+		c.Error(errors.New(err.Error()))
 		return
 	}
 

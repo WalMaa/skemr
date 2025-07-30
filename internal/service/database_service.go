@@ -1,10 +1,12 @@
 package service
 
 import (
+	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/walmaa/skemr/db/sqlc"
-	errors "github.com/walmaa/skemr/erros"
+	"github.com/walmaa/skemr/errormsg"
 	"log/slog"
 )
 
@@ -23,7 +25,7 @@ func checkProjectExists(c *gin.Context, db sqlc.Querier, projectID uuid.UUID) (s
 	project, err := db.GetProject(c, projectID)
 	if err != nil {
 		slog.Error("Error getting project", "project_id", projectID, "err", err)
-		return sqlc.Project{}, errors.ErrProjectNotFound
+		return sqlc.Project{}, errormsg.ErrProjectNotFound
 	}
 
 	return project, nil
@@ -44,13 +46,14 @@ func (r *DatabaseService) CreateDatabase(c *gin.Context, args sqlc.CreateDatabas
 		Name:      args.Name,
 	})
 
-	if err != nil {
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		slog.Error("Error checking for existing database", "name", args.Name, "err", err)
+		return sqlc.Database{}, err
 	}
 
 	if exists != (sqlc.Database{}) {
 		slog.Warn("Database already exists", "name", args.Name, "project_id", args.ProjectID)
-		return sqlc.Database{}, errors.ErrDatabaseAlreadyExists
+		return sqlc.Database{}, errormsg.ErrDatabaseAlreadyExists
 	}
 
 	return r.db.CreateDatabase(c, args)

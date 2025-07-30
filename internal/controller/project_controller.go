@@ -1,7 +1,10 @@
 package controller
 
 import (
+	"errors"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	errormsg "github.com/walmaa/skemr/errormsg"
 	"github.com/walmaa/skemr/internal/service"
 	"net/http"
 )
@@ -15,8 +18,9 @@ func NewProjectController(s *service.ProjectService) *ProjectController {
 }
 
 func (h *ProjectController) RegisterRoutes(g *gin.RouterGroup) {
-	group := g.Group("/projects")
+	group := g.Group("/projects/")
 	group.POST("/", h.createProject)
+	group.GET("/:projectId", h.getProject)
 }
 
 func (h *ProjectController) createProject(c *gin.Context) {
@@ -35,4 +39,20 @@ func (h *ProjectController) createProject(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, user)
+}
+
+func (h *ProjectController) getProject(c *gin.Context) {
+	projectID, err := uuid.Parse(c.Param("projectId"))
+	if err != nil {
+		c.Error(errormsg.ErrInvalidIdFormat)
+		return
+	}
+
+	project, err := h.Service.GetProject(c, projectID)
+	if err != nil {
+		c.Error(errors.New(err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, project)
 }
