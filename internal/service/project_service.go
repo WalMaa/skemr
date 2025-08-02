@@ -1,9 +1,13 @@
 package service
 
 import (
+	"context"
+	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/walmaa/skemr/db/sqlc"
+	"github.com/walmaa/skemr/errormsg"
 	"log/slog"
 )
 
@@ -15,15 +19,40 @@ func NewProjectService(q sqlc.Querier) *ProjectService {
 	return &ProjectService{db: q}
 }
 
-func (r *ProjectService) CreateProject(c *gin.Context, name string) (sqlc.Project, error) {
+// CheckProjectExists checks if a project with the given ID exists in the database.
+// Used when validating the operation on resources that are tied to a project.
+func CheckProjectExists(c context.Context, db sqlc.Querier, projectID uuid.UUID) (sqlc.Project, error) {
+	slog.Info("Checking if project exists", "project_id", projectID)
+
+	// Check if the project exists
+	project, err := db.GetProject(c, projectID)
+	if err != nil {
+		slog.Error("Error getting project", "project_id", projectID, "err", err)
+		return sqlc.Project{}, errormsg.ErrProjectNotFound
+	}
+
+	return project, nil
+}
+
+func (r *ProjectService) CreateProject(c context.Context, name string) (sqlc.Project, error) {
+
 	slog.Info("Creating project", "name", name)
 	return r.db.CreateProject(c, name)
 }
 
-func (r *ProjectService) GetProject(c *gin.Context, id uuid.UUID) (sqlc.Project, error) {
+func (r *ProjectService) GetProject(c context.Context, id uuid.UUID) (sqlc.Project, error) {
 	return r.db.GetProject(c, id)
 }
 
-func (r *ProjectService) DeleteProject(c *gin.Context, id uuid.UUID) error {
+func (r *ProjectService) DeleteProject(c *context.Context, id uuid.UUID) error {
+	slog.Info("Deleting project", "id", id)
+	// Check if the project exists
+	_, err := CheckProjectExists(c, r.db, id)
+
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		slog.Error("Error checking if project exists", "id", id, "err", err)
+		return err
+	}
+
 	return r.db.DeleteProject(c, id)
 }

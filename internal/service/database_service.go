@@ -1,8 +1,8 @@
 package service
 
 import (
+	"context"
 	"errors"
-	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/walmaa/skemr/db/sqlc"
@@ -18,24 +18,11 @@ func NewDatabaseService(q sqlc.Querier) *DatabaseService {
 	return &DatabaseService{db: q}
 }
 
-func checkProjectExists(c *gin.Context, db sqlc.Querier, projectID uuid.UUID) (sqlc.Project, error) {
-	slog.Info("Checking if project exists", "project_id", projectID)
-
-	// Check if the project exists
-	project, err := db.GetProject(c, projectID)
-	if err != nil {
-		slog.Error("Error getting project", "project_id", projectID, "err", err)
-		return sqlc.Project{}, errormsg.ErrProjectNotFound
-	}
-
-	return project, nil
-}
-
-func (r *DatabaseService) CreateDatabase(c *gin.Context, args sqlc.CreateDatabaseParams) (sqlc.Database, error) {
+func (r *DatabaseService) CreateDatabase(c context.Context, args sqlc.CreateDatabaseParams) (sqlc.Database, error) {
 	slog.Info("Creating database", "name", args)
 
 	// Check if the project exists
-	_, err := checkProjectExists(c, r.db, args.ProjectID)
+	_, err := CheckProjectExists(c, r.db, args.ProjectID)
 	if err != nil {
 		return sqlc.Database{}, err
 	}
@@ -59,17 +46,17 @@ func (r *DatabaseService) CreateDatabase(c *gin.Context, args sqlc.CreateDatabas
 	return r.db.CreateDatabase(c, args)
 }
 
-func (r *DatabaseService) GetDatabase(c *gin.Context, id uuid.UUID) (sqlc.Database, error) {
+func (r *DatabaseService) GetDatabase(c context.Context, id uuid.UUID) (sqlc.Database, error) {
 	slog.Info("Getting database", "id", id)
 	return r.db.GetDatabase(c, id)
 }
 
-func (r *DatabaseService) DeleteDatabase(c *gin.Context, id uuid.UUID) error {
+func (r *DatabaseService) DeleteDatabase(c context.Context, id uuid.UUID) error {
 	slog.Info("Deleting database", "id", id)
 	return r.db.DeleteDatabase(c, id)
 }
 
-func (r *DatabaseService) ListDatabasesByProject(c *gin.Context, id uuid.UUID) ([]sqlc.Database, error) {
+func (r *DatabaseService) ListDatabasesByProject(c context.Context, id uuid.UUID) ([]sqlc.Database, error) {
 	slog.Info("Listing databases for project", "project_id", id)
 	return r.db.ListDatabasesByProject(c, id)
 }
