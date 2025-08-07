@@ -33,6 +33,7 @@ func main() {
 	queries := sqlc.New(conn)
 	projectService := service.NewProjectService(queries)
 	databaseService := service.NewDatabaseService(queries)
+	schemaService := service.NewSchemaService(queries)
 
 	runSchema(conn)
 
@@ -40,6 +41,7 @@ func main() {
 	services := &routers.Services{
 		ProjectService:  projectService,
 		DatabaseService: databaseService,
+		SchemaService:   schemaService,
 	}
 
 	r := routers.InitRouter(services)

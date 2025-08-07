@@ -18,6 +18,22 @@ func NewDatabaseService(q sqlc.Querier) *DatabaseService {
 	return &DatabaseService{db: q}
 }
 
+func CheckDatabaseExists(c context.Context, db sqlc.Querier, projectId uuid.UUID, dbId uuid.UUID) (sqlc.Database, error) {
+	slog.Info("Checking if database exists", "database_id", dbId)
+
+	// Check if the database exists
+	database, err := db.GetDatabaseByIdAndProject(c, sqlc.GetDatabaseByIdAndProjectParams{
+		ID:        dbId,
+		ProjectID: projectId,
+	})
+	if err != nil {
+		slog.Error("Error getting database", "database_id", dbId, "err", err)
+		return sqlc.Database{}, errormsg.ErrDatabaseNotFound
+	}
+
+	return database, nil
+}
+
 func (r *DatabaseService) CreateDatabase(c context.Context, args sqlc.CreateDatabaseParams) (sqlc.Database, error) {
 	slog.Info("Creating database", "name", args)
 
@@ -28,7 +44,7 @@ func (r *DatabaseService) CreateDatabase(c context.Context, args sqlc.CreateData
 	}
 
 	// Check a database with the given name already exists
-	exists, err := r.db.GetDatabaseByName(c, sqlc.GetDatabaseByNameParams{
+	exists, err := r.db.GetDatabaseByNameAndProject(c, sqlc.GetDatabaseByNameAndProjectParams{
 		ProjectID: args.ProjectID,
 		Name:      args.Name,
 	})

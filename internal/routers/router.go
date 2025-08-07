@@ -13,6 +13,7 @@ import (
 type Services struct {
 	ProjectService  *service.ProjectService
 	DatabaseService *service.DatabaseService
+	SchemaService   *service.SchemaService
 }
 
 func InitRouter(services *Services) *gin.Engine {
@@ -44,11 +45,13 @@ func InitRouter(services *Services) *gin.Engine {
 	// Initialize controllers
 	projectController := controller.NewProjectController(services.ProjectService)
 	databaseController := controller.NewDatabaseController(services.DatabaseService)
+	schemaController := controller.NewSchemaController(services.SchemaService)
 	//ruleController := controller.NewRuleController(ruleService)
 
 	// Register routes
 	projectController.RegisterRoutes(api)
 	databaseController.RegisterRoutes(api)
+	schemaController.RegisterRoutes(api)
 	//ruleController.RegisterRoutes(projectRoutes)
 
 	return r

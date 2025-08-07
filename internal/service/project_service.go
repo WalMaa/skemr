@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"errors"
-	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/walmaa/skemr/db/sqlc"
@@ -44,7 +43,7 @@ func (r *ProjectService) GetProject(c context.Context, id uuid.UUID) (sqlc.Proje
 	return r.db.GetProject(c, id)
 }
 
-func (r *ProjectService) DeleteProject(c *context.Context, id uuid.UUID) error {
+func (r *ProjectService) DeleteProject(c context.Context, id uuid.UUID) error {
 	slog.Info("Deleting project", "id", id)
 	// Check if the project exists
 	_, err := CheckProjectExists(c, r.db, id)
