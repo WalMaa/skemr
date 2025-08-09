@@ -20,6 +20,10 @@ const (
 	SqlActionModifyDataType SqlAction = "MODIFY DATA TYPE"
 	SqlActionDropDatabase   SqlAction = "DROP DATABASE"
 	SqlActionUndefined      SqlAction = "UNDEFINED"
+	SqlActionInsertRow      SqlAction = "INSERT ROW"
+	SqlActionCreateTable    SqlAction = "CREATE TABLE"
+	SqlActionRenameTable    SqlAction = "RENAME TABLE"
+	SqlActionDropTable      SqlAction = "DROP TABLE"
 )
 
 /*
@@ -41,16 +45,34 @@ func ParseSql(sql string) (StatementAction, error) {
 
 	node := stmts[0].GetStmt()
 
+	// Check for a DROP DATABASE statement
 	if node.GetDropdbStmt() != nil {
 		return parseDropDatabase(node)
 	}
 
-	if node.GetAlterTableStmt() != nil {
-		return parseAlterTable(node)
+	if dropTableStmt := node.GetDropStmt(); dropTableStmt != nil {
+		return parseDrop(dropTableStmt)
 	}
 
-	if node.GetRenameStmt() != nil {
-		return parseRenameStmt(node)
+	if alterTablestmt := node.GetAlterTableStmt(); alterTablestmt != nil {
+		return parseAlterTable(alterTablestmt)
+	}
+
+	//Check for Rename column or table
+	if renameStmt := node.GetRenameStmt(); renameStmt != nil {
+		return parseRenameStmt(renameStmt)
+	}
+
+	if insertStmt := node.GetInsertStmt(); insertStmt != nil {
+		return parseInsertStmt(insertStmt)
+	}
+
+	if createStmt := node.GetCreateStmt(); createStmt != nil {
+		// Handle CREATE TABLE or other create statements if needed
+		// For now, we will just return an undefined action
+		return StatementAction{
+			Action: SqlActionCreateTable,
+		}, nil
 	}
 
 	// If the statement is not recognized, return an error
@@ -61,11 +83,34 @@ func ParseSql(sql string) (StatementAction, error) {
 	}, fmt.Errorf("unsupported SQL statement: %s", sql)
 }
 
-func parseRenameStmt(node *pgquery.Node) (StatementAction, error) {
-	renameStmt := node.GetRenameStmt()
+func parseInsertStmt(insertStmt *pgquery.InsertStmt) (StatementAction, error) {
+	relName := insertStmt.Relation.Relname
+	target := ""
+	action := SqlActionInsertRow
+
+	return StatementAction{
+		Target:   target,
+		Action:   action,
+		Relation: relName,
+	}, nil
+}
+
+func parseRenameStmt(renameStmt *pgquery.RenameStmt) (StatementAction, error) {
 	relName := renameStmt.Relation.Relname
 	target := renameStmt.Subname
 	action := SqlActionRenameColumn
+
+	typer := renameStmt.GetRenameType()
+	fmt.Println(typer)
+
+	switch renameStmt.GetRenameType() {
+	// If renaming a table
+	case pgquery.ObjectType_OBJECT_TABLE:
+		// If renaming a column
+		action = SqlActionRenameTable
+	case pgquery.ObjectType_OBJECT_COLUMN:
+
+	}
 
 	return StatementAction{
 		Target:   target,
@@ -85,13 +130,30 @@ func parseDropDatabase(node *pgquery.Node) (StatementAction, error) {
 	}, nil
 }
 
-func parseAlterTable(node *pgquery.Node) (StatementAction, error) {
-	alterTable := node.GetAlterTableStmt()
-	relName := alterTable.Relation.Relname
+func parseDrop(dropStmt *pgquery.DropStmt) (StatementAction, error) {
+	relName := ""
+	target := ""
+	action := SqlActionDropTable
+
+	// If we are dropping a table
+	if dropStmt.RemoveType == pgquery.ObjectType_OBJECT_TABLE {
+		relName = dropStmt.GetObjects()[0].GetList().Items[0].GetString_().GetSval()
+		action = SqlActionDropTable
+	}
+
+	return StatementAction{
+		Target:   target,
+		Action:   action,
+		Relation: relName,
+	}, nil
+}
+
+func parseAlterTable(stmt *pgquery.AlterTableStmt) (StatementAction, error) {
+	relName := stmt.Relation.Relname
 	target := ""
 	action := SqlActionUndefined
 
-	for _, cmd := range alterTable.Cmds {
+	for _, cmd := range stmt.Cmds {
 		target = cmd.GetAlterTableCmd().Name
 
 		// Determine the action based on the subtype of the command

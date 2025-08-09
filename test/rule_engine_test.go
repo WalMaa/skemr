@@ -2,7 +2,6 @@ package test
 
 import (
 	"context"
-	"fmt"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -56,7 +55,6 @@ func TestProcessStatement(t *testing.T) {
 
 	// Call the processStatements method
 	results, err := ruleEngine.ProcessStatements(context.Background(), statements, database)
-	fmt.Println(results)
 
 	assert.NoError(t, err)
 
