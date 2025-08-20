@@ -1,3 +1,9 @@
-dir: './db/sqlc'
-name: 'Querier'
-output: './test/mocks'
+dir: ./test/mocks
+pkgname: mocks
+
+packages:
+  github.com/walmaa/skemr/db/sqlc:
+    interfaces:
+      Querier:
+        config:
+          filename: querier_mock.go

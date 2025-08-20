@@ -6,7 +6,7 @@ WHERE id = $1 LIMIT 1;
 -- name: GetDatabaseByNameAndProject :one
 SELECT *
 FROM databases
-WHERE name = $1 AND project_id = $2 LIMIT 1;
+WHERE display_name = $1 AND project_id = $2 LIMIT 1;
 
 -- name: GetDatabaseByIdAndProject :one
 SELECT *
@@ -14,12 +14,12 @@ FROM databases
 WHERE id = $1 AND project_id = $2 LIMIT 1;
 
 -- name: CreateDatabase :one
-INSERT INTO databases (project_id, name)
+INSERT INTO databases (project_id, display_name)
 VALUES ($1, $2) RETURNING *;
 
 -- name: UpdateDatabase :exec
 UPDATE databases
-SET name = $2,
+SET display_name = $2,
     username = $3,
     password = $4
 WHERE id = $1

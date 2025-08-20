@@ -28,6 +28,10 @@ CREATE TYPE rule_type AS ENUM (
     'warn'
 );
 
+CREATE TYPE database_type AS ENUM (
+    'postgres'
+);
+
 CREATE TABLE  users
 (
     id       UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -44,9 +48,13 @@ CREATE TABLE projects
 CREATE TABLE databases
 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name     text NOT NULL,
+    display_name TEXT NOT NULL,
+    db_name     text NOT NULL,
     username TEXT,
     password TEXT,
+    host     TEXT,
+    port     INTEGER NOT NULL DEFAULT 5432,
+    type     database_type NOT NULL DEFAULT 'postgres',
     project_id uuid NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
     CONSTRAINT unique_database_name_per_project UNIQUE (name, project_id)
 );

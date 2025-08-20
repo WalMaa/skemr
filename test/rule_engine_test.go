@@ -2,22 +2,23 @@ package test
 
 import (
 	"context"
+	"testing"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/walmaa/skemr/db/sqlc"
 	"github.com/walmaa/skemr/rulengn"
 	"github.com/walmaa/skemr/test/mocks"
-	"testing"
 )
 
 func TestCheckStatement(t *testing.T) {
 	// Initialize the rule engine with a mock database
-	mockDB := &mocks.Querier{}
+	mockDB := &mocks.MockQuerier{}
 	ruleEngine := rulengn.NewRuleEngine(mockDB)
 
 	// Define a sample project
-	database := &sqlc.Database{ID: uuid.New(), Name: "Test Database"}
+	database := &sqlc.Database{ID: uuid.New(), DbName: "Test Database"}
 
 	// Define a sample SQL statement
 	statement := "ALTER TABLE users DROP COLUMN age;"
@@ -39,11 +40,11 @@ func TestCheckStatement(t *testing.T) {
 
 func TestProcessStatement(t *testing.T) {
 	// Initialize the rule engine with a mock database
-	mockDB := &mocks.Querier{}
+	mockDB := &mocks.MockQuerier{}
 	ruleEngine := rulengn.NewRuleEngine(mockDB)
 
 	// Define a sample project
-	database := &sqlc.Database{ID: uuid.New(), Name: "Test Database"}
+	database := &sqlc.Database{ID: uuid.New(), DbName: "Test Database"}
 
 	// Define a sample SQL statement
 	statements := []string{"ALTER TABLE users DROP COLUMN age;",

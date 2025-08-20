@@ -3,11 +3,12 @@ package service
 import (
 	"context"
 	"errors"
+	"log/slog"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/walmaa/skemr/db/sqlc"
 	"github.com/walmaa/skemr/errormsg"
-	"log/slog"
 )
 
 type ProjectService struct {
@@ -37,6 +38,16 @@ func (r *ProjectService) CreateProject(c context.Context, name string) (sqlc.Pro
 
 	slog.Info("Creating project", "name", name)
 	return r.db.CreateProject(c, name)
+}
+
+func (r *ProjectService) GetProjects(c context.Context) ([]sqlc.Project, error) {
+	slog.Info("Fetching all projects")
+	projects, err := r.db.GetProjects(c)
+	if err != nil {
+		slog.Error("Error fetching projects", "err", err)
+		return nil, err
+	}
+	return projects, nil
 }
 
 func (r *ProjectService) GetProject(c context.Context, id uuid.UUID) (sqlc.Project, error) {

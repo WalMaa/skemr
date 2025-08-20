@@ -2,8 +2,9 @@ package parser
 
 import (
 	"fmt"
-	pgquery "github.com/pganalyze/pg_query_go/v6"
 	"log/slog"
+
+	pgquery "github.com/pganalyze/pg_query_go/v6"
 )
 
 type StatementAction struct {

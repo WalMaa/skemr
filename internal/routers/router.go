@@ -2,9 +2,6 @@ package routers
 
 import (
 	"github.com/gin-gonic/gin"
-	swaggerfiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
-	"github.com/walmaa/skemr/docs"
 	"github.com/walmaa/skemr/internal/controller"
 	"github.com/walmaa/skemr/internal/middleware"
 	"github.com/walmaa/skemr/internal/service"
@@ -32,10 +29,6 @@ func InitRouter(services *Services) *gin.Engine {
 		auth.POST("/login", nil)
 		auth.POST("/register", nil)
 	}
-
-	// Swagger documentation
-	docs.SwaggerInfo.BasePath = "/api"
-	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 
 	// API routes
 	api := r.Group("/api")

@@ -2,6 +2,7 @@ package controller
 
 import (
 	"errors"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/walmaa/skemr/db/sqlc"
@@ -69,8 +70,8 @@ func (h *DatabaseController) createDatabase(c *gin.Context) {
 	}
 
 	args := sqlc.CreateDatabaseParams{
-		Name:      body.Name,
-		ProjectID: id,
+		DisplayName: body.Name,
+		ProjectID:   id,
 	}
 
 	database, err := h.Service.CreateDatabase(c, args)

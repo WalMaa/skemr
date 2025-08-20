@@ -2,11 +2,12 @@ package controller
 
 import (
 	"errors"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	errormsg "github.com/walmaa/skemr/errormsg"
 	"github.com/walmaa/skemr/internal/service"
-	"net/http"
 )
 
 type ProjectController struct {
@@ -21,6 +22,17 @@ func (h *ProjectController) RegisterRoutes(g *gin.RouterGroup) {
 	group := g.Group("/projects/")
 	group.POST("/", h.createProject)
 	group.GET("/:projectId", h.getProject)
+	group.GET("/", h.getProjects)
+}
+
+func (h *ProjectController) getProjects(c *gin.Context) {
+	projects, err := h.Service.GetProjects(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, projects)
 }
 
 func (h *ProjectController) createProject(c *gin.Context) {

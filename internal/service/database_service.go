@@ -3,11 +3,12 @@ package service
 import (
 	"context"
 	"errors"
+	"log/slog"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/walmaa/skemr/db/sqlc"
 	"github.com/walmaa/skemr/errormsg"
-	"log/slog"
 )
 
 type DatabaseService struct {
@@ -45,17 +46,17 @@ func (r *DatabaseService) CreateDatabase(c context.Context, args sqlc.CreateData
 
 	// Check a database with the given name already exists
 	exists, err := r.db.GetDatabaseByNameAndProject(c, sqlc.GetDatabaseByNameAndProjectParams{
-		ProjectID: args.ProjectID,
-		Name:      args.Name,
+		ProjectID:   args.ProjectID,
+		DisplayName: args.DisplayName,
 	})
 
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
-		slog.Error("Error checking for existing database", "name", args.Name, "err", err)
+		slog.Error("Error checking for existing database", "name", args.DisplayName, "err", err)
 		return sqlc.Database{}, err
 	}
 
 	if exists != (sqlc.Database{}) {
-		slog.Warn("Database already exists", "name", args.Name, "project_id", args.ProjectID)
+		slog.Warn("Database already exists", "name", args.DisplayName, "project_id", args.ProjectID)
 		return sqlc.Database{}, errormsg.ErrDatabaseAlreadyExists
 	}
 
