@@ -3,10 +3,12 @@ package rulengn
 import (
 	"context"
 	"fmt"
-	"github.com/walmaa/skemr/db/sqlc"
-	"github.com/walmaa/skemr/parser"
 	"log/slog"
 	"sync"
+
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/walmaa/skemr/db/sqlc"
+	"github.com/walmaa/skemr/parser"
 )
 
 type RuleEngine struct {
@@ -51,7 +53,7 @@ func (r *RuleEngine) CheckStatement(c context.Context, statement string, databas
 	args := sqlc.ListRulesByCriteriaParams{
 		DatabaseID:   database.ID,
 		Scope:        sqlc.RuleScopeTable,
-		RelationName: &stmtact.Relation,
+		RelationName: pgtype.Text{String: stmtact.Relation, Valid: true},
 		Target:       stmtact.Target,
 	}
 	rules, err := r.db.ListRulesByCriteria(c, args)

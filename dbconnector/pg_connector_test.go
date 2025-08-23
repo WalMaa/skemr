@@ -34,7 +34,7 @@ func getPostgres(t *testing.T) *postgres.PostgresContainer {
 			postgres.WithPassword(dbPassword),
 			postgres.BasicWaitStrategies(),
 			postgres.WithInitScripts(
-				"./testdata/init_postgres.sql"),
+				"../testdata/init_postgres.sql"),
 		)
 
 		require.NoError(t, err)

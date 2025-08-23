@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/walmaa/skemr/db/sqlc"
@@ -26,7 +27,7 @@ func TestCheckStatement(t *testing.T) {
 	mockDB.On("ListRulesByCriteria", mock.Anything, sqlc.ListRulesByCriteriaParams{
 		DatabaseID:   database.ID,
 		Scope:        sqlc.RuleScopeTable,
-		RelationName: &relation,
+		RelationName: pgtype.Text{String: relation, Valid: true},
 		Target:       "age",
 	}).Return([]sqlc.Rule{}, nil)
 
