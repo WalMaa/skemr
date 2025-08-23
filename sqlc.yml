@@ -9,7 +9,7 @@ sql:
         out: "db/sqlc"
         emit_interface: true
         sql_package: "pgx/v5"
-        emit_pointers_for_null_types: true
+        emit_pointers_for_null_types: false
         emit_empty_slices: true
         overrides:
           - db_type: "uuid"

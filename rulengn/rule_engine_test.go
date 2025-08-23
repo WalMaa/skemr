@@ -1,4 +1,4 @@
-package test
+package rulengn
 
 import (
 	"context"
@@ -8,14 +8,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/walmaa/skemr/db/sqlc"
-	"github.com/walmaa/skemr/rulengn"
 	"github.com/walmaa/skemr/test/mocks"
 )
 
 func TestCheckStatement(t *testing.T) {
 	// Initialize the rule engine with a mock database
 	mockDB := &mocks.MockQuerier{}
-	ruleEngine := rulengn.NewRuleEngine(mockDB)
+	ruleEngine := NewRuleEngine(mockDB)
 
 	// Define a sample project
 	database := &sqlc.Database{ID: uuid.New(), DbName: "Test Database"}
@@ -41,7 +40,7 @@ func TestCheckStatement(t *testing.T) {
 func TestProcessStatement(t *testing.T) {
 	// Initialize the rule engine with a mock database
 	mockDB := &mocks.MockQuerier{}
-	ruleEngine := rulengn.NewRuleEngine(mockDB)
+	ruleEngine := NewRuleEngine(mockDB)
 
 	// Define a sample project
 	database := &sqlc.Database{ID: uuid.New(), DbName: "Test Database"}

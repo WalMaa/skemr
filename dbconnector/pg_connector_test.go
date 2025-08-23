@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/walmaa/skemr/db/sqlc"
@@ -32,6 +33,8 @@ func getPostgres(t *testing.T) *postgres.PostgresContainer {
 			postgres.WithUsername(dbUser),
 			postgres.WithPassword(dbPassword),
 			postgres.BasicWaitStrategies(),
+			postgres.WithInitScripts(
+				"./testdata/init_postgres.sql"),
 		)
 
 		require.NoError(t, err)
@@ -55,9 +58,9 @@ func TestConnectToPostgres(t *testing.T) {
 	dbModel := &sqlc.Database{
 		ID:          uuid.New(),
 		DisplayName: "Test Database",
-		Username:    &dbUser,
-		Password:    &dbPassword,
-		Host:        &host,
+		Username:    pgtype.Text{String: dbUser, Valid: true},
+		Password:    pgtype.Text{String: dbPassword, Valid: true},
+		Host:        pgtype.Text{String: host, Valid: true},
 		Type:        "postgres",
 		DbName:      "postgres",
 		Port:        int32(port.Int()),
@@ -73,12 +76,51 @@ func TestConnectToPostgres(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestGetPostgresTablesInSchema(t *testing.T) {
+	pgC := getPostgres(t)
+	ctx := context.Background()
+
+	host, err := pgC.Host(ctx)
+	require.NoError(t, err)
+
+	port, err := pgC.MappedPort(ctx, "5432")
+	require.NoError(t, err)
+
+	dbUser := "user"
+	dbPassword := "password"
+
+	dbModel := &sqlc.Database{
+		ID:          uuid.New(),
+		DisplayName: "Test Database",
+		Username:    pgtype.Text{String: dbUser, Valid: true},
+		Password:    pgtype.Text{String: dbPassword, Valid: true},
+		Host:        pgtype.Text{String: host, Valid: true},
+		Type:        "postgres",
+		DbName:      "postgres",
+		Port:        int32(port.Int()),
+		ProjectID:   uuid.New(),
+	}
+
+	dbConn := NewDBConnector(*dbModel)
+	conn, err := dbConn.Connect(ctx)
+	require.NoError(t, err)
+	require.NotNil(t, conn)
+
+	tables, err := dbConn.ListTablesInSchema(ctx, conn, "public")
+	require.NoError(t, err)
+	require.NotNil(t, tables)
+	require.IsType(t, []string{}, tables)
+
+	err = conn.Close(ctx)
+	require.NoError(t, err)
+}
+
 func TestGetConnectionStringWithoutCreds(t *testing.T) {
 	host := "localhost"
 	dbModel := &sqlc.Database{
 		ID:          uuid.New(),
 		DisplayName: "Test Database",
-		Host:        &host,
+		Host:        pgtype.Text{String: host, Valid: true},
 		Type:        "postgres",
 		DbName:      "testdb",
 		Port:        5432,
@@ -98,9 +140,9 @@ func TestGetConnectionStringWithoutUsername(t *testing.T) {
 	dbModel := &sqlc.Database{
 		ID:          uuid.New(),
 		DisplayName: "Test Database",
-		Host:        &host,
-		Username:    &username,
-		Password:    &password,
+		Host:        pgtype.Text{String: host, Valid: true},
+		Username:    pgtype.Text{String: username, Valid: true},
+		Password:    pgtype.Text{String: password, Valid: true},
 		Type:        "postgres",
 		DbName:      "testdb",
 		Port:        5432,
@@ -119,8 +161,8 @@ func TestGetConnectionStringWithoutPass(t *testing.T) {
 	dbModel := &sqlc.Database{
 		ID:          uuid.New(),
 		DisplayName: "Test Database",
-		Host:        &host,
-		Username:    &username,
+		Host:        pgtype.Text{String: host, Valid: true},
+		Username:    pgtype.Text{String: username, Valid: true},
 		Type:        "postgres",
 		DbName:      "testdb",
 		Port:        5432,
@@ -140,9 +182,9 @@ func TestGetConnectionStringWithCreds(t *testing.T) {
 	dbModel := &sqlc.Database{
 		ID:          uuid.New(),
 		DisplayName: "Test Database",
-		Host:        &host,
-		Username:    &username,
-		Password:    &password,
+		Host:        pgtype.Text{String: host, Valid: true},
+		Username:    pgtype.Text{String: username, Valid: true},
+		Password:    pgtype.Text{String: password, Valid: true},
 		Type:        "postgres",
 		DbName:      "testdb",
 		Port:        5432,
