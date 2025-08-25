@@ -15,27 +15,57 @@ type DBConnector struct {
 	sqlc.Database
 }
 
+type TableRef struct {
+	Schema string
+	Table  string
+}
+
+type ColumnRef struct {
+	Table      TableRef
+	ColumnName string
+	DataType   string
+}
+
 func NewDBConnector(db sqlc.Database) *DBConnector {
 	return &DBConnector{
 		Database: db,
 	}
 }
 
-func (dc *DBConnector) ListTablesInSchema(ctx context.Context, conn *pgx.Conn, schema string) ([]string, error) {
-	rows, err := conn.Query(ctx, "SELECT table_name FROM information_schema.tables WHERE table_schema=$1", schema)
+func (dc *DBConnector) ListColumnsInTable(ctx context.Context, conn *pgx.Conn, tableRef TableRef) ([]ColumnRef, error) {
+	rows, err := conn.Query(ctx, "SELECT column_name, data_type FROM information_schema.columns WHERE table_schema=$1 AND table_name=$2", tableRef.Schema, tableRef.Table)
+	if err != nil {
+		slog.Error("Error querying columns", "schema", tableRef.Schema, "table", tableRef.Table, "err", err)
+		return nil, err
+	}
+	defer rows.Close()
+	var columns []ColumnRef
+	for rows.Next() {
+		columnRef := ColumnRef{Table: tableRef}
+		if err := rows.Scan(&columnRef.ColumnName, &columnRef.DataType); err != nil {
+			slog.Error("Error scanning column name", "err", err)
+			return nil, err
+		}
+		columns = append(columns, columnRef)
+	}
+	return columns, rows.Err()
+}
+
+func (dc *DBConnector) ListTablesInSchema(ctx context.Context, conn *pgx.Conn, schema string) ([]TableRef, error) {
+	rows, err := conn.Query(ctx, "SELECT table_schema, table_name FROM information_schema.tables WHERE table_schema=$1", schema)
 	if err != nil {
 		slog.Error("Error querying tables", "schema", schema, "err", err)
 		return nil, err
 	}
 	defer rows.Close()
-	var tables []string
+	var tables []TableRef
 	for rows.Next() {
-		var tableName string
-		if err := rows.Scan(&tableName); err != nil {
+		var tableRef TableRef
+		if err := rows.Scan(&tableRef.Schema, &tableRef.Table); err != nil {
 			slog.Error("Error scanning table name", "err", err)
 			return nil, err
 		}
-		tables = append(tables, tableName)
+		tables = append(tables, tableRef)
 	}
 	return tables, rows.Err()
 }

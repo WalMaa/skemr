@@ -17,33 +17,8 @@ var (
 	pgC    *postgres.PostgresContainer
 )
 
-func getPostgres(t *testing.T) *postgres.PostgresContainer {
-	t.Helper()
-	var err error
-	pgOnce.Do(func() {
-
-		ctx := context.Background()
-		dbName := "postgres"
-		dbUser := "user"
-		dbPassword := "password"
-
-		pgC, err = postgres.Run(ctx,
-			"postgres:16-alpine",
-			postgres.WithDatabase(dbName),
-			postgres.WithUsername(dbUser),
-			postgres.WithPassword(dbPassword),
-			postgres.BasicWaitStrategies(),
-			postgres.WithInitScripts(
-				"../testdata/init_postgres.sql"),
-		)
-
-		require.NoError(t, err)
-	})
-	return pgC
-}
-
 func TestConnectToPostgres(t *testing.T) {
-	pgC := getPostgres(t)
+	pgC := GetTestPostgres(t)
 	ctx := context.Background()
 
 	host, err := pgC.Host(ctx)
@@ -71,45 +46,6 @@ func TestConnectToPostgres(t *testing.T) {
 	conn, err := dbConn.Connect(ctx)
 	require.NoError(t, err)
 	require.NotNil(t, conn)
-
-	err = conn.Close(ctx)
-	require.NoError(t, err)
-}
-
-func TestGetPostgresTablesInSchema(t *testing.T) {
-	pgC := getPostgres(t)
-	ctx := context.Background()
-
-	host, err := pgC.Host(ctx)
-	require.NoError(t, err)
-
-	port, err := pgC.MappedPort(ctx, "5432")
-	require.NoError(t, err)
-
-	dbUser := "user"
-	dbPassword := "password"
-
-	dbModel := &sqlc.Database{
-		ID:          uuid.New(),
-		DisplayName: "Test Database",
-		Username:    pgtype.Text{String: dbUser, Valid: true},
-		Password:    pgtype.Text{String: dbPassword, Valid: true},
-		Host:        pgtype.Text{String: host, Valid: true},
-		Type:        "postgres",
-		DbName:      "postgres",
-		Port:        int32(port.Int()),
-		ProjectID:   uuid.New(),
-	}
-
-	dbConn := NewDBConnector(*dbModel)
-	conn, err := dbConn.Connect(ctx)
-	require.NoError(t, err)
-	require.NotNil(t, conn)
-
-	tables, err := dbConn.ListTablesInSchema(ctx, conn, "public")
-	require.NoError(t, err)
-	require.NotNil(t, tables)
-	require.IsType(t, []string{}, tables)
 
 	err = conn.Close(ctx)
 	require.NoError(t, err)
