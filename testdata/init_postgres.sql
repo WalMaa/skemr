@@ -87,3 +87,27 @@ SELECT setval(pg_get_serial_sequence('products','id'),
 
 SELECT setval(pg_get_serial_sequence('orders','id'),
               COALESCE((SELECT MAX(id) FROM orders), 0), true);
+
+
+-- Create analytics schema
+CREATE SCHEMA IF NOT EXISTS analytics;
+
+-- Create table in analytics schema
+CREATE TABLE IF NOT EXISTS analytics.page_views (
+                                                    id         BIGSERIAL PRIMARY KEY,
+                                                    customer_id BIGINT REFERENCES public.customers(id) ON DELETE SET NULL,
+                                                    page_url   TEXT NOT NULL,
+                                                    viewed_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Seed data for analytics.page_views
+INSERT INTO analytics.page_views (id, customer_id, page_url, viewed_at)
+VALUES
+    (1, 1, '/home',      now() - INTERVAL '2 days'),
+    (2, 1, '/products',  now() - INTERVAL '1 day'),
+    (3, 2, '/checkout',  now())
+ON CONFLICT (id) DO NOTHING;
+
+-- Reset sequence for analytics.page_views
+SELECT setval(pg_get_serial_sequence('analytics.page_views','id'),
+              COALESCE((SELECT MAX(id) FROM analytics.page_views), 0), true);

@@ -1,4 +1,4 @@
-package dbconnector
+package dbreflect
 
 import (
 	"context"
@@ -42,7 +42,7 @@ func TestConnectToPostgres(t *testing.T) {
 		ProjectID:   uuid.New(),
 	}
 
-	dbConn := NewDBConnector(*dbModel)
+	dbConn := NewPostgresConnector(*dbModel)
 	conn, err := dbConn.Connect(ctx)
 	require.NoError(t, err)
 	require.NotNil(t, conn)
@@ -62,7 +62,7 @@ func TestGetConnectionStringWithoutCreds(t *testing.T) {
 		Port:        5432,
 		ProjectID:   uuid.New(),
 	}
-	dbConn := NewDBConnector(*dbModel)
+	dbConn := NewPostgresConnector(*dbModel)
 	connStr, err := dbConn.getConnectionString()
 	require.NoError(t, err)
 	expected := "postgresql://localhost:5432/testdb"
@@ -84,7 +84,7 @@ func TestGetConnectionStringWithoutUsername(t *testing.T) {
 		Port:        5432,
 		ProjectID:   uuid.New(),
 	}
-	dbConn := NewDBConnector(*dbModel)
+	dbConn := NewPostgresConnector(*dbModel)
 	connStr, err := dbConn.getConnectionString()
 	require.NoError(t, err)
 	expected := "postgresql://user:password@localhost:5432/testdb"
@@ -104,7 +104,7 @@ func TestGetConnectionStringWithoutPass(t *testing.T) {
 		Port:        5432,
 		ProjectID:   uuid.New(),
 	}
-	dbConn := NewDBConnector(*dbModel)
+	dbConn := NewPostgresConnector(*dbModel)
 	connStr, err := dbConn.getConnectionString()
 	require.NoError(t, err)
 	expected := "postgresql://localhost:5432/testdb"
@@ -126,7 +126,7 @@ func TestGetConnectionStringWithCreds(t *testing.T) {
 		Port:        5432,
 		ProjectID:   uuid.New(),
 	}
-	dbConn := NewDBConnector(*dbModel)
+	dbConn := NewPostgresConnector(*dbModel)
 	connStr, err := dbConn.getConnectionString()
 	require.NoError(t, err)
 	expected := "postgresql://user:password@localhost:5432/testdb"

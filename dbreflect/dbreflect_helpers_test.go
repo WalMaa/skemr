@@ -1,4 +1,4 @@
-package dbconnector
+package dbreflect
 
 import (
 	"context"
@@ -40,7 +40,7 @@ func GetTestPostgres(t *testing.T) *postgres.PostgresContainer {
 
 // newTestPGConn prepares a temporary Postgres connection for tests.
 // It registers a cleanup to close the connection automatically.
-func newTestPGConn(t *testing.T) (ctx context.Context, dbConn *DBConnector, conn *pgx.Conn) {
+func newTestPGConn(t *testing.T) (ctx context.Context, dbConn *PostgresConnector, conn *pgx.Conn) {
 	t.Helper()
 
 	ctx = context.Background()
@@ -69,7 +69,7 @@ func newTestPGConn(t *testing.T) (ctx context.Context, dbConn *DBConnector, conn
 		ProjectID:   uuid.New(),
 	}
 
-	tmp := NewDBConnector(*dbModel)
+	tmp := NewPostgresConnector(*dbModel)
 	c, err := tmp.Connect(ctx)
 	require.NoError(t, err)
 	require.NotNil(t, c)

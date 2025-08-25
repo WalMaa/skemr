@@ -1,4 +1,4 @@
-package dbconnector
+package dbreflect
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 	"github.com/walmaa/skemr/db/sqlc"
 )
 
-type DBConnector struct {
+type PostgresConnector struct {
 	sqlc.Database
 }
 
@@ -21,18 +21,17 @@ type TableRef struct {
 }
 
 type ColumnRef struct {
-	Table      TableRef
 	ColumnName string
 	DataType   string
 }
 
-func NewDBConnector(db sqlc.Database) *DBConnector {
-	return &DBConnector{
+func NewPostgresConnector(db sqlc.Database) *PostgresConnector {
+	return &PostgresConnector{
 		Database: db,
 	}
 }
 
-func (dc *DBConnector) ListColumnsInTable(ctx context.Context, conn *pgx.Conn, tableRef TableRef) ([]ColumnRef, error) {
+func (dc *PostgresConnector) ListColumnsInTable(ctx context.Context, conn *pgx.Conn, tableRef TableRef) ([]ColumnRef, error) {
 	rows, err := conn.Query(ctx, "SELECT column_name, data_type FROM information_schema.columns WHERE table_schema=$1 AND table_name=$2", tableRef.Schema, tableRef.Table)
 	if err != nil {
 		slog.Error("Error querying columns", "schema", tableRef.Schema, "table", tableRef.Table, "err", err)
@@ -41,7 +40,7 @@ func (dc *DBConnector) ListColumnsInTable(ctx context.Context, conn *pgx.Conn, t
 	defer rows.Close()
 	var columns []ColumnRef
 	for rows.Next() {
-		columnRef := ColumnRef{Table: tableRef}
+		var columnRef ColumnRef
 		if err := rows.Scan(&columnRef.ColumnName, &columnRef.DataType); err != nil {
 			slog.Error("Error scanning column name", "err", err)
 			return nil, err
@@ -51,7 +50,7 @@ func (dc *DBConnector) ListColumnsInTable(ctx context.Context, conn *pgx.Conn, t
 	return columns, rows.Err()
 }
 
-func (dc *DBConnector) ListTablesInSchema(ctx context.Context, conn *pgx.Conn, schema string) ([]TableRef, error) {
+func (dc *PostgresConnector) GetTablesInSchema(ctx context.Context, conn *pgx.Conn, schema string) ([]TableRef, error) {
 	rows, err := conn.Query(ctx, "SELECT table_schema, table_name FROM information_schema.tables WHERE table_schema=$1", schema)
 	if err != nil {
 		slog.Error("Error querying tables", "schema", schema, "err", err)
@@ -70,8 +69,32 @@ func (dc *DBConnector) ListTablesInSchema(ctx context.Context, conn *pgx.Conn, s
 	return tables, rows.Err()
 }
 
+func (dc *PostgresConnector) GetSchemas(ctx context.Context, conn *pgx.Conn) ([]string, error) {
+	rows, err := conn.Query(ctx, "SELECT schema_name"+
+		" FROM information_schema.schemata"+
+		" WHERE schema_name NOT IN ('pg_catalog', 'information_schema')"+
+		" AND schema_name NOT LIKE 'pg_toast%'"+
+		" AND schema_name NOT LIKE 'pg_temp%';")
+	if err != nil {
+		slog.Error("Error querying schemas", "err", err)
+		return nil, err
+	}
+
+	defer rows.Close()
+	var schemas []string
+	for rows.Next() {
+		var schema string
+		if err := rows.Scan(&schema); err != nil {
+			slog.Error("Error scanning schema name", "err", err)
+			return nil, err
+		}
+		schemas = append(schemas, schema)
+	}
+	return schemas, rows.Err()
+}
+
 // Connect connects to a database and returns a pgx.Conn instance.
-func (dc *DBConnector) Connect(ctx context.Context) (*pgx.Conn, error) {
+func (dc *PostgresConnector) Connect(ctx context.Context) (*pgx.Conn, error) {
 	connStr, err := dc.getConnectionString()
 	if err != nil {
 		slog.Error("Error getting connection string", "err", err)
@@ -88,14 +111,14 @@ func (dc *DBConnector) Connect(ctx context.Context) (*pgx.Conn, error) {
 	return conn, nil
 }
 
-func (dc *DBConnector) Disconnect(ctx context.Context, conn *pgx.Conn) error {
+func (dc *PostgresConnector) Disconnect(ctx context.Context, conn *pgx.Conn) error {
 	if conn == nil {
 		return errors.New("No connection to close")
 	}
 	return conn.Close(ctx)
 }
 
-func (dc *DBConnector) TestConnection(ctx context.Context) error {
+func (dc *PostgresConnector) TestConnection(ctx context.Context) error {
 	conn, err := dc.Connect(ctx)
 	if err != nil {
 		return fmt.Errorf("connect: %w", err)
@@ -116,7 +139,7 @@ func (dc *DBConnector) TestConnection(ctx context.Context) error {
 }
 
 // getConnectionString returns the connection string for the database.
-func (dc *DBConnector) getConnectionString() (string, error) {
+func (dc *PostgresConnector) getConnectionString() (string, error) {
 	host := dc.Database.Host
 	port := dc.Database.Port
 	if !host.Valid || port == 0 || dc.Database.DbName == "" {
