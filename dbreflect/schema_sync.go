@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log/slog"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -52,6 +53,10 @@ func (s *SchemaSyncService) SyncSchema(c context.Context, databaseID uuid.UUID) 
 
 	// For each schema, get tables and columns
 	for _, schema := range schemas {
+		err := s.updateSchema(c, schema, databaseID)
+		if err != nil {
+			return err
+		}
 		tables, err := postgresConn.GetTablesInSchema(c, conn, schema)
 		if err != nil {
 			return fmt.Errorf("error getting tables in schema %s: %w", schema, err)
@@ -68,5 +73,39 @@ func (s *SchemaSyncService) SyncSchema(c context.Context, databaseID uuid.UUID) 
 		}
 	}
 
+	return nil
+}
+
+func (s *SchemaSyncService) updateSchema(c context.Context, schemaName string, databaseId uuid.UUID) error {
+	args := sqlc.GetSchemaByNameAndDatabaseParams{Name: schemaName, DatabaseID: databaseId}
+	schema, err := s.db.GetSchemaByNameAndDatabase(c, args)
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		slog.Error("error getting schema", "error", err.Error())
+		return err
+	}
+
+	// If that schema does not exist yet, save it
+	if errors.Is(err, pgx.ErrNoRows) {
+		args := sqlc.CreateSchemaParams{
+			DatabaseID: databaseId,
+			Name:       schemaName,
+		}
+		schema, err := s.db.CreateSchema(c, args)
+		if err != nil {
+			slog.Error("error creating schema", "error", err)
+			return err
+		}
+		slog.Info("schema created", "schema", schema)
+		return nil
+	}
+
+	// If schema does exist, update if needed. Currently no-op
+	slog.Info("schema exists", "schema", schema)
+
+	return nil
+
+}
+
+func (s *SchemaSyncService) UpdateTable(c context.Context, databaseId uuid.UUID, tableRef TableRef) error {
 	return nil
 }
