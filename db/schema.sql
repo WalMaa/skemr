@@ -56,7 +56,7 @@ CREATE TABLE databases
     port     INTEGER NOT NULL DEFAULT 5432,
     type     database_type NOT NULL DEFAULT 'postgres',
     project_id uuid NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-    CONSTRAINT unique_database_name_per_project UNIQUE (name, project_id)
+    CONSTRAINT unique_database_name_per_project UNIQUE (display_name, project_id)
 );
 
 CREATE TABLE schemas

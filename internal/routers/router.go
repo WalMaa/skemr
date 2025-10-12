@@ -15,24 +15,31 @@ type Services struct {
 
 func InitRouter(services *Services) *gin.Engine {
 	r := gin.Default()
-
-	// Auth
-	r.Use(gin.BasicAuth(gin.Accounts{
-		"user": "pass",
-	}))
-	r.Use(middleware.AuthMiddleware())
-
 	r.Use(middleware.ErrorHandler())
 
-	auth := r.Group("/auth")
+	/*--------------------------- Public routes, auth, webhooks ---------------*/
+	public := r.Group("/api/v1")
+
+	auth := public.Group("/auth")
 	{
 		auth.POST("/login", nil)
 		auth.POST("/register", nil)
 	}
 
-	// API routes
-	api := r.Group("/api")
-	// Project routes, which will be prefixed with /api/projects/:id
+	// Webhook routes
+	webhookController := controller.NewWebhookController()
+	webhookController.RegisterRoutes(public)
+
+	/*--------------------------- Protected routes ---------------------------*/
+	protected := r.Group("/api/v1")
+
+	// Auth
+	protected.Use(gin.BasicAuth(gin.Accounts{
+		"user": "pass",
+	}))
+	r.Use(middleware.AuthMiddleware())
+
+	// Project routes, which will be prefixed with /api/v1/projects/:id
 	// Each project will have its own set of routes under this group
 
 	// Initialize controllers
@@ -42,9 +49,9 @@ func InitRouter(services *Services) *gin.Engine {
 	//ruleController := controller.NewRuleController(ruleService)
 
 	// Register routes
-	projectController.RegisterRoutes(api)
-	databaseController.RegisterRoutes(api)
-	schemaController.RegisterRoutes(api)
+	projectController.RegisterRoutes(protected)
+	databaseController.RegisterRoutes(protected)
+	schemaController.RegisterRoutes(protected)
 	//ruleController.RegisterRoutes(projectRoutes)
 
 	return r

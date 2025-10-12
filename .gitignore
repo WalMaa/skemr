@@ -27,3 +27,6 @@ Thumbs.db
 
 # Dependency directories (optional)
 vendor/   # only ignore if you don't want to vendor dependencies
+
+# Docker gitlab
+gitlab/
