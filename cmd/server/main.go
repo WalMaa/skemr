@@ -3,8 +3,12 @@ package main
 import (
 	"io/ioutil"
 	"log"
+	"log/slog"
+	"os"
+	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/lmittmann/tint"
 	"github.com/walmaa/skemr/db/sqlc"
 	"github.com/walmaa/skemr/internal/routers"
 	"github.com/walmaa/skemr/internal/service"
@@ -25,6 +29,16 @@ func runSchema(conn *pgx.Conn) {
 }
 
 func main() {
+
+	// Logger colors
+	w := os.Stderr
+	// Set global logger with custom options
+	slog.SetDefault(slog.New(
+		tint.NewHandler(w, &tint.Options{
+			Level:      slog.LevelDebug,
+			TimeFormat: time.Kitchen,
+		}),
+	))
 
 	conn, err := pgx.Connect(context.Background(), "postgres://postgres:pass@localhost:5432/postgres")
 	if err != nil {

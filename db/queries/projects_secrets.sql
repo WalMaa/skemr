@@ -16,7 +16,6 @@ SELECT p.id, p.name, p.created_at, p.updated_at
 FROM projects_secret_keys psk
 JOIN projects p ON p.id = psk.project_id
 WHERE psk.secret_key = $1
-  AND (psk.expires_at IS NULL OR psk.expires_at > NOW())
 LIMIT 1;
 
 -- name: CreateProjectSecretKey :one
