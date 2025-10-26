@@ -1,12 +1,12 @@
 version: "2"
 sql:
   - engine: "postgresql"
-    queries: "./db/queries"
-    schema: "./db/schema.sql"
+    queries: "./skemr-api/db/queries"
+    schema: "./skemr-api/db/schema.sql"
     gen:
       go:
         emit_json_tags: true
-        out: "db/sqlc"
+        out: "./skemr-api/db/sqlc"
         emit_interface: true
         sql_package: "pgx/v5"
         emit_pointers_for_null_types: false

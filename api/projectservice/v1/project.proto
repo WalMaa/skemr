@@ -2,7 +2,7 @@ syntax= "proto3";
 
 package api.projectservice.v1;
 
-option go_package = "github.com/walmaa/skemr/api/projectservice;projectservice";
+option go_package = "github.com/walmaa/skemr-api/api/projectservice;projectservice";
 
 message Project {
     string id = 1;

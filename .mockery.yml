@@ -1,8 +1,8 @@
-dir: ./test/mocks
+dir: ./skemr-api/test/mocks
 pkgname: mocks
 
 packages:
-  github.com/walmaa/skemr/db/sqlc:
+  github.com/walmaa/skemr-api/db/sqlc:
     interfaces:
       Querier:
         config:

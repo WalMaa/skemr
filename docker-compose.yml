@@ -9,12 +9,14 @@ services:
       - "POSTGRES_USER=postgres"
   gitlab:
     image: "gitlab/gitlab-ce:latest"
+    container_name: gitlab
     ports:
       - "80:80"
       - "443:443"
       - "2222:22"
     environment:
         GITLAB_OMNIBUS_CONFIG: |
+          external_url 'http://localhost'
           gitlab_rails['initial_root_password'] = 'password'
           gitlab_rails['allow_local_requests_from_web_hooks_and_services'] = true
           gitlab_rails['allow_local_requests_from_system_hooks'] = true
@@ -22,6 +24,16 @@ services:
       - "./gitlab/config/gitlab:/etc/gitlab"
       - "./gitlab/logs/gitlab:/var/log/gitlab"
       - "./gitlab/data/gitlab:/var/opt/gitlab"
+    extra_hosts:
+      - host.docker.internal:host-gateway
+  gitlab-runner:
+    image: gitlab/gitlab-runner:latest
+    restart: always
+    depends_on:
+      - gitlab
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "./gitlab-runner/config:/etc/gitlab-runner"
     extra_hosts:
       - host.docker.internal:host-gateway
   mailpit:
