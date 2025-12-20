@@ -16,7 +16,7 @@ func NewRuleEngine() *RuleEngine {
 	return &RuleEngine{}
 }
 
-func (r *RuleEngine) ProcessStatements(c context.Context, statements []string, database *models.Database) (chan bool, error) {
+func (r *RuleEngine) ProcessStatements(c context.Context, statements []string, rules []models.Rule) (chan bool, error) {
 	results := make(chan bool, len(statements))
 	var wg sync.WaitGroup
 	for _, statement := range statements {
@@ -25,7 +25,7 @@ func (r *RuleEngine) ProcessStatements(c context.Context, statements []string, d
 		go func() {
 			defer wg.Done()
 			slog.Info("Processing statement", slog.String("statement", stmt))
-			results <- r.CheckStatement(c, stmt, database)
+			results <- r.CheckStatement(c, stmt, rules)
 		}()
 
 	}
@@ -38,23 +38,21 @@ func (r *RuleEngine) ProcessStatements(c context.Context, statements []string, d
 }
 
 // CheckStatement checks if the given SQL statement matches any rules in the database for the specified project.
-func (r *RuleEngine) CheckStatement(c context.Context, statement string, database *models.Database) bool {
+func (r *RuleEngine) CheckStatement(c context.Context, statement string, rules []models.Rule) bool {
 	slog.Info("CheckStatement", slog.String("statement", statement))
-	_, err := parser.ParseSql(statement)
+	statementAction, err := parser.ParseSql(statement)
 
 	if err != nil {
 		slog.Error("Error parsing statement", "statement", statement, "err", err)
 		return false
 	}
 
-	// TODO: Check against rules
-	//args := sqlc.ListRulesByCriteriaParams{
-	//	DatabaseID:   database.ID,
-	//	Scope:        sqlc.RuleScopeTable,
-	//	RelationName: pgtype.Text{String: stmtact.Relation, Valid: true},
-	//	Target:       stmtact.Target,
-	//}
-	//rules, err := r.db.ListRulesByCriteria(c, args)
+	for _, rule := range rules {
+		if rule.Target == statementAction.Target {
+			slog.Info("Rule target matches statement target", slog.String("rule_target", rule.Target), slog.String("statement_target", statementAction.Target))
+
+		}
+	}
 
 	return true
 }

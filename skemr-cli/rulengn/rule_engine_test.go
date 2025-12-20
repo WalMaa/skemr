@@ -12,14 +12,25 @@ import (
 func TestCheckStatement(t *testing.T) {
 	ruleEngine := NewRuleEngine()
 
-	// Define a sample project
-	database := &models.Database{ID: uuid.New(), DbName: "Test Database"}
-
 	// Define a sample SQL statement
 	statement := "ALTER TABLE users DROP COLUMN age;"
 
+	relName := "users"
+
+	// Define a rules slice
+	rules := []models.Rule{
+		{
+			ID:           uuid.New(),
+			Name:         "Drop Age Column Rule",
+			Type:         models.RuleTypeAdvisory,
+			Scope:        models.RuleScopeColumn,
+			RelationName: &relName,
+			Target:       "age",
+		},
+	}
+
 	// Call the CheckStatement method
-	result := ruleEngine.CheckStatement(context.Background(), statement, database)
+	result := ruleEngine.CheckStatement(context.Background(), statement, rules)
 
 	// Assert the result
 	assert.True(t, result)
@@ -29,16 +40,13 @@ func TestProcessStatement(t *testing.T) {
 	// Initialize the rule engine with a mock database
 	ruleEngine := NewRuleEngine()
 
-	// Define a sample project
-	database := &models.Database{ID: uuid.New(), DbName: "Test Database"}
-
 	// Define a sample SQL statement
 	statements := []string{"ALTER TABLE users DROP COLUMN age;",
 		"CREATE TABLE orders (id SERIAL PRIMARY KEY, user_id INT, amount DECIMAL);",
 		"INSERT INTO users (name, email) VALUES ('John Doe', 'johg');"}
 
 	// Call the processStatements method
-	results, err := ruleEngine.ProcessStatements(context.Background(), statements, database)
+	results, err := ruleEngine.ProcessStatements(context.Background(), statements, nil)
 
 	assert.NoError(t, err)
 

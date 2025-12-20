@@ -8,23 +8,32 @@ import (
 )
 
 type StatementAction struct {
-	Target   string
-	Action   SqlAction
-	Relation string
+	Target   string    // e.g., column name, table name, database name
+	Action   SqlAction // The type of action performed (e.g., CREATE, DROP, ALTER)
+	Relation string    // e.g., table name for column actions
 }
 
 type SqlAction string
 
 const (
-	SqlActionDropColumn     SqlAction = "DROP COLUMN"
-	SqlActionRenameColumn   SqlAction = "RENAME COLUMN"
-	SqlActionModifyDataType SqlAction = "MODIFY DATA TYPE"
+	// Database level actions
+	SqlActionCreateDatabase SqlAction = "CREATE DATABASE"
+	SqlActionRenameDatabase SqlAction = "RENAME DATABASE"
 	SqlActionDropDatabase   SqlAction = "DROP DATABASE"
-	SqlActionUndefined      SqlAction = "UNDEFINED"
-	SqlActionInsertRow      SqlAction = "INSERT ROW"
-	SqlActionCreateTable    SqlAction = "CREATE TABLE"
-	SqlActionRenameTable    SqlAction = "RENAME TABLE"
-	SqlActionDropTable      SqlAction = "DROP TABLE"
+	// -- Table level actions
+	SqlActionCreateTable SqlAction = "CREATE TABLE"
+	SqlActionRenameTable SqlAction = "RENAME TABLE"
+	SqlActionDropTable   SqlAction = "DROP TABLE"
+
+	// ---- Column level actions
+	SqlActionModifyDataType SqlAction = "MODIFY DATA TYPE"
+	SqlActionRenameColumn   SqlAction = "RENAME COLUMN"
+	SqlActionDropColumn     SqlAction = "DROP COLUMN"
+	SqlActionAddColumn      SqlAction = "ADD COLUMN"
+
+	SqlActionInsertRow SqlAction = "INSERT ROW"
+	// Fallback
+	SqlActionUndefined SqlAction = "UNDEFINED"
 )
 
 /*
@@ -76,6 +85,10 @@ func ParseSql(sql string) (StatementAction, error) {
 		}, nil
 	}
 
+	if createDbStmt := node.GetCreatedbStmt(); createDbStmt != nil {
+		return parseCreateDatabaseStmt(createDbStmt)
+	}
+
 	// If the statement is not recognized, return an error
 	return StatementAction{
 		Target:   "",
@@ -96,20 +109,36 @@ func parseInsertStmt(insertStmt *pgquery.InsertStmt) (StatementAction, error) {
 	}, nil
 }
 
-func parseRenameStmt(renameStmt *pgquery.RenameStmt) (StatementAction, error) {
-	relName := renameStmt.Relation.Relname
-	target := renameStmt.Subname
-	action := SqlActionRenameColumn
+func parseCreateDatabaseStmt(createDbStmt *pgquery.CreatedbStmt) (StatementAction, error) {
+	dbName := createDbStmt.Dbname
+	action := SqlActionCreateDatabase
 
-	typer := renameStmt.GetRenameType()
-	fmt.Println(typer)
+	return StatementAction{
+		Target:   dbName,
+		Action:   action,
+		Relation: "",
+	}, nil
+}
+
+func parseRenameStmt(renameStmt *pgquery.RenameStmt) (StatementAction, error) {
+	relName := ""
+	target := renameStmt.Subname
+	action := SqlActionUndefined
 
 	switch renameStmt.GetRenameType() {
 	// If renaming a table
 	case pgquery.ObjectType_OBJECT_TABLE:
-		// If renaming a column
+
 		action = SqlActionRenameTable
+		target = renameStmt.Relation.Relname
+
+	// If renaming a database
+	case pgquery.ObjectType_OBJECT_DATABASE:
+		action = SqlActionRenameDatabase
+	// If renaming a column
 	case pgquery.ObjectType_OBJECT_COLUMN:
+		action = SqlActionRenameColumn
+		relName = renameStmt.Relation.Relname
 
 	}
 
@@ -160,11 +189,17 @@ func parseAlterTable(stmt *pgquery.AlterTableStmt) (StatementAction, error) {
 		// Determine the action based on the subtype of the command
 		switch cmd.GetAlterTableCmd().GetSubtype() {
 
+		// If dropping a column
 		case pgquery.AlterTableType_AT_DropColumn:
 			action = SqlActionDropColumn
+		// If modifying a column data type
 		case pgquery.AlterTableType_AT_AlterColumnType:
 
 			action = SqlActionModifyDataType
+		// If adding a column
+		case pgquery.AlterTableType_AT_AddColumn:
+			action = SqlActionAddColumn
+			target = cmd.GetAlterTableCmd().Def.GetColumnDef().Colname
 		}
 	}
 

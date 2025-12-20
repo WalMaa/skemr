@@ -24,8 +24,10 @@ CREATE TYPE migration_statement_action AS ENUM (
 );
 
 CREATE TYPE rule_type AS ENUM (
-    'lock',
-    'warn'
+    'locked',
+    'warn',
+    'advisory'
+    'deprecated'
 );
 
 CREATE TYPE database_type AS ENUM (

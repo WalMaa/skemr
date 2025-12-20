@@ -28,7 +28,6 @@ services:
       - host.docker.internal:host-gateway
   gitlab-runner:
     image: gitlab/gitlab-runner:latest
-    restart: always
     depends_on:
       - gitlab
     volumes:
@@ -36,6 +35,14 @@ services:
       - "./gitlab-runner/config:/etc/gitlab-runner"
     extra_hosts:
       - host.docker.internal:host-gateway
+  smtp4dev:
+    image: rnwood/smtp4dev:latest
+    container_name: skemr-smtp4dev
+    ports:
+      - "5000:80"
+      - "5025:25"
+    environment:
+      - ServerOptions__HostName=smtp4dev
   mailpit:
     image: axllent/mailpit
     container_name: skemr-mailpit
