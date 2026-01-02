@@ -9,6 +9,33 @@ import (
 	"github.com/walmaa/skemr-common/models"
 )
 
+func TestLockedRuleViolationExitCode1(t *testing.T) {
+	ruleEngine := NewRuleEngine()
+
+	// Define a sample SQL statement
+	statement := "ALTER TABLE users DROP COLUMN age;"
+
+	relName := "users"
+
+	// Define a rules slice
+	rules := []models.Rule{
+		{
+			ID:           uuid.New(),
+			Name:         "Drop Age Column Rule",
+			Type:         models.RuleTypeLocked,
+			Scope:        models.RuleScopeColumn,
+			RelationName: &relName,
+			Target:       "age",
+		},
+	}
+
+	// Call the CheckStatement method
+	result := ruleEngine.CheckStatement(statement, rules)
+
+	// Assert the result
+	assert.True(t, result)
+}
+
 func TestCheckStatement(t *testing.T) {
 	ruleEngine := NewRuleEngine()
 
@@ -30,14 +57,13 @@ func TestCheckStatement(t *testing.T) {
 	}
 
 	// Call the CheckStatement method
-	result := ruleEngine.CheckStatement(context.Background(), statement, rules)
+	result := ruleEngine.CheckStatement(statement, rules)
 
 	// Assert the result
 	assert.True(t, result)
 }
 
 func TestProcessStatement(t *testing.T) {
-	// Initialize the rule engine with a mock database
 	ruleEngine := NewRuleEngine()
 
 	// Define a sample SQL statement
