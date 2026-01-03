@@ -1,7 +1,6 @@
 package rulengn
 
 import (
-	"context"
 	"testing"
 
 	"github.com/google/uuid"
@@ -9,11 +8,134 @@ import (
 	"github.com/walmaa/skemr-common/models"
 )
 
-func TestLockedRuleViolationExitCode1(t *testing.T) {
+func TestProcessStatementsReturnsResult(t *testing.T) {
+	ruleEngine := NewRuleEngine()
+	relName := "users"
+	rules := []models.Rule{
+
+		{
+			ID:           uuid.New(),
+			Name:         "Drop Age Column Rule",
+			Type:         models.RuleTypeDeprecated,
+			Scope:        models.RuleScopeColumn,
+			RelationName: &relName,
+			Target:       "age",
+		},
+	}
+	statementDtos := []SqlStatementDto{
+		{
+			Statement: "ALTER TABLE users DROP COLUMN age;",
+			File:      "test.sql",
+			Line:      1,
+		},
+		{
+			Statement: "ALTER TABLE users DROP COLUMN firstName;",
+			File:      "test.sql",
+			Line:      2,
+		},
+	}
+
+	result, err := ruleEngine.ProcessStatements(t.Context(), statementDtos, rules)
+
+	assert.NoError(t, err)
+
+	assert.Equal(t, 1, len(result))
+	assert.Equal(t, models.RuleTypeDeprecated, result[0].Type)
+	assert.Equal(t, "Drop Age Column Rule", result[0].Rule.Name)
+	assert.Equal(t, statementDtos[0].Statement, result[0].Statement)
+	assert.Equal(t, "test.sql", result[0].File)
+	assert.Equal(t, 1, result[0].Line)
+
+}
+
+func TestDeprecatedRuleTrigger(t *testing.T) {
 	ruleEngine := NewRuleEngine()
 
 	// Define a sample SQL statement
 	statement := "ALTER TABLE users DROP COLUMN age;"
+	statementDto := SqlStatementDto{
+		Statement: statement,
+		File:      "test.sql",
+		Line:      1,
+	}
+
+	relName := "users"
+
+	// Define a rules slice
+	rules := []models.Rule{
+		{
+			ID:           uuid.New(),
+			Name:         "Drop Age Column Rule",
+			Type:         models.RuleTypeDeprecated,
+			Scope:        models.RuleScopeColumn,
+			RelationName: &relName,
+			Target:       "age",
+		},
+	}
+
+	// Call the CheckStatement method
+	result, err := ruleEngine.CheckStatement(statementDto, rules)
+
+	assert.NoError(t, err)
+
+	// Assert the result
+	assert.Equal(t, 1, len(result))
+	assert.Equal(t, models.RuleTypeDeprecated, result[0].Type)
+	assert.Equal(t, "Drop Age Column Rule", result[0].Rule.Name)
+	assert.Equal(t, statement, result[0].Statement)
+	assert.Equal(t, "test.sql", result[0].File)
+	assert.Equal(t, 1, result[0].Line)
+}
+
+func TestWarnRuleTrigger(t *testing.T) {
+	ruleEngine := NewRuleEngine()
+
+	// Define a sample SQL statement
+	statement := "ALTER TABLE users DROP COLUMN age;"
+	statementDto := SqlStatementDto{
+		Statement: statement,
+		File:      "test.sql",
+		Line:      1,
+	}
+
+	relName := "users"
+
+	// Define a rules slice
+	rules := []models.Rule{
+		{
+			ID:           uuid.New(),
+			Name:         "Drop Age Column Rule",
+			Type:         models.RuleTypeWarn,
+			Scope:        models.RuleScopeColumn,
+			RelationName: &relName,
+			Target:       "age",
+		},
+	}
+
+	// Call the CheckStatement method
+	result, err := ruleEngine.CheckStatement(statementDto, rules)
+
+	assert.NoError(t, err)
+
+	// Assert the result
+	assert.Equal(t, 1, len(result))
+	assert.Equal(t, models.RuleTypeWarn, result[0].Type)
+	assert.Equal(t, "Drop Age Column Rule", result[0].Rule.Name)
+	assert.Equal(t, statement, result[0].Statement)
+	assert.Equal(t, "test.sql", result[0].File)
+	assert.Equal(t, 1, result[0].Line)
+}
+
+func TestLockedRuleViolation(t *testing.T) {
+	ruleEngine := NewRuleEngine()
+
+	// Define a sample SQL statement
+	statement := "ALTER TABLE users DROP COLUMN age;"
+	statementDto := SqlStatementDto{
+		Statement: statement,
+		File:      "test.sql",
+		Line:      1,
+	}
 
 	relName := "users"
 
@@ -30,17 +152,29 @@ func TestLockedRuleViolationExitCode1(t *testing.T) {
 	}
 
 	// Call the CheckStatement method
-	result := ruleEngine.CheckStatement(statement, rules)
+	result, err := ruleEngine.CheckStatement(statementDto, rules)
+
+	assert.NoError(t, err)
 
 	// Assert the result
-	assert.True(t, result)
+	assert.Equal(t, 1, len(result))
+	assert.Equal(t, models.RuleTypeLocked, result[0].Type)
+	assert.Equal(t, "Drop Age Column Rule", result[0].Rule.Name)
+	assert.Equal(t, statement, result[0].Statement)
+	assert.Equal(t, "test.sql", result[0].File)
+	assert.Equal(t, 1, result[0].Line)
 }
 
-func TestCheckStatement(t *testing.T) {
+func TestAdvisoryRuleTrigger(t *testing.T) {
 	ruleEngine := NewRuleEngine()
 
 	// Define a sample SQL statement
 	statement := "ALTER TABLE users DROP COLUMN age;"
+	statementDto := SqlStatementDto{
+		Statement: statement,
+		File:      "test.sql",
+		Line:      1,
+	}
 
 	relName := "users"
 
@@ -57,33 +191,10 @@ func TestCheckStatement(t *testing.T) {
 	}
 
 	// Call the CheckStatement method
-	result := ruleEngine.CheckStatement(statement, rules)
-
-	// Assert the result
-	assert.True(t, result)
-}
-
-func TestProcessStatement(t *testing.T) {
-	ruleEngine := NewRuleEngine()
-
-	// Define a sample SQL statement
-	statements := []string{"ALTER TABLE users DROP COLUMN age;",
-		"CREATE TABLE orders (id SERIAL PRIMARY KEY, user_id INT, amount DECIMAL);",
-		"INSERT INTO users (name, email) VALUES ('John Doe', 'johg');"}
-
-	// Call the processStatements method
-	results, err := ruleEngine.ProcessStatements(context.Background(), statements, nil)
+	result, err := ruleEngine.CheckStatement(statementDto, rules)
 
 	assert.NoError(t, err)
 
-	// Consume the results to trigger execution and logs
-	var resultCount int
-	for res := range results {
-		assert.True(t, res)
-		resultCount++
-	}
-
-	// Assert we received the expected number of results
-	assert.Equal(t, len(statements), resultCount)
-
+	// Assert the result
+	assert.Equal(t, 1, len(result))
 }
