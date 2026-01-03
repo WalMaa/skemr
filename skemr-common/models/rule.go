@@ -5,13 +5,11 @@ import (
 )
 
 type Rule struct {
-	ID           uuid.UUID `json:"id"`
-	Name         string    `json:"name"`
-	Type         RuleType  `json:"type"`
-	Scope        RuleScope `json:"scope"`
-	RelationName *string   `json:"relation_name"`
-	Target       string    `json:"target"`
-	DatabaseID   uuid.UUID `json:"database_id"`
+	ID               uuid.UUID `json:"id"`
+	Name             string    `json:"name"`
+	Type             RuleType  `json:"type"`
+	DataBaseEntityId uuid.UUID
+	ProjectId        uuid.UUID
 }
 
 type RuleType string
@@ -31,3 +29,9 @@ const (
 	RuleScopeTable    RuleScope = "table"
 	RuleScopeColumn   RuleScope = "column"
 )
+
+type RuleCreationDto struct {
+	Name             string
+	Type             RuleType
+	DataBaseEntityId uuid.UUID
+}

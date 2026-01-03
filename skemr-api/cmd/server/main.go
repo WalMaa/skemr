@@ -48,9 +48,9 @@ func main() {
 	queries := sqlc.New(conn)
 	projectService := service.NewProjectService(queries)
 	databaseService := service.NewDatabaseService(queries)
-	schemaService := service.NewSchemaService(queries)
 	webhookService := service.NewWebhookService(queries)
 	projectSecretsService := service.NewProjectSecretsService(queries)
+	ruleService := service.NewRuleService(queries)
 
 	runSchema(conn)
 
@@ -59,8 +59,8 @@ func main() {
 		ProjectService:        projectService,
 		ProjectSecretsService: projectSecretsService,
 		DatabaseService:       databaseService,
-		SchemaService:         schemaService,
 		WebhookService:        webhookService,
+		RuleService:           ruleService,
 	}
 
 	// Initialize router
