@@ -41,7 +41,7 @@ func TestSchemaSync(t *testing.T) {
 
 	mockDB.On("GetDatabase", mock.Anything, mock.Anything).Return(*dbModel, nil)
 
-	mockDB.On("GetSchemaByNameAndDatabase", mock.Anything, mock.Anything).Return(sqlc.Schema{
+	mockDB.On("GetDatabaseEntityByDatabaseIdAndTypeAndName", mock.Anything, mock.Anything).Return(sqlc.DatabaseEntity{
 		ID:         uuid.New(),
 		Name:       "testSchemaName",
 		DatabaseID: uuid.UUID{},
@@ -60,16 +60,28 @@ func TestUpdateSchemaCreatesNew(t *testing.T) {
 	dataBaseId := uuid.New()
 	schemaName := "testSchemaName"
 
+	database := sqlc.Database{
+		ID:          dataBaseId,
+		DisplayName: "",
+		DbName:      "",
+		Username:    pgtype.Text{},
+		Password:    pgtype.Text{},
+		Host:        pgtype.Text{},
+		Port:        0,
+		Type:        "",
+		ProjectID:   uuid.UUID{},
+	}
+
 	mockDB := mocks.NewMockQuerier(t)
-	mockDB.On("GetSchemaByNameAndDatabase", mock.Anything, mock.Anything).Return(sqlc.Schema{}, pgx.ErrNoRows)
-	mockDB.On("CreateSchema", mock.Anything, mock.Anything).Return(sqlc.Schema{
+	mockDB.On("GetDatabaseEntityByDatabaseIdAndTypeAndName", mock.Anything, mock.Anything).Return(sqlc.DatabaseEntity{}, pgx.ErrNoRows)
+	mockDB.On("CreateDatabaseEntity", mock.Anything, mock.Anything).Return(sqlc.DatabaseEntity{
 		ID:         uuid.New(),
 		Name:       schemaName,
 		DatabaseID: dataBaseId,
 	}, nil)
 
 	syncService := NewSchemaSyncService(mockDB)
-	err := syncService.updateSchema(c, schemaName, uuid.New())
+	err := syncService.updateSchema(c, schemaName, database)
 
 	require.NoError(t, err)
 	mockDB.AssertExpectations(t)
@@ -81,15 +93,27 @@ func TestUpdateSchemaUpdatesExisting(t *testing.T) {
 	dataBaseId := uuid.New()
 	schemaName := "testSchemaName"
 
+	database := sqlc.Database{
+		ID:          dataBaseId,
+		DisplayName: "",
+		DbName:      "",
+		Username:    pgtype.Text{},
+		Password:    pgtype.Text{},
+		Host:        pgtype.Text{},
+		Port:        0,
+		Type:        "",
+		ProjectID:   uuid.New(),
+	}
+
 	mockDB := mocks.NewMockQuerier(t)
-	mockDB.On("GetSchemaByNameAndDatabase", mock.Anything, mock.Anything).Return(sqlc.Schema{
+	mockDB.On("GetDatabaseEntityByDatabaseIdAndTypeAndName", mock.Anything, mock.Anything).Return(sqlc.DatabaseEntity{
 		ID:         uuid.New(),
 		Name:       schemaName,
 		DatabaseID: dataBaseId,
 	}, nil)
 
 	syncService := NewSchemaSyncService(mockDB)
-	err := syncService.updateSchema(c, schemaName, uuid.New())
+	err := syncService.updateSchema(c, schemaName, database)
 
 	require.NoError(t, err)
 	mockDB.AssertExpectations(t)

@@ -85,13 +85,6 @@ CREATE TABLE databases
     CONSTRAINT unique_database_name_per_project UNIQUE (display_name, project_id)
 );
 
-CREATE TABLE schemas
-(
-    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name        TEXT NOT NULL,
-    database_id uuid NOT NULL REFERENCES databases (id) ON DELETE CASCADE
-);
-
 CREATE TABLE migration_statements
 (
     id            UUID PRIMARY KEY                    DEFAULT gen_random_uuid(),
@@ -111,13 +104,14 @@ CREATE TABLE tables
     schema_id uuid NOT NULL REFERENCES databases (id) ON DELETE CASCADE
 );
 
-CREATE TABLE database_entity
+CREATE TABLE database_entities
 (
     id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     project_id     uuid NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    database_id    uuid NOT NULL REFERENCES databases(id) ON DELETE CASCADE,
 
-    type           database_entity_type  NOT NULL,
-    parent_id      uuid        NULL REFERENCES database_entity (id),
+    entity_type           database_entity_type  NOT NULL,
+    parent_id      uuid        NULL REFERENCES database_entities (id),
 
     -- generic identity at this node
     name           text        NOT NULL, -- e.g. "public", "users", "email", "my_view"
@@ -127,7 +121,8 @@ CREATE TABLE database_entity
 
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-    UNIQUE (project_id, external_key)
+    UNIQUE (project_id, external_key),
+    UNIQUE (database_id, name, type, parent_id) -- Ensure we do not map the same entity twice
 );
 
 

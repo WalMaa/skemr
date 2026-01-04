@@ -11,6 +11,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/walmaa/skemr-api/db/sqlc"
 	"github.com/walmaa/skemr-api/errormsg"
+	"github.com/walmaa/skemr-common/models"
 )
 
 type SchemaSyncService struct {
@@ -53,15 +54,16 @@ func (s *SchemaSyncService) SyncSchema(c context.Context, databaseID uuid.UUID) 
 
 	// For each schema, get tables and columns
 	for _, schema := range schemas {
-		err := s.updateSchema(c, schema, databaseID)
+		schema, err := s.updateSchema(c, schema, database)
 		if err != nil {
 			return err
 		}
-		tables, err := postgresConn.GetTablesInSchema(c, conn, schema)
+		tables, err := postgresConn.GetTablesInSchema(c, conn, schema.Name)
 		if err != nil {
 			return fmt.Errorf("error getting tables in schema %s: %w", schema, err)
 		}
 		for _, tableRef := range tables {
+			table, err := s.UpdateTable()
 			columns, err := postgresConn.ListColumnsInTable(c, conn, tableRef)
 			if err != nil {
 				return fmt.Errorf("error getting columns in table %s.%s: %w", schema, tableRef.Table, err)
@@ -76,36 +78,41 @@ func (s *SchemaSyncService) SyncSchema(c context.Context, databaseID uuid.UUID) 
 	return nil
 }
 
-func (s *SchemaSyncService) updateSchema(c context.Context, schemaName string, databaseId uuid.UUID) error {
-	args := sqlc.GetSchemaByNameAndDatabaseParams{Name: schemaName, DatabaseID: databaseId}
-	schema, err := s.db.GetSchemaByNameAndDatabase(c, args)
+func (s *SchemaSyncService) updateSchema(c context.Context, schemaName string, database sqlc.Database) (sqlc.DatabaseEntity, error) {
+	args := sqlc.GetDatabaseEntityByDatabaseIdAndTypeAndNameParams{
+		DatabaseID: database.ID,
+		Type:       sqlc.DatabaseEntityType(models.DatabaseEntityTypeSchema),
+		Name:       schemaName,
+	}
+	schema, err := s.db.GetDatabaseEntityByDatabaseIdAndTypeAndName(c, args)
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		slog.Error("error getting schema", "error", err.Error())
-		return err
+		return sqlc.DatabaseEntity{}, err
 	}
 
 	// If that schema does not exist yet, save it
 	if errors.Is(err, pgx.ErrNoRows) {
-		args := sqlc.CreateSchemaParams{
-			DatabaseID: databaseId,
+		args := sqlc.CreateDatabaseEntityParams{
+			ProjectID:  database.ProjectID,
+			DatabaseID: database.ID,
 			Name:       schemaName,
 		}
-		schema, err := s.db.CreateSchema(c, args)
+		schema, err := s.db.CreateDatabaseEntity(c, args)
 		if err != nil {
 			slog.Error("error creating schema", "error", err)
-			return err
+			return sqlc.DatabaseEntity{}, err
 		}
-		slog.Info("schema created", "schema", schema)
-		return nil
+		slog.Info("schema created", "schema", schema.Name)
+		return schema, err
 	}
 
 	// If schema does exist, update if needed. Currently no-op
 	slog.Info("schema exists", "schema", schema)
 
-	return nil
+	return schema, err
 
 }
 
-func (s *SchemaSyncService) UpdateTable(c context.Context, databaseId uuid.UUID, tableRef TableRef) error {
-	return nil
+func (s *SchemaSyncService) UpdateTable(c context.Context, tableRef TableRef, database sqlc.Database) (sqlc.DatabaseEntity, error) {
+	return sqlc.DatabaseEntity{}, nil
 }

@@ -16,8 +16,8 @@ type PostgresConnector struct {
 }
 
 type TableRef struct {
-	Schema string
-	Table  string
+	Schema string // The parent Schema
+	Table  string // The name of the table itself
 }
 
 type ColumnRef struct {
