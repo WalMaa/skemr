@@ -5,15 +5,15 @@ import (
 )
 
 type Database struct {
-	ID          uuid.UUID    `json:"id"`
-	DisplayName string       `json:"display_name"`
-	DbName      string       `json:"db_name"`
-	Username    *string      `json:"username"`
-	Password    *string      `json:"password"`
-	Host        *string      `json:"host"`
-	Port        int32        `json:"port"`
-	Type        DatabaseType `json:"type"`
-	ProjectID   uuid.UUID    `json:"project_id"`
+	ID           uuid.UUID    `json:"id"`
+	DisplayName  string       `json:"displayName"`
+	DbName       *string      `json:"dbName"`
+	Username     *string      `json:"username"`
+	Password     *string      `json:"password"`
+	Host         *string      `json:"host"`
+	Port         int32        `json:"port"`
+	DatabaseType DatabaseType `json:"databaseType"`
+	ProjectID    uuid.UUID    `json:"projectId"`
 }
 
 type DatabaseType string

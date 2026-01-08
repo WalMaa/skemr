@@ -7,6 +7,18 @@ services:
       - "POSTGRES_DB=postgres"
       - "POSTGRES_PASSWORD=pass"
       - "POSTGRES_USER=postgres"
+  redis:
+    image: 'redis:7-alpine'
+    ports:
+      - '6379:6379'
+  redis-insight:
+    image: redis/redisinsight:latest
+    ports:
+      - "5540:5540"
+    environment:
+      - RI_REDIS_HOST=redis
+      - RI_REDIS_PORT=6379
+      - RI_REDIS_ALIAS=local-redis
   gitlab:
     image: "gitlab/gitlab-ce:latest"
     container_name: gitlab

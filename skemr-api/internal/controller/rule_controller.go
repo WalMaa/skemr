@@ -19,17 +19,17 @@ func NewRuleController(s *service.RuleService) *RuleController {
 }
 
 func (h *RuleController) RegisterRoutes(g *gin.RouterGroup) {
-	group := g.Group("projects/:projectId/rules")
-	group.POST("/", h.createRule)
+	group := g.Group("projects/:projectId/databases/:databaseId/rules")
+	group.POST("", h.createRule)
+	group.GET("", h.ListRules)
 }
 
 func (h *RuleController) createRule(c *gin.Context) {
-	projectId, err := uuid.Parse(c.Param("projectId"))
-
-	if err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
+	databaseId, ok := paramUUID(c, "databaseId")
+	if !ok {
 		return
 	}
+	projectID := c.MustGet("projectID").(uuid.UUID)
 
 	var body models.RuleCreationDto
 	if err := c.ShouldBindJSON(&body); err != nil {
@@ -37,7 +37,7 @@ func (h *RuleController) createRule(c *gin.Context) {
 		return
 	}
 
-	rule, err := h.Service.CreateRule(c, projectId, body)
+	rule, err := h.Service.CreateRule(c, projectID, databaseId, body)
 
 	if err != nil {
 		c.Error(errors.New(err.Error()))
@@ -45,4 +45,22 @@ func (h *RuleController) createRule(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, rule)
+}
+
+func (h *RuleController) ListRules(c *gin.Context) {
+	databaseId, ok := paramUUID(c, "databaseId")
+	if !ok {
+		return
+	}
+	projectID := c.MustGet("projectID").(uuid.UUID)
+
+	rules, err := h.Service.ListRulesByDatabase(c, projectID, databaseId)
+
+	if err != nil {
+		c.Error(errors.New(err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, rules)
+
 }

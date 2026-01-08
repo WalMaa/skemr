@@ -6,10 +6,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
-	"github.com/walmaa/skemr-api/db/sqlc"
+	"github.com/walmaa/skemr-common/models"
 )
 
 // Creates a singleton Postgres container for tests
@@ -57,19 +56,22 @@ func newTestPGConn(t *testing.T) (ctx context.Context, dbConn *PostgresConnector
 	dbUser := "user"
 	dbPassword := "password"
 
-	dbModel := &sqlc.Database{
-		ID:          uuid.New(),
-		DisplayName: "Test Database",
-		Username:    pgtype.Text{String: dbUser, Valid: true},
-		Password:    pgtype.Text{String: dbPassword, Valid: true},
-		Host:        pgtype.Text{String: host, Valid: true},
-		Type:        "postgres",
-		DbName:      "postgres",
-		Port:        int32(port.Int()),
-		ProjectID:   uuid.New(),
+	hostStr := host
+	dbName := "postgres"
+
+	dbModel := models.Database{
+		ID:           uuid.New(),
+		DisplayName:  "Test Database",
+		Username:     &dbUser,
+		Password:     &dbPassword,
+		Host:         &hostStr,
+		DbName:       &dbName,
+		Port:         int32(port.Int()),
+		DatabaseType: models.Postgres,
+		ProjectID:    uuid.New(),
 	}
 
-	tmp := NewPostgresConnector(*dbModel)
+	tmp := NewPostgresConnector(dbModel)
 	c, err := tmp.Connect(ctx)
 	require.NoError(t, err)
 	require.NotNil(t, c)

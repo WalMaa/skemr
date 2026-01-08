@@ -22,7 +22,7 @@ func TestGetPostgresTablesInSchema(t *testing.T) {
 func TestGetPostgresColumn(t *testing.T) {
 	ctx, dbConn, conn := newTestPGConn(t)
 
-	columns, err := dbConn.ListColumnsInTable(ctx, conn, TableRef{Schema: "public", Table: "customers"})
+	columns, err := dbConn.ListColumnsInTable(ctx, conn, TableRef{Schema: "public", Name: "customers"})
 	require.NoError(t, err)
 	require.NotNil(t, columns)
 	require.IsType(t, []ColumnRef{}, columns)

@@ -75,12 +75,12 @@ CREATE TABLE databases
 (
     id           UUID PRIMARY KEY       DEFAULT gen_random_uuid(),
     display_name TEXT          NOT NULL,
-    db_name      text          NOT NULL,
+    db_name      TEXT,
     username     TEXT,
     password     TEXT,
     host         TEXT,
-    port         INTEGER       NOT NULL DEFAULT 5432,
-    type         database_type NOT NULL DEFAULT 'postgres',
+    port         INTEGER,
+    database_type         database_type DEFAULT 'postgres',
     project_id   uuid          NOT NULL REFERENCES projects (id) ON DELETE CASCADE,
     CONSTRAINT unique_database_name_per_project UNIQUE (display_name, project_id)
 );
@@ -88,7 +88,6 @@ CREATE TABLE databases
 CREATE TABLE migration_statements
 (
     id            UUID PRIMARY KEY                    DEFAULT gen_random_uuid(),
-    schema_id     uuid                       NOT NULL REFERENCES schemas (id) ON DELETE CASCADE,
     raw_statement TEXT                       NOT NULL,
     action        migration_statement_action NOT NULL,
     status        migration_status           NOT NULL DEFAULT 'pending',
@@ -122,7 +121,7 @@ CREATE TABLE database_entities
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
     UNIQUE (project_id, external_key),
-    UNIQUE (database_id, name, type, parent_id) -- Ensure we do not map the same entity twice
+    UNIQUE (database_id, name, entity_type, parent_id) -- Ensure we do not map the same entity twice
 );
 
 
@@ -132,6 +131,6 @@ CREATE TABLE rules
     id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name          TEXT       NOT NULL, -- User defined for rule
     type          rule_type  NOT NULL,
-    database_entity_id uuid NOT NULL REFERENCES database_entity(id),
+    database_entity_id uuid NOT NULL REFERENCES database_entities(id),
     project_id uuid NOT NULL REFERENCES projects(id) ON DELETE CASCADE
 );

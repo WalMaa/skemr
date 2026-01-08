@@ -18,23 +18,23 @@ func NewDatabaseController(s *service.DatabaseService) *DatabaseController {
 }
 
 func (h *DatabaseController) RegisterRoutes(g *gin.RouterGroup) {
-	group := g.Group("projects/:projectId/databases")
+	group := g.Group("/projects/:projectId/databases")
 	{
 		group.POST("/", h.createDatabase)
-		group.GET("/:id", h.getDatabase)
-		group.DELETE("/:id", h.deleteDatabase)
+		group.GET("/:databaseId", h.getDatabase)
+		group.DELETE("/:databaseId", h.deleteDatabase)
 		group.GET("/", h.listDatabasesByProject)
 	}
 }
 
 func (h *DatabaseController) deleteDatabase(c *gin.Context) {
-	id, err := uuid.Parse(c.Param("id"))
+	databaseId, err := uuid.Parse(c.Param("databaseId"))
 	if err != nil {
 		c.JSON(400, gin.H{"error": "Invalid ID format"})
 		return
 	}
 
-	err = h.Service.DeleteDatabase(c, id)
+	err = h.Service.DeleteDatabase(c, databaseId)
 	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
@@ -60,7 +60,7 @@ func (h *DatabaseController) listDatabasesByProject(c *gin.Context) {
 }
 
 func (h *DatabaseController) createDatabase(c *gin.Context) {
-	id, err := uuid.Parse(c.Param("projectId"))
+	projectId, err := uuid.Parse(c.Param("projectId"))
 	var body struct {
 		Name string `json:"name" binding:"required,min=3,max=50"`
 	}
@@ -71,7 +71,7 @@ func (h *DatabaseController) createDatabase(c *gin.Context) {
 
 	args := sqlc.CreateDatabaseParams{
 		DisplayName: body.Name,
-		ProjectID:   id,
+		ProjectID:   projectId,
 	}
 
 	database, err := h.Service.CreateDatabase(c, args)
@@ -85,14 +85,14 @@ func (h *DatabaseController) createDatabase(c *gin.Context) {
 
 func (h *DatabaseController) getDatabase(c *gin.Context) {
 
-	id, err := uuid.Parse(c.Param("id"))
+	databaseId, err := uuid.Parse(c.Param("databaseId"))
 
 	if err != nil {
 		c.JSON(400, gin.H{"error": "Invalid ID format"})
 		return
 	}
 
-	database, err := h.Service.GetDatabase(c, id)
+	database, err := h.Service.GetDatabase(c, databaseId)
 	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
 		return

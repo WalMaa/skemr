@@ -40,6 +40,8 @@ func InitRouter(services *Services) *gin.Engine {
 		"user": "pass",
 	}))
 	r.Use(middleware.AuthMiddleware())
+	// Project ID
+	protected.Use(middleware.ProjectIDMiddleware())
 
 	// Project routes, which will be prefixed with /api/v1/projects/:id
 	// Each project will have its own set of routes under this group

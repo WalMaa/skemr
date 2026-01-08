@@ -6,7 +6,7 @@ import (
 	"github.com/walmaa/skemr-common/models"
 )
 
-func ToDomainEntity(e sqlc.Rule) models.Rule {
+func ToDomainRule(e sqlc.Rule) models.Rule {
 	return models.Rule{
 		ID:               e.ID,
 		Name:             e.Name,
@@ -16,7 +16,15 @@ func ToDomainEntity(e sqlc.Rule) models.Rule {
 	}
 }
 
-func ToSqlcCreate(projectId uuid.UUID, dto models.RuleCreationDto) sqlc.CreateRuleParams {
+func ToDomainRules(r []sqlc.Rule) []models.Rule {
+	rules := make([]models.Rule, len(r))
+	for i, rule := range r {
+		rules[i] = ToDomainRule(rule)
+	}
+	return rules
+}
+
+func ToSqlcCreateRule(projectId uuid.UUID, dto models.RuleCreationDto) sqlc.CreateRuleParams {
 	return sqlc.CreateRuleParams{
 		Name:      dto.Name,
 		Type:      sqlc.RuleType(dto.Type),

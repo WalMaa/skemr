@@ -6,17 +6,22 @@ import (
 	"log/slog"
 
 	"github.com/google/uuid"
+	"github.com/hibiken/asynq"
 	"github.com/jackc/pgx/v5"
 	"github.com/walmaa/skemr-api/db/sqlc"
 	"github.com/walmaa/skemr-api/errormsg"
+	"github.com/walmaa/skemr-api/internal/mapper"
+	"github.com/walmaa/skemr-api/tasks"
+	"github.com/walmaa/skemr-common/models"
 )
 
 type DatabaseService struct {
-	db sqlc.Querier
+	db         sqlc.Querier
+	taskClient *asynq.Client
 }
 
-func NewDatabaseService(q sqlc.Querier) *DatabaseService {
-	return &DatabaseService{db: q}
+func NewDatabaseService(q sqlc.Querier, c *asynq.Client) *DatabaseService {
+	return &DatabaseService{db: q, taskClient: c}
 }
 
 func CheckDatabaseExists(c context.Context, db sqlc.Querier, projectId uuid.UUID, dbId uuid.UUID) (sqlc.Database, error) {
@@ -35,13 +40,13 @@ func CheckDatabaseExists(c context.Context, db sqlc.Querier, projectId uuid.UUID
 	return database, nil
 }
 
-func (r *DatabaseService) CreateDatabase(c context.Context, args sqlc.CreateDatabaseParams) (sqlc.Database, error) {
+func (r *DatabaseService) CreateDatabase(c context.Context, args sqlc.CreateDatabaseParams) (models.Database, error) {
 	slog.Info("Creating database", "name", args)
 
 	// Check if the project exists
 	_, err := CheckProjectExists(c, r.db, args.ProjectID)
 	if err != nil {
-		return sqlc.Database{}, err
+		return models.Database{}, err
 	}
 
 	// Check a database with the given name already exists
@@ -52,15 +57,30 @@ func (r *DatabaseService) CreateDatabase(c context.Context, args sqlc.CreateData
 
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		slog.Error("Error checking for existing database", "name", args.DisplayName, "err", err)
-		return sqlc.Database{}, err
+		return models.Database{}, err
 	}
 
 	if exists != (sqlc.Database{}) {
 		slog.Warn("Database already exists", "name", args.DisplayName, "project_id", args.ProjectID)
-		return sqlc.Database{}, errormsg.ErrDatabaseAlreadyExists
+		return models.Database{}, errormsg.ErrDatabaseAlreadyExists
+	}
+	database, err := r.db.CreateDatabase(c, args)
+
+	if err != nil {
+		slog.Error("Error creating database", err)
+		return models.Database{}, err
 	}
 
-	return r.db.CreateDatabase(c, args)
+	task, err := tasks.NewDatabaseSyncTask(database.ID)
+	if err != nil {
+		slog.Error("Unable to create database sync task")
+	}
+	_, err = r.taskClient.Enqueue(task)
+	if err != nil {
+		slog.Error("Error in task", err)
+	}
+
+	return mapper.ToDomainDatabase(database), nil
 }
 
 func (r *DatabaseService) GetDatabase(c context.Context, id uuid.UUID) (sqlc.Database, error) {

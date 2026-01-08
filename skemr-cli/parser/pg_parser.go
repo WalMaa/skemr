@@ -20,7 +20,7 @@ const (
 	SqlActionCreateDatabase SqlAction = "CREATE DATABASE"
 	SqlActionRenameDatabase SqlAction = "RENAME DATABASE"
 	SqlActionDropDatabase   SqlAction = "DROP DATABASE"
-	// -- Table level actions
+	// -- Name level actions
 	SqlActionCreateTable SqlAction = "CREATE TABLE"
 	SqlActionRenameTable SqlAction = "RENAME TABLE"
 	SqlActionDropTable   SqlAction = "DROP TABLE"

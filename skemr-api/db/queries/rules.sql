@@ -27,8 +27,16 @@ SELECT *
 FROM rules
 WHERE project_id = @id;
 
+-- name: ListRulesByDatabaseId :many
+SELECT r.*
+FROM rules r
+LEFT JOIN database_entities de
+    ON r.database_entity_id = de.id
+    AND de.database_id = @database_id;
+
+
 -- name: ListRulesByCriteria :many
 SELECT *
 FROM rules
 WHERE project_id = @project_id
-  AND (type = @type OR @type IS NULL);
+  AND (database_entity_id = @database_entity_id OR @database_entity_id IS NULL);

@@ -8,40 +8,40 @@ import (
 	"strconv"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/walmaa/skemr-api/db/sqlc"
+	"github.com/walmaa/skemr-common/models"
 )
 
 type PostgresConnector struct {
-	sqlc.Database
+	models.Database
 }
 
 type TableRef struct {
 	Schema string // The parent Schema
-	Table  string // The name of the table itself
+	Name   string // The name of the table itself
 }
 
 type ColumnRef struct {
-	ColumnName string
-	DataType   string
+	Name     string
+	DataType string
 }
 
-func NewPostgresConnector(db sqlc.Database) *PostgresConnector {
+func NewPostgresConnector(db models.Database) *PostgresConnector {
 	return &PostgresConnector{
 		Database: db,
 	}
 }
 
 func (dc *PostgresConnector) ListColumnsInTable(ctx context.Context, conn *pgx.Conn, tableRef TableRef) ([]ColumnRef, error) {
-	rows, err := conn.Query(ctx, "SELECT column_name, data_type FROM information_schema.columns WHERE table_schema=$1 AND table_name=$2", tableRef.Schema, tableRef.Table)
+	rows, err := conn.Query(ctx, "SELECT column_name, data_type FROM information_schema.columns WHERE table_schema=$1 AND table_name=$2", tableRef.Schema, tableRef.Name)
 	if err != nil {
-		slog.Error("Error querying columns", "schema", tableRef.Schema, "table", tableRef.Table, "err", err)
+		slog.Error("Error querying columns", "schema", tableRef.Schema, "table", tableRef.Name, "err", err)
 		return nil, err
 	}
 	defer rows.Close()
 	var columns []ColumnRef
 	for rows.Next() {
 		var columnRef ColumnRef
-		if err := rows.Scan(&columnRef.ColumnName, &columnRef.DataType); err != nil {
+		if err := rows.Scan(&columnRef.Name, &columnRef.DataType); err != nil {
 			slog.Error("Error scanning column name", "err", err)
 			return nil, err
 		}
@@ -60,7 +60,7 @@ func (dc *PostgresConnector) GetTablesInSchema(ctx context.Context, conn *pgx.Co
 	var tables []TableRef
 	for rows.Next() {
 		var tableRef TableRef
-		if err := rows.Scan(&tableRef.Schema, &tableRef.Table); err != nil {
+		if err := rows.Scan(&tableRef.Schema, &tableRef.Name); err != nil {
 			slog.Error("Error scanning table name", "err", err)
 			return nil, err
 		}
@@ -142,20 +142,20 @@ func (dc *PostgresConnector) TestConnection(ctx context.Context) error {
 func (dc *PostgresConnector) getConnectionString() (string, error) {
 	host := dc.Database.Host
 	port := dc.Database.Port
-	if !host.Valid || port == 0 || dc.Database.DbName == "" {
+	if host == nil || port == 0 || dc.DbName == nil {
 		return "", errors.New("Missing database connection parameters")
 	}
 
 	credentials := ""
-	if dc.Database.Username.Valid && dc.Database.Password.Valid {
-		username := dc.Database.Username.String
-		password := dc.Database.Password.String
+	if dc.Database.Username != nil && dc.Database.Password != nil {
+		username := *dc.Database.Username
+		password := *dc.Database.Password
 		credentials = username + ":" + password + "@"
 	}
 
-	switch dc.Database.Type {
+	switch dc.Database.DatabaseType {
 	case "postgres":
-		return "postgresql://" + credentials + host.String + ":" + strconv.Itoa(int(port)) + "/" + dc.Database.DbName, nil
+		return "postgresql://" + credentials + *host + ":" + strconv.Itoa(int(port)) + "/" + *dc.Database.DbName, nil
 	}
 	return "", errors.New("DB not supported")
 }

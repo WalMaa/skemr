@@ -12,6 +12,8 @@ import (
 	"github.com/walmaa/skemr-api/db/sqlc"
 	"github.com/walmaa/skemr-api/internal/routers"
 	"github.com/walmaa/skemr-api/internal/service"
+	"github.com/walmaa/skemr-api/internal/worker"
+	"github.com/walmaa/skemr-api/tasks"
 	"golang.org/x/net/context"
 )
 
@@ -29,6 +31,7 @@ func runSchema(conn *pgx.Conn) {
 }
 
 func main() {
+	ctx := context.Background()
 
 	// Logger colors
 	w := os.Stderr
@@ -45,14 +48,17 @@ func main() {
 		log.Fatal(err)
 	}
 
+	taskClient := tasks.StartTaskClient(ctx, "localhost:6379")
 	queries := sqlc.New(conn)
 	projectService := service.NewProjectService(queries)
-	databaseService := service.NewDatabaseService(queries)
+	databaseService := service.NewDatabaseService(queries, taskClient)
 	webhookService := service.NewWebhookService(queries)
 	projectSecretsService := service.NewProjectSecretsService(queries)
 	ruleService := service.NewRuleService(queries)
 
 	runSchema(conn)
+
+	worker.StartTaskWorkers(queries)
 
 	// Initialize services
 	services := &routers.Services{

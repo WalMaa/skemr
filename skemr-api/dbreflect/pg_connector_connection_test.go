@@ -6,10 +6,9 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
-	"github.com/walmaa/skemr-api/db/sqlc"
+	"github.com/walmaa/skemr-common/models"
 )
 
 var (
@@ -29,17 +28,18 @@ func TestConnectToPostgres(t *testing.T) {
 
 	dbUser := "user"
 	dbPassword := "password"
+	dbName := "postgres"
 
-	dbModel := &sqlc.Database{
-		ID:          uuid.New(),
-		DisplayName: "Test Database",
-		Username:    pgtype.Text{String: dbUser, Valid: true},
-		Password:    pgtype.Text{String: dbPassword, Valid: true},
-		Host:        pgtype.Text{String: host, Valid: true},
-		Type:        "postgres",
-		DbName:      "postgres",
-		Port:        int32(port.Int()),
-		ProjectID:   uuid.New(),
+	dbModel := &models.Database{
+		ID:           uuid.New(),
+		DisplayName:  "Test Database",
+		Username:     &dbUser,
+		Password:     &dbPassword,
+		Host:         &host,
+		DatabaseType: models.Postgres,
+		DbName:       &dbName,
+		Port:         int32(port.Int()),
+		ProjectID:    uuid.New(),
 	}
 
 	dbConn := NewPostgresConnector(*dbModel)
@@ -53,19 +53,20 @@ func TestConnectToPostgres(t *testing.T) {
 
 func TestGetConnectionStringWithoutCreds(t *testing.T) {
 	host := "localhost"
-	dbModel := &sqlc.Database{
-		ID:          uuid.New(),
-		DisplayName: "Test Database",
-		Host:        pgtype.Text{String: host, Valid: true},
-		Type:        "postgres",
-		DbName:      "testdb",
-		Port:        5432,
-		ProjectID:   uuid.New(),
+	dbName := "testDb"
+	dbModel := &models.Database{
+		ID:           uuid.New(),
+		DisplayName:  "Test Database",
+		Host:         &host,
+		DatabaseType: models.Postgres,
+		DbName:       &dbName,
+		Port:         5432,
+		ProjectID:    uuid.New(),
 	}
 	dbConn := NewPostgresConnector(*dbModel)
 	connStr, err := dbConn.getConnectionString()
 	require.NoError(t, err)
-	expected := "postgresql://localhost:5432/testdb"
+	expected := "postgresql://localhost:5432/testDb"
 	require.Equal(t, expected, connStr)
 }
 
@@ -73,41 +74,43 @@ func TestGetConnectionStringWithoutUsername(t *testing.T) {
 	host := "localhost"
 	username := "user"
 	password := "password"
-	dbModel := &sqlc.Database{
-		ID:          uuid.New(),
-		DisplayName: "Test Database",
-		Host:        pgtype.Text{String: host, Valid: true},
-		Username:    pgtype.Text{String: username, Valid: true},
-		Password:    pgtype.Text{String: password, Valid: true},
-		Type:        "postgres",
-		DbName:      "testdb",
-		Port:        5432,
-		ProjectID:   uuid.New(),
+	dbName := "postgres"
+	dbModel := &models.Database{
+		ID:           uuid.New(),
+		DisplayName:  "Test Database",
+		Host:         &host,
+		Username:     &username,
+		Password:     &password,
+		DatabaseType: models.Postgres,
+		DbName:       &dbName,
+		Port:         5432,
+		ProjectID:    uuid.New(),
 	}
 	dbConn := NewPostgresConnector(*dbModel)
 	connStr, err := dbConn.getConnectionString()
 	require.NoError(t, err)
-	expected := "postgresql://user:password@localhost:5432/testdb"
+	expected := "postgresql://user:password@localhost:5432/postgres"
 	require.Equal(t, expected, connStr)
 }
 
 func TestGetConnectionStringWithoutPass(t *testing.T) {
 	host := "localhost"
 	username := "user"
-	dbModel := &sqlc.Database{
-		ID:          uuid.New(),
-		DisplayName: "Test Database",
-		Host:        pgtype.Text{String: host, Valid: true},
-		Username:    pgtype.Text{String: username, Valid: true},
-		Type:        "postgres",
-		DbName:      "testdb",
-		Port:        5432,
-		ProjectID:   uuid.New(),
+	dbName := "postgres"
+	dbModel := &models.Database{
+		ID:           uuid.New(),
+		DisplayName:  "Test Database",
+		Host:         &host,
+		Username:     &username,
+		DatabaseType: models.Postgres,
+		DbName:       &dbName,
+		Port:         5432,
+		ProjectID:    uuid.New(),
 	}
 	dbConn := NewPostgresConnector(*dbModel)
 	connStr, err := dbConn.getConnectionString()
 	require.NoError(t, err)
-	expected := "postgresql://localhost:5432/testdb"
+	expected := "postgresql://localhost:5432/postgres"
 	require.Equal(t, expected, connStr)
 }
 
@@ -115,20 +118,21 @@ func TestGetConnectionStringWithCreds(t *testing.T) {
 	host := "localhost"
 	username := "user"
 	password := "password"
-	dbModel := &sqlc.Database{
-		ID:          uuid.New(),
-		DisplayName: "Test Database",
-		Host:        pgtype.Text{String: host, Valid: true},
-		Username:    pgtype.Text{String: username, Valid: true},
-		Password:    pgtype.Text{String: password, Valid: true},
-		Type:        "postgres",
-		DbName:      "testdb",
-		Port:        5432,
-		ProjectID:   uuid.New(),
+	dbName := "postgres"
+	dbModel := &models.Database{
+		ID:           uuid.New(),
+		DisplayName:  "Test Database",
+		Host:         &host,
+		Username:     &username,
+		Password:     &password,
+		DatabaseType: models.Postgres,
+		DbName:       &dbName,
+		Port:         5432,
+		ProjectID:    uuid.New(),
 	}
 	dbConn := NewPostgresConnector(*dbModel)
 	connStr, err := dbConn.getConnectionString()
 	require.NoError(t, err)
-	expected := "postgresql://user:password@localhost:5432/testdb"
+	expected := "postgresql://user:password@localhost:5432/postgres"
 	require.Equal(t, expected, connStr)
 }

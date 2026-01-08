@@ -3,6 +3,12 @@ SELECT *
 FROM databases
 WHERE id = $1 LIMIT 1;
 
+-- name: GetDatabaseByIDAndProjectID :one
+SELECT *
+FROM databases
+WHERE id = @id
+  AND project_id = @project_id LIMIT 1;
+
 -- name: GetDatabaseByNameAndProject :one
 SELECT *
 FROM databases
@@ -15,7 +21,7 @@ WHERE id = $1 AND project_id = $2 LIMIT 1;
 
 -- name: CreateDatabase :one
 INSERT INTO databases (project_id, display_name)
-VALUES ($1, $2) RETURNING *;
+VALUES (@project_id, @display_name) RETURNING *;
 
 -- name: UpdateDatabase :exec
 UPDATE databases
