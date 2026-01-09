@@ -1,7 +1,9 @@
 package mapper
 
 import (
+	"github.com/google/uuid"
 	"github.com/walmaa/skemr-api/db/sqlc"
+	"github.com/walmaa/skemr-api/internal/dto"
 	"github.com/walmaa/skemr-common/models"
 )
 
@@ -16,5 +18,17 @@ func ToDomainDatabase(e sqlc.Database) models.Database {
 		Port:         e.Port.Int32,
 		DatabaseType: models.DatabaseType(e.DatabaseType.DatabaseType),
 		ProjectID:    e.ProjectID,
+	}
+}
+
+func ToUpdateDatabaseParams(databaseId uuid.UUID, dto dto.DatabaseUpdateDto) sqlc.UpdateDatabaseParams {
+	return sqlc.UpdateDatabaseParams{
+		DatabaseID:  databaseId,
+		DisplayName: Text(dto.DisplayName),
+		DbName:      Text(dto.DbName),
+		Username:    Text(dto.Username),
+		Password:    Text(dto.Password),
+		Host:        Text(dto.Host),
+		Port:        Int4(dto.Port),
 	}
 }

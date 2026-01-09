@@ -7,6 +7,14 @@ services:
       - "POSTGRES_DB=postgres"
       - "POSTGRES_PASSWORD=pass"
       - "POSTGRES_USER=postgres"
+  test-postgres:
+    image: "postgres:latest"
+    ports:
+      - "5433:5432"
+    environment:
+      - "POSTGRES_DB=test_db"
+      - "POSTGRES_PASSWORD=test_pass"
+      - "POSTGRES_USER=test_user"
   redis:
     image: 'redis:7-alpine'
     ports:

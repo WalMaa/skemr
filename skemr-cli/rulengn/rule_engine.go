@@ -88,7 +88,7 @@ func (r *RuleEngine) CheckStatement(statementDto SqlStatementDto, rules []models
 	for _, rule := range rules {
 		if rule.Target == statementAction.Target {
 			slog.Info("Rule target matches statementDto target", slog.String("rule_target", rule.Target), slog.String("statement_target", statementAction.Target))
-			switch rule.Type {
+			switch rule.RuleType {
 			case models.RuleTypeLocked:
 				violation := r.lockAction(rule, statementAction, statementDto)
 				statementResults = append(statementResults, violation)
@@ -102,7 +102,7 @@ func (r *RuleEngine) CheckStatement(statementDto SqlStatementDto, rules []models
 				warning := r.deprecatedAction(rule, statementDto)
 				statementResults = append(statementResults, warning)
 			default:
-				slog.Warn("Unknown rule type", slog.String("rule_type", string(rule.Type)))
+				slog.Warn("Unknown rule type", slog.String("rule_type", string(rule.RuleType)))
 
 			}
 		}

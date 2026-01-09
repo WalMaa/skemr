@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/walmaa/skemr-api/db/sqlc"
+	"github.com/walmaa/skemr-api/internal/dto"
 	"github.com/walmaa/skemr-api/internal/mapper"
 	"github.com/walmaa/skemr-common/models"
 )
@@ -18,7 +19,7 @@ func NewRuleService(q sqlc.Querier) *RuleService {
 	return &RuleService{db: q}
 }
 
-func (r *RuleService) CreateRule(c context.Context, projectID uuid.UUID, databaseId uuid.UUID, dto models.RuleCreationDto) (models.Rule, error) {
+func (r *RuleService) CreateRule(c context.Context, projectID uuid.UUID, databaseId uuid.UUID, dto dto.RuleCreationDto) (models.Rule, error) {
 	slog.Info("Creating rule")
 
 	project, err := CheckProjectExists(c, r.db, projectID)

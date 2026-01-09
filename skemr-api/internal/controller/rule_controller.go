@@ -6,8 +6,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/walmaa/skemr-api/internal/dto"
 	"github.com/walmaa/skemr-api/internal/service"
-	"github.com/walmaa/skemr-common/models"
 )
 
 type RuleController struct {
@@ -31,7 +31,7 @@ func (h *RuleController) createRule(c *gin.Context) {
 	}
 	projectID := c.MustGet("projectID").(uuid.UUID)
 
-	var body models.RuleCreationDto
+	var body dto.RuleCreationDto
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return

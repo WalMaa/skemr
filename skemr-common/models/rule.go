@@ -7,7 +7,7 @@ import (
 type Rule struct {
 	ID               uuid.UUID `json:"id"`
 	Name             string    `json:"name"`
-	Type             RuleType  `json:"type"`
+	RuleType         RuleType  `json:"ruletype"`
 	DataBaseEntityId uuid.UUID
 	ProjectId        uuid.UUID
 }
@@ -29,9 +29,3 @@ const (
 	RuleScopeTable    RuleScope = "table"
 	RuleScopeColumn   RuleScope = "column"
 )
-
-type RuleCreationDto struct {
-	Name             string
-	Type             RuleType
-	DataBaseEntityId uuid.UUID
-}

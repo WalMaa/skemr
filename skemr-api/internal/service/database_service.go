@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/walmaa/skemr-api/db/sqlc"
 	"github.com/walmaa/skemr-api/errormsg"
+	"github.com/walmaa/skemr-api/internal/dto"
 	"github.com/walmaa/skemr-api/internal/mapper"
 	"github.com/walmaa/skemr-api/tasks"
 	"github.com/walmaa/skemr-common/models"
@@ -96,4 +97,18 @@ func (r *DatabaseService) DeleteDatabase(c context.Context, id uuid.UUID) error 
 func (r *DatabaseService) ListDatabasesByProject(c context.Context, id uuid.UUID) ([]sqlc.Database, error) {
 	slog.Info("Listing databases for project", "project_id", id)
 	return r.db.ListDatabasesByProject(c, id)
+}
+
+func (r *DatabaseService) UpdateDatabase(c context.Context, projectId uuid.UUID, databaseId uuid.UUID, dto dto.DatabaseUpdateDto) (models.Database, error) {
+
+	slog.Info("Updating database", "id", databaseId)
+
+	database, err := r.db.UpdateDatabase(c, mapper.ToUpdateDatabaseParams(databaseId, dto))
+
+	if err != nil {
+		slog.Error("Error updating database", err)
+		return models.Database{}, err
+	}
+
+	return mapper.ToDomainDatabase(database), nil
 }

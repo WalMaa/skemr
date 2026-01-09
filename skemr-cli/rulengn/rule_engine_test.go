@@ -16,7 +16,7 @@ func TestProcessStatementsReturnsResult(t *testing.T) {
 		{
 			ID:           uuid.New(),
 			Name:         "Drop Age Column Rule",
-			Type:         models.RuleTypeDeprecated,
+			RuleType:     models.RuleTypeDeprecated,
 			Scope:        models.RuleScopeColumn,
 			RelationName: &relName,
 			Target:       "age",
@@ -66,7 +66,7 @@ func TestDeprecatedRuleTrigger(t *testing.T) {
 		{
 			ID:           uuid.New(),
 			Name:         "Drop Age Column Rule",
-			Type:         models.RuleTypeDeprecated,
+			RuleType:     models.RuleTypeDeprecated,
 			Scope:        models.RuleScopeColumn,
 			RelationName: &relName,
 			Target:       "age",
@@ -105,7 +105,7 @@ func TestWarnRuleTrigger(t *testing.T) {
 		{
 			ID:           uuid.New(),
 			Name:         "Drop Age Column Rule",
-			Type:         models.RuleTypeWarn,
+			RuleType:     models.RuleTypeWarn,
 			Scope:        models.RuleScopeColumn,
 			RelationName: &relName,
 			Target:       "age",
@@ -144,7 +144,7 @@ func TestLockedRuleViolation(t *testing.T) {
 		{
 			ID:           uuid.New(),
 			Name:         "Drop Age Column Rule",
-			Type:         models.RuleTypeLocked,
+			RuleType:     models.RuleTypeLocked,
 			Scope:        models.RuleScopeColumn,
 			RelationName: &relName,
 			Target:       "age",
@@ -183,7 +183,7 @@ func TestAdvisoryRuleTrigger(t *testing.T) {
 		{
 			ID:           uuid.New(),
 			Name:         "Drop Age Column Rule",
-			Type:         models.RuleTypeAdvisory,
+			RuleType:     models.RuleTypeAdvisory,
 			Scope:        models.RuleScopeColumn,
 			RelationName: &relName,
 			Target:       "age",

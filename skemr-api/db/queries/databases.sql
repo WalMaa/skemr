@@ -23,13 +23,17 @@ WHERE id = $1 AND project_id = $2 LIMIT 1;
 INSERT INTO databases (project_id, display_name)
 VALUES (@project_id, @display_name) RETURNING *;
 
--- name: UpdateDatabase :exec
+-- name: UpdateDatabase :one
 UPDATE databases
-SET display_name = $2,
-    username = $3,
-    password = $4
-WHERE id = $1
-    RETURNING *;
+SET display_name = COALESCE(sqlc.narg(display_name), display_name),
+    db_name = COALESCE(sqlc.narg(db_name), db_name),
+    username = COALESCE(sqlc.narg(username), username),
+    password = COALESCE(sqlc.narg(password), password),
+    host = COALESCE(sqlc.narg(host), host),
+    port = COALESCE(sqlc.narg(port), port),
+    database_type = COALESCE(sqlc.narg(database_type), database_type)
+WHERE id = @database_id
+RETURNING *;
 
 -- name: DeleteDatabase :exec
 DELETE
