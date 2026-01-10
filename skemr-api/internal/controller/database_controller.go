@@ -22,10 +22,10 @@ func NewDatabaseController(s *service.DatabaseService) *DatabaseController {
 func (h *DatabaseController) RegisterRoutes(g *gin.RouterGroup) {
 	group := g.Group("/projects/:projectId/databases")
 	{
-		group.POST("/", h.createDatabase)
+		group.POST("", h.createDatabase)
 		group.GET("/:databaseId", h.getDatabase)
 		group.DELETE("/:databaseId", h.deleteDatabase)
-		group.GET("/", h.listDatabasesByProject)
+		group.GET("", h.listDatabasesByProject)
 		group.PATCH("/:databaseId", h.updateDatabase)
 	}
 }

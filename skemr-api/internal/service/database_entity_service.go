@@ -1,0 +1,72 @@
+package service
+
+import (
+	"context"
+	"log/slog"
+
+	"github.com/google/uuid"
+	"github.com/walmaa/skemr-api/db/sqlc"
+	"github.com/walmaa/skemr-api/internal/mapper"
+	"github.com/walmaa/skemr-common/models"
+)
+
+type DatabaseEntityService struct {
+	db sqlc.Querier
+}
+
+func NewDatabaseEntityService(q sqlc.Querier) *DatabaseEntityService {
+	{
+		return &DatabaseEntityService{db: q}
+	}
+}
+
+func (s *DatabaseEntityService) GetDatabaseEntityByID(c context.Context, projectId uuid.UUID, databaseId uuid.UUID, entityId uuid.UUID) (models.DatabaseEntity, error) {
+	slog.Info("Getting database entity for project %q, database %q and entity %q", projectId, databaseId, entityId)
+	project, err := CheckProjectExists(c, s.db, projectId)
+
+	if err != nil {
+		return models.DatabaseEntity{}, err
+	}
+
+	database, err := CheckDatabaseExists(c, s.db, project.ID, databaseId)
+	if err != nil {
+		return models.DatabaseEntity{}, err
+	}
+
+	entity, err := s.db.GetDatabaseEntity(c, database.ID)
+
+	return mapper.ToDomainDatabaseEntity(entity), err
+}
+
+func (s *DatabaseEntityService) ListDatabaseEntitiesByDatabase(c context.Context, projectId uuid.UUID, databaseId uuid.UUID, entityType *models.DatabaseEntityType, parentId *uuid.UUID) ([]models.DatabaseEntity, error) {
+	slog.Info("Listing database entities", "project", "database", databaseId)
+	project, err := CheckProjectExists(c, s.db, projectId)
+
+	if err != nil {
+		return []models.DatabaseEntity{}, err
+	}
+
+	database, err := CheckDatabaseExists(c, s.db, project.ID, databaseId)
+	if err != nil {
+		return []models.DatabaseEntity{}, err
+	}
+
+	var et sqlc.NullDatabaseEntityType
+	if entityType != nil {
+		et = sqlc.NullDatabaseEntityType{
+			DatabaseEntityType: sqlc.DatabaseEntityType(*entityType),
+			Valid:              true,
+		}
+	}
+
+	entities, err := s.db.GetDatabaseEntitiesByDatabaseId(c, sqlc.GetDatabaseEntitiesByDatabaseIdParams{
+		DatabaseID: database.ID,
+		EntityType: et,
+		ParentID:   parentId,
+	})
+	if err != nil {
+		return []models.DatabaseEntity{}, err
+	}
+
+	return mapper.ToDomainDatabaseEntities(entities), nil
+}

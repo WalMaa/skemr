@@ -39,7 +39,7 @@ func main() {
 	slog.SetDefault(slog.New(
 		tint.NewHandler(w, &tint.Options{
 			Level:      slog.LevelDebug,
-			TimeFormat: time.Kitchen,
+			TimeFormat: time.DateTime,
 		}),
 	))
 
@@ -55,6 +55,7 @@ func main() {
 	webhookService := service.NewWebhookService(queries)
 	projectSecretsService := service.NewProjectSecretsService(queries)
 	ruleService := service.NewRuleService(queries)
+	databaseEntityService := service.NewDatabaseEntityService(queries)
 
 	runSchema(conn)
 
@@ -67,6 +68,7 @@ func main() {
 		DatabaseService:       databaseService,
 		WebhookService:        webhookService,
 		RuleService:           ruleService,
+		DatabaseEntityService: databaseEntityService,
 	}
 
 	// Initialize router

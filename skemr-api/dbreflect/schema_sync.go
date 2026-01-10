@@ -100,7 +100,7 @@ func (s *SchemaSyncService) SyncSchema(c context.Context, database models.Databa
 func (s *SchemaSyncService) updateSchema(c context.Context, schemaName string, database models.Database) (sqlc.DatabaseEntity, error) {
 	args := sqlc.GetDatabaseEntityByDatabaseIdAndTypeAndNameParams{
 		DatabaseID: database.ID,
-		Type:       sqlc.DatabaseEntityTypeSchema,
+		EntityType: sqlc.DatabaseEntityTypeSchema,
 		Name:       schemaName,
 	}
 	schema, err := s.db.GetDatabaseEntityByDatabaseIdAndTypeAndName(c, args)
@@ -136,7 +136,7 @@ func (s *SchemaSyncService) updateSchema(c context.Context, schemaName string, d
 func (s *SchemaSyncService) UpdateTable(c context.Context, tableRef TableRef, database models.Database, schemaId uuid.UUID) (sqlc.DatabaseEntity, error) {
 	args := sqlc.GetDatabaseEntityByDatabaseIdAndTypeAndNameParams{
 		DatabaseID: database.ID,
-		Type:       sqlc.DatabaseEntityTypeTable,
+		EntityType: sqlc.DatabaseEntityTypeTable,
 		Name:       tableRef.Name,
 	}
 	table, err := s.db.GetDatabaseEntityByDatabaseIdAndTypeAndName(c, args)
@@ -173,7 +173,7 @@ func (s *SchemaSyncService) UpdateTable(c context.Context, tableRef TableRef, da
 func (s *SchemaSyncService) UpdateColumn(c context.Context, columnRef ColumnRef, database models.Database, tableId uuid.UUID) (sqlc.DatabaseEntity, error) {
 	args := sqlc.GetDatabaseEntityByDatabaseIdAndTypeAndNameParams{
 		DatabaseID: database.ID,
-		Type:       sqlc.DatabaseEntityTypeColumn,
+		EntityType: sqlc.DatabaseEntityTypeColumn,
 		Name:       columnRef.Name,
 	}
 	column, err := s.db.GetDatabaseEntityByDatabaseIdAndTypeAndName(c, args)

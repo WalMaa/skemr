@@ -114,13 +114,9 @@ CREATE TABLE database_entities
 
     -- generic identity at this node
     name           text        NOT NULL, -- e.g. "public", "users", "email", "my_view"
-    qualified_name text        NULL,     -- e.g. "mydb.public.users.email"
-    -- stable computed key
-    external_key   text        NOT NULL, -- e.g. "project/mydb/public/users/email"
 
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-    UNIQUE (project_id, external_key),
     UNIQUE (database_id, name, entity_type, parent_id) -- Ensure we do not map the same entity twice
 );
 

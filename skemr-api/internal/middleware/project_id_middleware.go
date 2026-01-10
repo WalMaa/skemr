@@ -5,7 +5,7 @@ import (
 	"github.com/google/uuid"
 )
 
-const ctxProjectID = "projectID"
+const CtxProjectID = "projectID"
 
 func ProjectIDMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -21,7 +21,7 @@ func ProjectIDMiddleware() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		c.Set(ctxProjectID, id)
+		c.Set(CtxProjectID, id)
 		c.Next()
 	}
 }

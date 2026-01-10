@@ -13,6 +13,7 @@ type Services struct {
 	RuleService           *service.RuleService
 	WebhookService        *service.WebhookService
 	ProjectSecretsService *service.ProjectSecretsService
+	DatabaseEntityService *service.DatabaseEntityService
 }
 
 func InitRouter(services *Services) *gin.Engine {
@@ -51,12 +52,14 @@ func InitRouter(services *Services) *gin.Engine {
 	databaseController := controller.NewDatabaseController(services.DatabaseService)
 	projectSecretsController := controller.NewProjectSecretsController(services.ProjectSecretsService)
 	ruleController := controller.NewRuleController(services.RuleService)
+	databaseEntityController := controller.NewDatabaseEntityController(services.DatabaseEntityService)
 
 	// Register routes
 	projectController.RegisterRoutes(protected)
 	databaseController.RegisterRoutes(protected)
 	projectSecretsController.RegisterRoutes(protected)
 	ruleController.RegisterRoutes(protected)
+	databaseEntityController.RegisterRoutes(protected)
 
 	return r
 }
