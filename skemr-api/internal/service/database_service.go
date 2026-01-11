@@ -9,10 +9,10 @@ import (
 	"github.com/hibiken/asynq"
 	"github.com/jackc/pgx/v5"
 	"github.com/walmaa/skemr-api/db/sqlc"
-	"github.com/walmaa/skemr-api/errormsg"
 	"github.com/walmaa/skemr-api/internal/dto"
+	"github.com/walmaa/skemr-api/internal/errormsg"
 	"github.com/walmaa/skemr-api/internal/mapper"
-	"github.com/walmaa/skemr-api/tasks"
+	"github.com/walmaa/skemr-api/internal/tasks"
 	"github.com/walmaa/skemr-common/models"
 )
 

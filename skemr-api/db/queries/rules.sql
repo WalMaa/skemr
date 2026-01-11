@@ -6,8 +6,8 @@ LIMIT 1;
 
 -- name: CreateRule :one
 INSERT INTO rules
-    (name, type, project_id)
-VALUES ($1, $2, $3)
+    (name, type, database_entity_id, project_id)
+VALUES (@name, @type, @database_entity_id, @project_id)
 RETURNING *;
 
 -- name: UpdateRule :exec

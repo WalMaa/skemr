@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/walmaa/skemr-api/internal/dto"
+	"github.com/walmaa/skemr-api/internal/middleware"
 	"github.com/walmaa/skemr-api/internal/service"
 )
 
@@ -29,7 +30,7 @@ func (h *RuleController) createRule(c *gin.Context) {
 	if !ok {
 		return
 	}
-	projectID := c.MustGet("projectID").(uuid.UUID)
+	projectID := c.MustGet(middleware.CtxProjectID).(uuid.UUID)
 
 	var body dto.RuleCreationDto
 	if err := c.ShouldBindJSON(&body); err != nil {

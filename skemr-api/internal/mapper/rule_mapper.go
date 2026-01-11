@@ -27,8 +27,9 @@ func ToDomainRules(r []sqlc.Rule) []models.Rule {
 
 func ToSqlcCreateRule(projectId uuid.UUID, dto dto.RuleCreationDto) sqlc.CreateRuleParams {
 	return sqlc.CreateRuleParams{
-		Name:      dto.Name,
-		Type:      sqlc.RuleType(dto.RuleType),
-		ProjectID: projectId,
+		Name:             dto.Name,
+		Type:             sqlc.RuleType(dto.RuleType),
+		ProjectID:        projectId,
+		DatabaseEntityID: dto.DataBaseEntityId,
 	}
 }

@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/walmaa/skemr-api/db/sqlc"
-	"github.com/walmaa/skemr-api/errormsg"
+	"github.com/walmaa/skemr-api/internal/errormsg"
 )
 
 type ProjectService struct {

@@ -8,8 +8,8 @@ type Rule struct {
 	ID               uuid.UUID `json:"id"`
 	Name             string    `json:"name"`
 	RuleType         RuleType  `json:"ruletype"`
-	DataBaseEntityId uuid.UUID
-	ProjectId        uuid.UUID
+	DataBaseEntityId uuid.UUID `json:"databaseEntityId"`
+	ProjectId        uuid.UUID `json:"projectId"`
 }
 
 type RuleType string

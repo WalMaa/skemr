@@ -127,6 +127,6 @@ CREATE TABLE rules
     id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name          TEXT       NOT NULL, -- User defined for rule
     type          rule_type  NOT NULL,
-    database_entity_id uuid NOT NULL REFERENCES database_entities(id),
+    database_entity_id uuid NOT NULL REFERENCES database_entities(id) ON DELETE CASCADE,
     project_id uuid NOT NULL REFERENCES projects(id) ON DELETE CASCADE
 );

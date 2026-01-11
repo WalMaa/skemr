@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	errormsg "github.com/walmaa/skemr-api/errormsg"
+	"github.com/walmaa/skemr-api/internal/errormsg"
 	"github.com/walmaa/skemr-api/internal/service"
 )
 

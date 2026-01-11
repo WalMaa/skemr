@@ -12,8 +12,8 @@ import (
 	"github.com/walmaa/skemr-api/db/sqlc"
 	"github.com/walmaa/skemr-api/internal/routers"
 	"github.com/walmaa/skemr-api/internal/service"
+	"github.com/walmaa/skemr-api/internal/tasks"
 	"github.com/walmaa/skemr-api/internal/worker"
-	"github.com/walmaa/skemr-api/tasks"
 	"golang.org/x/net/context"
 )
 
