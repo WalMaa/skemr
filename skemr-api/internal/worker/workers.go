@@ -6,7 +6,7 @@ import (
 
 	"github.com/hibiken/asynq"
 	"github.com/walmaa/skemr-api/db/sqlc"
-	"github.com/walmaa/skemr-api/dbreflect"
+	"github.com/walmaa/skemr-api/internal/dbreflect"
 	"github.com/walmaa/skemr-api/internal/tasks"
 )
 
