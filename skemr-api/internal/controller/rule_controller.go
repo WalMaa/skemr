@@ -23,6 +23,48 @@ func (h *RuleController) RegisterRoutes(g *gin.RouterGroup) {
 	group := g.Group("projects/:projectId/databases/:databaseId/rules")
 	group.POST("", h.createRule)
 	group.GET("", h.ListRules)
+	group.GET("/:ruleId", h.GetRule)
+	group.DELETE("/:ruleId", h.deleteRule)
+}
+
+func (h *RuleController) GetRule(c *gin.Context) {
+	projectID := c.MustGet(middleware.CtxProjectID).(uuid.UUID)
+	databaseId, ok := paramUUID(c, "databaseId")
+	if !ok {
+		return
+	}
+	ruleId, ok := paramUUID(c, "ruleId")
+	if !ok {
+		return
+	}
+	rule, err := h.Service.GetRule(c, projectID, databaseId, ruleId)
+
+	if err != nil {
+		c.Error(errors.New(err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, rule)
+}
+
+func (h *RuleController) deleteRule(c *gin.Context) {
+	projectID := c.MustGet(middleware.CtxProjectID).(uuid.UUID)
+	databaseId, ok := paramUUID(c, "databaseId")
+	if !ok {
+		return
+	}
+	ruleId, ok := paramUUID(c, "ruleId")
+	if !ok {
+		return
+	}
+	err := h.Service.DeleteRule(c, projectID, databaseId, ruleId)
+
+	if err != nil {
+		c.Error(errors.New(err.Error()))
+		return
+	}
+
+	c.Status(http.StatusNoContent)
 }
 
 func (h *RuleController) createRule(c *gin.Context) {

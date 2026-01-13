@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"log/slog"
+	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"github.com/walmaa/skemr-cli/rulengn"
@@ -21,5 +23,26 @@ var validateCmd = &cobra.Command{
 		cmd.Context()
 		ruleEngine := rulengn.NewRuleEngine()
 		ruleEngine.ProcessStatements(cmd.Context(), nil, nil)
+		printFilesInDirectory("")
 	},
+}
+
+func printFilesInDirectory(dirPath string) {
+	slog.Info("Printing files in directory", slog.String("directory", dirPath))
+	cwd, err := os.Getwd()
+
+	if err != nil {
+		panic(err)
+	}
+
+	path := filepath.Join(cwd, dirPath)
+	dat, err := os.ReadDir(path)
+
+	if err != nil {
+		panic(err)
+	}
+
+	for _, entry := range dat {
+		slog.Info(entry.Name())
+	}
 }

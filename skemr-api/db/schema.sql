@@ -128,5 +128,5 @@ CREATE TABLE rules
     name          TEXT       NOT NULL, -- User defined for rule
     type          rule_type  NOT NULL,
     database_entity_id uuid NOT NULL REFERENCES database_entities(id) ON DELETE CASCADE,
-    project_id uuid NOT NULL REFERENCES projects(id) ON DELETE CASCADE
+    database_id uuid NOT NULL REFERENCES databases(id) ON DELETE CASCADE
 );

@@ -1,13 +1,22 @@
 -- name: GetRule :one
 SELECT *
 FROM rules
-WHERE id = @id
+WHERE database_id = @database_id AND id = @rule_id
+LIMIT 1;
+
+-- name: GetRuleWithEntity :one
+SELECT
+    sqlc.embed(r),
+    sqlc.embed(de)
+FROM rules r
+JOIN database_entities de ON r.database_entity_id = de.id
+WHERE r.database_id = @database_id AND r.id = @rule_id
 LIMIT 1;
 
 -- name: CreateRule :one
 INSERT INTO rules
-    (name, type, database_entity_id, project_id)
-VALUES (@name, @type, @database_entity_id, @project_id)
+    (name, type, database_entity_id, database_id)
+VALUES (@name, @type, @database_entity_id, @database_id)
 RETURNING *;
 
 -- name: UpdateRule :exec
@@ -20,23 +29,25 @@ RETURNING *;
 -- name: DeleteRule :exec
 DELETE
 FROM rules
-WHERE id = @id;
+WHERE database_id = @database_id AND id = @rule_id;
 
--- name: ListRulesByProject :many
-SELECT *
-FROM rules
-WHERE project_id = @id;
 
 -- name: ListRulesByDatabaseId :many
-SELECT r.*
+SELECT *
+FROM rules
+WHERE database_id = @database_id;
+
+-- name: GetRulesWithEntities :many
+SELECT
+    sqlc.embed(r),
+    sqlc.embed(de)
 FROM rules r
-LEFT JOIN database_entities de
-    ON r.database_entity_id = de.id
-    AND de.database_id = @database_id;
+JOIN database_entities de ON r.database_entity_id = de.id
+WHERE r.database_id = @database_id;
 
 
 -- name: ListRulesByCriteria :many
 SELECT *
 FROM rules
-WHERE project_id = @project_id
+WHERE database_id = @database_id
   AND (database_entity_id = @database_entity_id OR @database_entity_id IS NULL);

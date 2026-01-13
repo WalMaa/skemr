@@ -86,8 +86,8 @@ func (r *RuleEngine) CheckStatement(statementDto SqlStatementDto, rules []models
 	}
 
 	for _, rule := range rules {
-		if rule.Target == statementAction.Target {
-			slog.Info("Rule target matches statementDto target", slog.String("rule_target", rule.Target), slog.String("statement_target", statementAction.Target))
+		if rule.DataBaseEntity.Name == statementAction.Target {
+			slog.Info("Rule target matches statementDto target", slog.String("rule_database_entity", rule.DataBaseEntity.Name), slog.String("statement_target", statementAction.Target))
 			switch rule.RuleType {
 			case models.RuleTypeLocked:
 				violation := r.lockAction(rule, statementAction, statementDto)
