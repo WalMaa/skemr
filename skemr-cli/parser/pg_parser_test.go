@@ -12,9 +12,9 @@ func TestParseSqlDropColumn(t *testing.T) {
 
 	assert.Nil(t, err)
 
-	assert.Equal(t, "name", statementAction.Target, "Expected target 'name'")
-	assert.Equal(t, SqlActionDropColumn, statementAction.Action, "Expected action 'DROP COLUMN'")
-	assert.Equal(t, "rules", statementAction.Relation, "Expected relation 'rules'")
+	assert.Equal(t, "name", statementAction[0].Target, "Expected target 'name'")
+	assert.Equal(t, SqlActionDropColumn, statementAction[0].Action, "Expected action 'DROP COLUMN'")
+	assert.Equal(t, "rules", statementAction[0].Relation, "Expected relation 'rules'")
 
 }
 
@@ -24,9 +24,9 @@ func TestParseSqlDropTable(t *testing.T) {
 
 	assert.Nil(t, err)
 
-	assert.Equal(t, "", statementAction.Target, "Expected empty target for DROP TABLE")
-	assert.Equal(t, SqlActionDropTable, statementAction.Action, "Expected action 'DROP TABLE'")
-	assert.Equal(t, "rules", statementAction.Relation, "Expected relation 'rules'")
+	assert.Equal(t, "", statementAction[0].Target, "Expected empty target for DROP TABLE")
+	assert.Equal(t, SqlActionDropTable, statementAction[0].Action, "Expected action 'DROP TABLE'")
+	assert.Equal(t, "rules", statementAction[0].Relation, "Expected relation 'rules'")
 }
 
 func TestParseSqlRenameColumn(t *testing.T) {
@@ -35,9 +35,9 @@ func TestParseSqlRenameColumn(t *testing.T) {
 
 	assert.Nil(t, err)
 
-	assert.Equal(t, "name", statementAction.Target, "Expected target 'new_name'")
-	assert.Equal(t, SqlActionRenameColumn, statementAction.Action, "Expected action 'RENAME COLUMN'")
-	assert.Equal(t, "rules", statementAction.Relation, "Expected relation 'rules'")
+	assert.Equal(t, "name", statementAction[0].Target, "Expected target 'new_name'")
+	assert.Equal(t, SqlActionRenameColumn, statementAction[0].Action, "Expected action 'RENAME COLUMN'")
+	assert.Equal(t, "rules", statementAction[0].Relation, "Expected relation 'rules'")
 }
 
 func TestParseSqlModifyDataType(t *testing.T) {
@@ -46,8 +46,8 @@ func TestParseSqlModifyDataType(t *testing.T) {
 
 	assert.Nil(t, err)
 
-	if statementAction.Target != "name" || statementAction.Action != SqlActionModifyDataType || statementAction.Relation != "rules" {
-		t.Fatalf("Expected target 'name', action 'MODIFY DATA TYPE', relation 'rules', got target '%s', action '%s', relation '%s'", statementAction.Target, statementAction.Action, statementAction.Relation)
+	if statementAction[0].Target != "name" || statementAction[0].Action != SqlActionModifyDataType || statementAction[0].Relation != "rules" {
+		t.Fatalf("Expected target 'name', action 'MODIFY DATA TYPE', relation 'rules', got target '%s', action '%s', relation '%s'", statementAction[0].Target, statementAction[0].Action, statementAction[0].Relation)
 	}
 }
 
@@ -57,9 +57,9 @@ func TestParseSqlRenameTable(t *testing.T) {
 
 	assert.Nil(t, err)
 
-	assert.Equal(t, "rules", statementAction.Target, "Expected target 'rules'")
-	assert.Equal(t, SqlActionRenameTable, statementAction.Action, "Expected action 'RENAME TABLE'")
-	assert.Equal(t, "", statementAction.Relation, "Expected empty relation for RENAME TABLE")
+	assert.Equal(t, "rules", statementAction[0].Target, "Expected target 'rules'")
+	assert.Equal(t, SqlActionRenameTable, statementAction[0].Action, "Expected action 'RENAME TABLE'")
+	assert.Equal(t, "", statementAction[0].Relation, "Expected empty relation for RENAME TABLE")
 }
 
 func TestParseSqlDropDataBase(t *testing.T) {
@@ -68,9 +68,9 @@ func TestParseSqlDropDataBase(t *testing.T) {
 
 	assert.Nil(t, err)
 
-	if statementAction.Target != "postgres" || statementAction.Action != SqlActionDropDatabase || statementAction.Relation != "" {
-		t.Fatalf("Expected target 'postgres', action 'DROP DATABASE', relation '', got target '%s', action '%s', relation '%s'", statementAction.Target, statementAction.Action, statementAction.Relation)
-	}
+	assert.Equal(t, "postgres", statementAction[0].Target, "Expected target 'postgres'")
+	assert.Equal(t, SqlActionDropDatabase, statementAction[0].Action, "Expected action 'SqlActionDropDatabase'")
+	assert.Equal(t, "", statementAction[0].Relation)
 }
 
 func TestParseSqlCreateDataBase(t *testing.T) {
@@ -79,9 +79,9 @@ func TestParseSqlCreateDataBase(t *testing.T) {
 
 	assert.Nil(t, err)
 
-	assert.Equal(t, "skemr_db", statementAction.Target, "Expected target 'skemr_db'")
-	assert.Equal(t, SqlActionCreateDatabase, statementAction.Action, "Expected action 'CREATE DATABASE'")
-	assert.Equal(t, "", statementAction.Relation, "Expected empty relation for CREATE DATABASE")
+	assert.Equal(t, "skemr_db", statementAction[0].Target, "Expected target 'skemr_db'")
+	assert.Equal(t, SqlActionCreateDatabase, statementAction[0].Action, "Expected action 'CREATE DATABASE'")
+	assert.Equal(t, "", statementAction[0].Relation, "Expected empty relation for CREATE DATABASE")
 }
 
 func TestParseSqlRenameDataBase(t *testing.T) {
@@ -90,9 +90,9 @@ func TestParseSqlRenameDataBase(t *testing.T) {
 
 	assert.Nil(t, err)
 
-	assert.Equal(t, "skemr_db", statementAction.Target, "Expected target 'skemr_db'")
-	assert.Equal(t, SqlActionRenameDatabase, statementAction.Action, "Expected action 'RENAME DATABASE'")
-	assert.Equal(t, "", statementAction.Relation, "Expected empty relation for RENAME DATABASE")
+	assert.Equal(t, "skemr_db", statementAction[0].Target, "Expected target 'skemr_db'")
+	assert.Equal(t, SqlActionRenameDatabase, statementAction[0].Action, "Expected action 'RENAME DATABASE'")
+	assert.Equal(t, "", statementAction[0].Relation, "Expected empty relation for RENAME DATABASE")
 }
 
 func TestParseSqlUndefined(t *testing.T) {
@@ -102,8 +102,8 @@ func TestParseSqlUndefined(t *testing.T) {
 	if err == nil {
 		t.Fatalf("Expected an error for invalid SQL, got none")
 	}
-	if statementAction.Target != "" || statementAction.Action != SqlActionUndefined || statementAction.Relation != "" {
-		t.Fatalf("Expected target '', action 'UNDEFINED', relation '', got target '%s', action '%s', relation '%s'", statementAction.Target, statementAction.Action, statementAction.Relation)
+	if statementAction[0].Target != "" || statementAction[0].Action != SqlActionUndefined || statementAction[0].Relation != "" {
+		t.Fatalf("Expected target '', action 'UNDEFINED', relation '', got target '%s', action '%s', relation '%s'", statementAction[0].Target, statementAction[0].Action, statementAction[0].Relation)
 	}
 }
 
@@ -113,9 +113,9 @@ func TestParseSqlAddColumn(t *testing.T) {
 
 	assert.Nil(t, err)
 
-	assert.Equal(t, "description", statementAction.Target, "Expected target 'description'")
-	assert.Equal(t, SqlActionAddColumn, statementAction.Action, "Expected action 'ADD COLUMN'")
-	assert.Equal(t, "rules", statementAction.Relation, "Expected relation 'rules'")
+	assert.Equal(t, "description", statementAction[0].Target, "Expected target 'description'")
+	assert.Equal(t, SqlActionAddColumn, statementAction[0].Action, "Expected action 'ADD COLUMN'")
+	assert.Equal(t, "rules", statementAction[0].Relation, "Expected relation 'rules'")
 }
 
 func TestParseSqlInsertRow(t *testing.T) {
@@ -124,7 +124,16 @@ func TestParseSqlInsertRow(t *testing.T) {
 
 	assert.Nil(t, err)
 
-	assert.Equal(t, "", statementAction.Target, "Expected empty target for INSERT ROW")
-	assert.Equal(t, SqlActionInsertRow, statementAction.Action, "Expected action 'INSERT ROW'")
-	assert.Equal(t, "rules", statementAction.Relation, "Expected relation 'rules'")
+	assert.Equal(t, "", statementAction[0].Target, "Expected empty target for INSERT ROW")
+	assert.Equal(t, SqlActionInsertRow, statementAction[0].Action, "Expected action 'INSERT ROW'")
+	assert.Equal(t, "rules", statementAction[0].Relation, "Expected relation 'rules'")
+}
+
+func TestParseMultipleStatements(t *testing.T) {
+	sql := "ALTER TABLE rules DROP COLUMN name;\n" +
+		"ALTER TABLE rules DROP COLUMN createdAt;"
+
+	_, err := ParseSql(sql)
+
+	assert.Nil(t, err)
 }

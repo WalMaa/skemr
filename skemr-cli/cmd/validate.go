@@ -24,14 +24,14 @@ var validateCmd = &cobra.Command{
 		ruleEngine := rulengn.NewRuleEngine()
 		ruleEngine.ProcessStatements(cmd.Context(), nil, nil)
 		filePaths := make([]string, 0)
-		printFilesInDirectory(&filePaths, "./skemr-cli/test")
+		collectFilePathsFromDir(&filePaths, "./skemr-cli/test")
 		for _, filePath := range filePaths {
 			slog.Info("Found file", slog.String("filePath", filePath))
 		}
 	},
 }
 
-func printFilesInDirectory(filePaths *[]string, dirPath string) {
+func collectFilePathsFromDir(filePaths *[]string, dirPath string) {
 	slog.Info("Gathering filepaths in directory", slog.String("directory", dirPath))
 	cwd, err := os.Getwd()
 
@@ -52,7 +52,7 @@ func printFilesInDirectory(filePaths *[]string, dirPath string) {
 			slog.Info("Adding file", slog.String("file", entry.Name()))
 			*filePaths = append(*filePaths, filepath.Join(path, entry.Name()))
 		} else {
-			printFilesInDirectory(filePaths, filepath.Join(dirPath, entry.Name()))
+			collectFilePathsFromDir(filePaths, filepath.Join(dirPath, entry.Name()))
 		}
 	}
 }

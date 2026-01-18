@@ -36,25 +36,7 @@ const (
 	SqlActionUndefined SqlAction = "UNDEFINED"
 )
 
-/*
-ParseSql parses the SQL statement and returns a structured representation of the SQL.
-*/
-func ParseSql(sql string) (StatementAction, error) {
-	tree, err := pgquery.Parse(sql)
-	if err != nil {
-		slog.Error("Failed to parse SQL", "error", err, "sql", sql)
-		return StatementAction{
-			Action: SqlActionUndefined,
-		}, err
-	}
-	stmts := tree.Stmts
-
-	if len(stmts) == 0 {
-		return StatementAction{}, nil
-	}
-
-	node := stmts[0].GetStmt()
-
+func parseNode(node *pgquery.Node) (StatementAction, error) {
 	// Check for a DROP DATABASE statement
 	if node.GetDropdbStmt() != nil {
 		return parseDropDatabase(node)
@@ -94,7 +76,31 @@ func ParseSql(sql string) (StatementAction, error) {
 		Target:   "",
 		Action:   SqlActionUndefined,
 		Relation: "",
-	}, fmt.Errorf("unsupported SQL statement: %s", sql)
+	}, fmt.Errorf("unsupported SQL statement")
+}
+
+/*
+ParseSql parses a migration files and returns a structured representation of the SQL.
+*/
+func ParseSql(sql string) ([]StatementAction, error) {
+	tree, err := pgquery.Parse(sql)
+	result := make([]StatementAction, 0)
+	if err != nil {
+		slog.Error("Failed to parse SQL", "error", err, "sql", sql)
+
+	}
+	stmts := tree.Stmts
+
+	for _, stmt := range stmts {
+		statementAction, err := parseNode(stmt.GetStmt())
+		if err != nil {
+			slog.Error("Error parsing node", "error", err)
+		}
+		result = append(result, statementAction)
+	}
+
+	return result, nil
+
 }
 
 func parseInsertStmt(insertStmt *pgquery.InsertStmt) (StatementAction, error) {
