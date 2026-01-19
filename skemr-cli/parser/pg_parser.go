@@ -36,7 +36,9 @@ const (
 	SqlActionUndefined SqlAction = "UNDEFINED"
 )
 
-func parseNode(node *pgquery.Node) (StatementAction, error) {
+func parseStatement(stmt *pgquery.RawStmt) (StatementAction, error) {
+	slog.Info("Parsing", "statement", stmt.String())
+	node := stmt.GetStmt()
 	// Check for a DROP DATABASE statement
 	if node.GetDropdbStmt() != nil {
 		return parseDropDatabase(node)
@@ -76,7 +78,7 @@ func parseNode(node *pgquery.Node) (StatementAction, error) {
 		Target:   "",
 		Action:   SqlActionUndefined,
 		Relation: "",
-	}, fmt.Errorf("unsupported SQL statement")
+	}, fmt.Errorf("unsupported SQL statement: %s", node.String())
 }
 
 /*
@@ -92,7 +94,7 @@ func ParseSql(sql string) ([]StatementAction, error) {
 	stmts := tree.Stmts
 
 	for _, stmt := range stmts {
-		statementAction, err := parseNode(stmt.GetStmt())
+		statementAction, err := parseStatement(stmt)
 		if err != nil {
 			slog.Error("Error parsing node", "error", err)
 		}

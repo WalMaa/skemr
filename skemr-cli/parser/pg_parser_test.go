@@ -130,10 +130,11 @@ func TestParseSqlInsertRow(t *testing.T) {
 }
 
 func TestParseMultipleStatements(t *testing.T) {
-	sql := "ALTER TABLE rules DROP COLUMN name;\n" +
-		"ALTER TABLE rules DROP COLUMN createdAt;"
+	sql := "ALTER TABLE rules DROP COLUMN name;      \n" +
+		"ALTER TABLE users DROP COLUMN createdAt;"
 
-	_, err := ParseSql(sql)
+	statementActions, err := ParseSql(sql)
 
 	assert.Nil(t, err)
+	assert.Equal(t, 2, len(statementActions))
 }

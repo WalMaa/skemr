@@ -8,7 +8,7 @@ import (
 )
 
 // Builds a SqlStatementDro
-func GetSqlStatements(filePath string) rulengn.SqlStatementDto {
+func GetSqlStatements(filePath string) rulengn.MigrationFileDto {
 	// Get file
 	f, err := os.ReadFile(filePath)
 	if err != nil {

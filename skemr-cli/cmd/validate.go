@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -22,17 +23,28 @@ var validateCmd = &cobra.Command{
 		slog.Info("Validate command executed", slog.String("project_id", projectID))
 		cmd.Context()
 		ruleEngine := rulengn.NewRuleEngine()
-		ruleEngine.ProcessStatements(cmd.Context(), nil, nil)
+
+		// Process files
 		filePaths := make([]string, 0)
 		collectFilePathsFromDir(&filePaths, "./skemr-cli/test")
-		for _, filePath := range filePaths {
-			slog.Info("Found file", slog.String("filePath", filePath))
+
+		// Rule check
+		dtos := make([]rulengn.MigrationFileDto, len(filePaths))
+		for i, path := range filePaths {
+			dtos[i] = rulengn.MigrationFileDto{File: path}
 		}
+		_, err := ruleEngine.ProcessMigrationFiles(cmd.Context(), dtos, nil)
+		if err != nil {
+			err = fmt.Errorf("Error while validating migrations")
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		slog.Info("Processed migration files", "fileCount", len(filePaths))
 	},
 }
 
 func collectFilePathsFromDir(filePaths *[]string, dirPath string) {
-	slog.Info("Gathering filepaths in directory", slog.String("directory", dirPath))
+	slog.Debug("Gathering filepaths in directory", slog.String("directory", dirPath))
 	cwd, err := os.Getwd()
 
 	if err != nil {
@@ -49,7 +61,7 @@ func collectFilePathsFromDir(filePaths *[]string, dirPath string) {
 	for _, entry := range dat {
 		// Recursively add files from subdirectories
 		if !entry.IsDir() {
-			slog.Info("Adding file", slog.String("file", entry.Name()))
+			slog.Debug("Adding file", slog.String("file", entry.Name()))
 			*filePaths = append(*filePaths, filepath.Join(path, entry.Name()))
 		} else {
 			collectFilePathsFromDir(filePaths, filepath.Join(dirPath, entry.Name()))
