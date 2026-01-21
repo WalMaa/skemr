@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/walmaa/skemr-cli/config"
 	"github.com/walmaa/skemr-common/models"
 )
 
@@ -17,7 +18,7 @@ var client = &http.Client{Timeout: 10 * time.Second}
 func GetRules(ctx context.Context, projectId string, databaseId string, token string) []models.Rule {
 	slog.Info("Fetching rules from control plane", "projectId", projectId, "databaseId", databaseId)
 	var bearer = "Bearer " + token
-	var url = fmt.Sprintf("http://localhost:8080/api/v1/projects/%s/databases/%s/rules", projectId, databaseId)
+	var url = fmt.Sprintf("%s/api/v1/projects/%s/databases/%s/rules", config.Cfg.ControlPlaneUrl, projectId, databaseId)
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 

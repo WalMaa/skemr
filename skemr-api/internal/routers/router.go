@@ -37,10 +37,10 @@ func InitRouter(services *Services) *gin.Engine {
 	protected := r.Group("/api/v1")
 
 	// Auth
-	protected.Use(gin.BasicAuth(gin.Accounts{
-		"user": "pass",
-	}))
-	r.Use(middleware.AuthMiddleware())
+	//protected.Use(gin.BasicAuth(gin.Accounts{
+	//	"user": "pass",
+	//}))
+	protected.Use(middleware.AuthMiddleware())
 	// Project ID
 	protected.Use(middleware.ProjectIDMiddleware())
 

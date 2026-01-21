@@ -3,7 +3,8 @@ package middleware
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/walmaa/skemr-api/db/sqlc"
+	"github.com/walmaa/skemr-common/models"
+
 	"net/http"
 )
 
@@ -19,10 +20,9 @@ func AuthMiddleware() gin.HandlerFunc {
 	}
 }
 
-func authenticate(token string) *sqlc.User {
-	return &sqlc.User{
-		ID:       uuid.New(),
-		Email:    "user@mail.com",
-		Password: "password",
+func authenticate(token string) *models.User {
+	return &models.User{
+		ID:    uuid.New(),
+		Email: "example@gmail.com",
 	}
 }
