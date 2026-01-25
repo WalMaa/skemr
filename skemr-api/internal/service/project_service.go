@@ -9,6 +9,8 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/walmaa/skemr-api/db/sqlc"
 	"github.com/walmaa/skemr-api/internal/errormsg"
+	"github.com/walmaa/skemr-api/internal/mapper"
+	"github.com/walmaa/skemr-common/models"
 )
 
 type ProjectService struct {
@@ -21,17 +23,17 @@ func NewProjectService(q sqlc.Querier) *ProjectService {
 
 // CheckProjectExists checks if a project with the given ID exists in the database.
 // Used when validating the operation on resources that are tied to a project.
-func CheckProjectExists(c context.Context, db sqlc.Querier, projectID uuid.UUID) (sqlc.Project, error) {
+func CheckProjectExists(c context.Context, db sqlc.Querier, projectID uuid.UUID) (models.Project, error) {
 	slog.Info("Checking if project exists", "project_id", projectID)
 
 	// Check if the project exists
 	project, err := db.GetProject(c, projectID)
 	if err != nil {
 		slog.Error("Error getting project", "project_id", projectID, "err", err)
-		return sqlc.Project{}, errormsg.ErrProjectNotFound
+		return models.Project{}, errormsg.ErrProjectNotFound
 	}
 
-	return project, nil
+	return mapper.ToDomainProject(project), nil
 }
 
 func (r *ProjectService) CreateProject(c context.Context, name string) (sqlc.Project, error) {

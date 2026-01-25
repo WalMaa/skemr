@@ -72,7 +72,15 @@ func (r *DatabaseService) CreateDatabase(c context.Context, args sqlc.CreateData
 		return models.Database{}, err
 	}
 
-	task, err := tasks.NewDatabaseSyncTask(database.ID)
+	r.createDatabaseSyncTask(database.ID)
+	return mapper.ToDomainDatabase(database), nil
+}
+
+// CreateDatabaseSyncTask Creates a Database sync task for Asynq background processing.
+func (r *DatabaseService) createDatabaseSyncTask(databaseId uuid.UUID) {
+	// TODO: rate limiting
+	slog.Info("Creating a Datbase sync task", "databaseId", databaseId)
+	task, err := tasks.NewDatabaseSyncTask(databaseId)
 	if err != nil {
 		slog.Error("Unable to create database sync task")
 	}
@@ -81,7 +89,28 @@ func (r *DatabaseService) CreateDatabase(c context.Context, args sqlc.CreateData
 		slog.Error("Error in task", err)
 	}
 
-	return mapper.ToDomainDatabase(database), nil
+}
+
+func (r *DatabaseService) EnqueueManualDatabaseSync(c context.Context, projectId uuid.UUID, databaseId uuid.UUID) error {
+	slog.Info("Enqueuing manual database sync", "projectId", projectId, "databaseId", databaseId)
+
+	project, err := CheckProjectExists(c, r.db, projectId)
+
+	if err != nil {
+		slog.Error("Error fetching project")
+		return err
+	}
+
+	database, err := CheckDatabaseExists(c, r.db, project.ID, databaseId)
+
+	if err != nil {
+		slog.Error("Error getting database")
+		return err
+	}
+
+	r.createDatabaseSyncTask(database.ID)
+
+	return nil
 }
 
 func (r *DatabaseService) GetDatabase(c context.Context, id uuid.UUID) (sqlc.Database, error) {

@@ -82,6 +82,11 @@ CREATE TABLE databases
     port         INTEGER,
     database_type         database_type DEFAULT 'postgres',
     project_id   uuid          NOT NULL REFERENCES projects (id) ON DELETE CASCADE,
+    last_synced_at TIMESTAMPTZ,
+    last_sync_error TEXT,
+    failed_connection_attempts INTEGER NOT NULL DEFAULT 0,
+    created_at   TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+    updated_at   TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
     CONSTRAINT unique_database_name_per_project UNIQUE (display_name, project_id)
 );
 

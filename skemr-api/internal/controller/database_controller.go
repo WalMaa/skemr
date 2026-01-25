@@ -27,6 +27,7 @@ func (h *DatabaseController) RegisterRoutes(g *gin.RouterGroup) {
 		group.DELETE("/:databaseId", h.deleteDatabase)
 		group.GET("", h.listDatabasesByProject)
 		group.PATCH("/:databaseId", h.updateDatabase)
+		group.POST("/:databaseId/sync", h.syncDatabase)
 	}
 }
 
@@ -105,6 +106,23 @@ func (h *DatabaseController) updateDatabase(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, database)
+}
+
+func (h *DatabaseController) syncDatabase(c *gin.Context) {
+	projectId := c.MustGet("projectID").(uuid.UUID)
+	databaseId, ok := paramUUID(c, "databaseId")
+	if !ok {
+		return
+	}
+
+	err := h.Service.EnqueueManualDatabaseSync(c, projectId, databaseId)
+
+	if err != nil {
+		c.Error(errors.New(err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusNoContent, nil)
 }
 
 func (h *DatabaseController) getDatabase(c *gin.Context) {

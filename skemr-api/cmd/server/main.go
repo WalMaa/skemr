@@ -1,7 +1,6 @@
 package main
 
 import (
-	"io/ioutil"
 	"log"
 	"log/slog"
 	"os"
@@ -19,12 +18,21 @@ import (
 
 // runSchema drops the current schema, reads schema.sql file and executes it to set up the database schema.
 func runSchema(conn *pgx.Conn) {
-	schema, err := ioutil.ReadFile("./db/schema.sql")
+	schema, err := os.ReadFile("./db/schema.sql")
 	if err != nil {
 		log.Fatal(err)
 	}
 	_, err = conn.Exec(context.Background(), "DROP SCHEMA IF EXISTS public CASCADE")
 	_, err = conn.Exec(context.Background(), string(schema))
+	if err != nil {
+		log.Fatal(err)
+	}
+	// Seed data
+	seed, err := os.ReadFile("./db/seed.sql")
+	if err != nil {
+		log.Fatal(err)
+	}
+	_, err = conn.Exec(context.Background(), string(seed))
 	if err != nil {
 		log.Fatal(err)
 	}
