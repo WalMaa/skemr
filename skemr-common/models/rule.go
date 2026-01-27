@@ -7,7 +7,7 @@ import (
 type Rule struct {
 	ID             uuid.UUID      `json:"id"`
 	Name           string         `json:"name"`
-	RuleType       RuleType       `json:"ruletype"`
+	RuleType       RuleType       `json:"ruleType"`
 	DataBaseEntity DatabaseEntity `json:"databaseEntity"`
 }
 

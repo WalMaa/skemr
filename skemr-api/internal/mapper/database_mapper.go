@@ -21,6 +21,14 @@ func ToDomainDatabase(e sqlc.Database) models.Database {
 	}
 }
 
+func ToDomainDatabases(d []sqlc.Database) []models.Database {
+	databases := make([]models.Database, len(d))
+	for i, database := range d {
+		databases[i] = ToDomainDatabase(database)
+	}
+	return databases
+}
+
 func ToUpdateDatabaseParams(databaseId uuid.UUID, dto dto.DatabaseUpdateDto) sqlc.UpdateDatabaseParams {
 	return sqlc.UpdateDatabaseParams{
 		DatabaseID:  databaseId,

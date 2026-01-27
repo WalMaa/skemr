@@ -13,3 +13,11 @@ func ToDomainProject(project sqlc.Project) models.Project {
 		UpdatedAt: Time(&project.UpdatedAt),
 	}
 }
+
+func ToDomainProjects(p []sqlc.Project) []models.Project {
+	projects := make([]models.Project, len(p))
+	for i, project := range p {
+		projects[i] = ToDomainProject(project)
+	}
+	return projects
+}

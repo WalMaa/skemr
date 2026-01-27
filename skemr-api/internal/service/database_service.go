@@ -25,7 +25,7 @@ func NewDatabaseService(q sqlc.Querier, c *asynq.Client) *DatabaseService {
 	return &DatabaseService{db: q, taskClient: c}
 }
 
-func CheckDatabaseExists(c context.Context, db sqlc.Querier, projectId uuid.UUID, dbId uuid.UUID) (sqlc.Database, error) {
+func CheckDatabaseExists(c context.Context, db sqlc.Querier, projectId uuid.UUID, dbId uuid.UUID) (models.Database, error) {
 	slog.Info("Checking if database exists", "database_id", dbId)
 
 	// Check if the database exists
@@ -35,10 +35,10 @@ func CheckDatabaseExists(c context.Context, db sqlc.Querier, projectId uuid.UUID
 	})
 	if err != nil {
 		slog.Error("Error getting database", "database_id", dbId, "err", err)
-		return sqlc.Database{}, errormsg.ErrDatabaseNotFound
+		return models.Database{}, errormsg.ErrDatabaseNotFound
 	}
 
-	return database, nil
+	return mapper.ToDomainDatabase(database), nil
 }
 
 func (r *DatabaseService) CreateDatabase(c context.Context, args sqlc.CreateDatabaseParams) (models.Database, error) {
@@ -113,9 +113,14 @@ func (r *DatabaseService) EnqueueManualDatabaseSync(c context.Context, projectId
 	return nil
 }
 
-func (r *DatabaseService) GetDatabase(c context.Context, id uuid.UUID) (sqlc.Database, error) {
-	slog.Info("Getting database", "id", id)
-	return r.db.GetDatabase(c, id)
+func (r *DatabaseService) GetDatabase(c context.Context, databaseId uuid.UUID) (models.Database, error) {
+	slog.Info("Getting database", "databaseId", databaseId)
+	database, err := r.db.GetDatabase(c, databaseId)
+	if err != nil {
+		slog.Error("Unable to get database")
+		return models.Database{}, err
+	}
+	return mapper.ToDomainDatabase(database), nil
 }
 
 func (r *DatabaseService) DeleteDatabase(c context.Context, id uuid.UUID) error {
@@ -123,9 +128,21 @@ func (r *DatabaseService) DeleteDatabase(c context.Context, id uuid.UUID) error 
 	return r.db.DeleteDatabase(c, id)
 }
 
-func (r *DatabaseService) ListDatabasesByProject(c context.Context, id uuid.UUID) ([]sqlc.Database, error) {
-	slog.Info("Listing databases for project", "project_id", id)
-	return r.db.ListDatabasesByProject(c, id)
+func (r *DatabaseService) ListDatabasesByProject(c context.Context, projectId uuid.UUID) ([]models.Database, error) {
+	slog.Info("Listing databases for project", "project_id", projectId)
+	project, err := CheckProjectExists(c, r.db, projectId)
+	if err != nil {
+		slog.Error("Could not get project")
+		return nil, err
+	}
+	databases, err := r.db.ListDatabasesByProject(c, project.ID)
+
+	if err != nil {
+		slog.Error("Unable to get databases")
+		return nil, err
+	}
+
+	return mapper.ToDomainDatabases(databases), nil
 }
 
 func (r *DatabaseService) UpdateDatabase(c context.Context, projectId uuid.UUID, databaseId uuid.UUID, dto dto.DatabaseUpdateDto) (models.Database, error) {

@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/lmittmann/tint"
 	"github.com/walmaa/skemr-api/db/sqlc"
 	"github.com/walmaa/skemr-api/internal/routers"
@@ -17,7 +17,7 @@ import (
 )
 
 // runSchema drops the current schema, reads schema.sql file and executes it to set up the database schema.
-func runSchema(conn *pgx.Conn) {
+func runSchema(conn *pgxpool.Pool) {
 	schema, err := os.ReadFile("./db/schema.sql")
 	if err != nil {
 		log.Fatal(err)
@@ -51,7 +51,7 @@ func main() {
 		}),
 	))
 
-	conn, err := pgx.Connect(context.Background(), "postgres://postgres:pass@localhost:5432/postgres")
+	conn, err := pgxpool.New(context.Background(), "postgres://postgres:pass@localhost:5432/postgres")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -81,6 +81,6 @@ func main() {
 
 	// Initialize router
 	r := routers.InitRouter(services)
-	defer conn.Close(context.Background())
+	defer conn.Close()
 	r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
 }

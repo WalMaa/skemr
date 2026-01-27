@@ -17,9 +17,9 @@ const (
 
 type DatabaseEntity struct {
 	ID        uuid.UUID          `json:"id"`
-	ProjectId uuid.UUID          `json:"projectId"`
+	Name      string             `json:"name"` // Name of the entity "public", "users", "email", "my_view"
 	Type      DatabaseEntityType `json:"type"`
 	ParentId  *uuid.UUID         `json:"parentId"` // in case of column, references table. table references schema etc.
-	Name      string             `json:"name"`     // Name of the entity "public", "users", "email", "my_view"
+	ProjectId uuid.UUID          `json:"projectId"`
 	CreatedAt time.Time          `json:"createdAt"`
 }

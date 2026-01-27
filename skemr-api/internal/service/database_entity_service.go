@@ -39,7 +39,7 @@ func (s *DatabaseEntityService) GetDatabaseEntityByID(c context.Context, project
 }
 
 func (s *DatabaseEntityService) ListDatabaseEntitiesByDatabase(c context.Context, projectId uuid.UUID, databaseId uuid.UUID, entityType *models.DatabaseEntityType, parentId *uuid.UUID) ([]models.DatabaseEntity, error) {
-	slog.Info("Listing database entities", "project", "database", databaseId)
+	slog.Info("Listing database entities", "projectId", projectId, "database", databaseId)
 	project, err := CheckProjectExists(c, s.db, projectId)
 
 	if err != nil {

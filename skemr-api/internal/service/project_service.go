@@ -42,14 +42,14 @@ func (r *ProjectService) CreateProject(c context.Context, name string) (sqlc.Pro
 	return r.db.CreateProject(c, name)
 }
 
-func (r *ProjectService) GetProjects(c context.Context) ([]sqlc.Project, error) {
+func (r *ProjectService) GetProjects(c context.Context) ([]models.Project, error) {
 	slog.Info("Fetching all projects")
 	projects, err := r.db.GetProjects(c)
 	if err != nil {
 		slog.Error("Error fetching projects", "err", err)
 		return nil, err
 	}
-	return projects, nil
+	return mapper.ToDomainProjects(projects), nil
 }
 
 func (r *ProjectService) GetProject(c context.Context, id uuid.UUID) (sqlc.Project, error) {
