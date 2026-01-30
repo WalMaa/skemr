@@ -1,27 +1,28 @@
 package middleware
 
 import (
-	"github.com/gin-gonic/gin"
+	"context"
+	"net/http"
+
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
-const CtxProjectID = "projectID"
+const CtxProjectID = "projectId"
 
-func ProjectIDMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		param := c.Param("projectId")
-		// if not a project path, skip
+func ProjectIDMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		param := chi.URLParam(r, "projectId")
 		if param == "" {
+			next.ServeHTTP(w, r)
 			return
 		}
-		// If param exists it must pass uuid parsing
 		id, err := uuid.Parse(param)
 		if err != nil {
-			c.JSON(400, gin.H{"error": "invalid projectId"})
-			c.Abort()
+			http.Error(w, "invalid projectId", http.StatusBadRequest)
 			return
 		}
-		c.Set(CtxProjectID, id)
-		c.Next()
-	}
+		ctx := context.WithValue(r.Context(), CtxProjectID, id)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }

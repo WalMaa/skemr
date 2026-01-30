@@ -1,9 +1,11 @@
 package controller
 
 import (
+	"encoding/json"
 	"log/slog"
+	"net/http"
 
-	"github.com/gin-gonic/gin"
+	"github.com/go-chi/chi/v5"
 	"github.com/walmaa/skemr-api/internal/service"
 )
 
@@ -15,22 +17,22 @@ func NewWebhookController(s *service.WebhookService) *WebhookController {
 	return &WebhookController{Service: s}
 }
 
-func (h *WebhookController) RegisterRoutes(g *gin.RouterGroup) {
-	group := g.Group("webhooks")
-	{
-		group.POST("/gitlab", h.handleGitLabWebhook)
-
-	}
+func (h *WebhookController) RegisterRoutes(r chi.Router) {
+	r.Route("/webhooks", func(r chi.Router) {
+		r.Post("/gitlab", h.handleGitLabWebhook)
+	})
 }
 
-func (h *WebhookController) handleGitLabWebhook(c *gin.Context) {
-	// Handle GitLab webhook payload
-	slog.Info("Received GitLab webhook", "body", c.Request.RemoteAddr)
+func (h *WebhookController) handleGitLabWebhook(w http.ResponseWriter, r *http.Request) {
+	slog.Info("Received GitLab webhook", "remote_addr", r.RemoteAddr)
 
-	r := c.Request
+	if err := h.Service.HandleGitLabWebhook(nil, r); err != nil { // TODO: Refactor service to not require gin.Context
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-	h.Service.HandleGitLabWebhook(c, r)
-
-	c.JSON(200, gin.H{"status": "GitLab webhook received"})
-
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(map[string]string{"status": "GitLab webhook received"}); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }

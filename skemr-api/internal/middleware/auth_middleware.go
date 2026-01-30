@@ -1,23 +1,26 @@
 package middleware
 
 import (
-	"github.com/gin-gonic/gin"
+	"context"
+	"net/http"
+
 	"github.com/google/uuid"
 	"github.com/walmaa/skemr-common/models"
-
-	"net/http"
 )
 
-func AuthMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		user := authenticate(c.Request.Header.Get("Authorization"))
+// Context key for user
+const CtxUser = "user"
+
+func AuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user := authenticate(r.Header.Get("Authorization"))
 		if user == nil {
-			c.AbortWithStatus(http.StatusUnauthorized)
+			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
-		c.Set("user", user)
-		c.Next()
-	}
+		ctx := context.WithValue(r.Context(), CtxUser, user)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }
 
 func authenticate(token string) *models.User {

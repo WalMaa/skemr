@@ -1,11 +1,11 @@
 package controller
 
 import (
+	"encoding/json"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
-	"github.com/walmaa/skemr-api/internal/middleware"
 	"github.com/walmaa/skemr-api/internal/service"
 	"github.com/walmaa/skemr-common/models"
 )
@@ -18,74 +18,77 @@ func NewDatabaseEntityController(s *service.DatabaseEntityService) *DatabaseEnti
 	return &DatabaseEntityController{Service: s}
 }
 
-func (h *DatabaseEntityController) RegisterRoutes(g *gin.RouterGroup) {
-	group := g.Group("/projects/:projectId/databases/:databaseId/entities")
-	{
-		group.GET("", h.GetDatabaseEntities)
-		group.GET("/:entityId", h.GetDatabaseEntity)
-
-	}
+func (h *DatabaseEntityController) RegisterRoutes(r chi.Router) {
+	r.Route("/databases/{databaseId}/entities", func(r chi.Router) {
+		r.Get("/", h.GetDatabaseEntities)
+		r.Get("/{entityId}", h.GetDatabaseEntity)
+	})
 }
 
 type Query struct {
 	EntityType models.DatabaseEntityType
 }
 
-func (h *DatabaseEntityController) GetDatabaseEntity(c *gin.Context) {
-	projectId := c.MustGet(middleware.CtxProjectID).(uuid.UUID)
-
-	databaseId, err := uuid.Parse(c.Param("databaseId"))
-	if err != nil {
-		c.JSON(400, gin.H{"error": "Invalid database ID format"})
+func (h *DatabaseEntityController) GetDatabaseEntity(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	projectId, ok := ctx.Value("projectId").(uuid.UUID)
+	if !ok {
+		http.Error(w, "projectId not found in context", http.StatusBadRequest)
 		return
 	}
-	entityId, err := uuid.Parse(c.Param("entityId"))
+	databaseId, err := uuid.Parse(chi.URLParam(r, "databaseId"))
 	if err != nil {
-		c.JSON(400, gin.H{"error": "Invalid entity ID format"})
+		http.Error(w, "Invalid database ID format", http.StatusBadRequest)
 		return
 	}
-	entity, err := h.Service.GetDatabaseEntityByID(c, projectId, databaseId, entityId)
-
+	entityId, err := uuid.Parse(chi.URLParam(r, "entityId"))
 	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
+		http.Error(w, "Invalid entity ID format", http.StatusBadRequest)
 		return
 	}
-
-	c.JSON(http.StatusOK, entity)
+	entity, err := h.Service.GetDatabaseEntityByID(ctx, projectId, databaseId, entityId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(entity); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
-func (h *DatabaseEntityController) GetDatabaseEntities(c *gin.Context) {
-	projectId := c.MustGet(middleware.CtxProjectID).(uuid.UUID)
+func (h *DatabaseEntityController) GetDatabaseEntities(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	projectId := ctx.Value("projectId").(uuid.UUID)
 
-	databaseId, err := uuid.Parse(c.Param("databaseId"))
+	databaseId, err := uuid.Parse(chi.URLParam(r, "databaseId"))
 	if err != nil {
-		c.JSON(400, gin.H{"error": "Invalid database ID format"})
+		http.Error(w, "Invalid database ID format", http.StatusBadRequest)
 		return
 	}
-	entityTypeQuery := c.Query("type")
+	entityTypeQuery := r.URL.Query().Get("type")
 	var entityType *models.DatabaseEntityType
 	if entityTypeQuery != "" {
 		et := models.DatabaseEntityType(entityTypeQuery)
 		entityType = &et
 	}
-
-	parentIdQuery := c.Query("parentId")
+	parentIdQuery := r.URL.Query().Get("parentId")
 	var parentId *uuid.UUID
 	if parentIdQuery != "" {
 		pId, err := uuid.Parse(parentIdQuery)
 		if err != nil {
-			c.JSON(400, gin.H{"error": "Invalid parent ID format"})
+			http.Error(w, "Invalid parent ID format", http.StatusBadRequest)
 			return
 		}
 		parentId = &pId
 	}
-	entities, err := h.Service.ListDatabaseEntitiesByDatabase(c, projectId, databaseId, entityType, parentId)
-
+	entities, err := h.Service.ListDatabaseEntitiesByDatabase(ctx, projectId, databaseId, entityType, parentId)
 	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	c.JSON(http.StatusOK, entities)
-
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(entities); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }

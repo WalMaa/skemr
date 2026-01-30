@@ -1,10 +1,10 @@
 package controller
 
 import (
-	"errors"
+	"encoding/json"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/walmaa/skemr-api/internal/errormsg"
 	"github.com/walmaa/skemr-api/internal/service"
@@ -18,53 +18,53 @@ func NewProjectController(s *service.ProjectService) *ProjectController {
 	return &ProjectController{Service: s}
 }
 
-func (h *ProjectController) RegisterRoutes(g *gin.RouterGroup) {
-	group := g.Group("/projects/")
-	group.POST("/", h.createProject)
-	group.GET("/:projectId", h.getProject)
-	group.GET("/", h.getProjects)
+func (h *ProjectController) RegisterRoutes(r chi.Router) {
+	r.Route("/projects", func(r chi.Router) {
+		r.Post("/", h.createProject)
+		r.Get("/", h.getProjects)
+		r.Get("/{projectId}", h.getProject)
+	})
 }
 
-func (h *ProjectController) getProjects(c *gin.Context) {
-	projects, err := h.Service.GetProjects(c)
+func (h *ProjectController) getProjects(w http.ResponseWriter, r *http.Request) {
+	projects, err := h.Service.GetProjects(r.Context())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	c.JSON(http.StatusOK, projects)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(projects)
 }
 
-func (h *ProjectController) createProject(c *gin.Context) {
+func (h *ProjectController) createProject(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		Name string `json:"name" binding:"required,min=3,max=50"`
+		Name string `json:"name"`
 	}
-	if err := c.ShouldBindJSON(&body); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
-	user, err := h.Service.CreateProject(c, body.Name)
+	user, err := h.Service.CreateProject(r.Context(), body.Name)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	c.JSON(http.StatusCreated, user)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(user)
 }
 
-func (h *ProjectController) getProject(c *gin.Context) {
-	projectID, err := uuid.Parse(c.Param("projectId"))
+func (h *ProjectController) getProject(w http.ResponseWriter, r *http.Request) {
+	projectID, err := uuid.Parse(chi.URLParam(r, "projectId"))
 	if err != nil {
-		c.Error(errormsg.ErrInvalidIdFormat)
+		http.Error(w, errormsg.ErrInvalidIdFormat.Error(), http.StatusBadRequest)
 		return
 	}
-
-	project, err := h.Service.GetProject(c, projectID)
+	project, err := h.Service.GetProject(r.Context(), projectID)
 	if err != nil {
-		c.Error(errors.New(err.Error()))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	c.JSON(http.StatusOK, project)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(project)
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"log/slog"
+	"net/http"
 	"os"
 	"time"
 
@@ -80,7 +81,17 @@ func main() {
 	}
 
 	// Initialize router
-	r := routers.InitRouter(services)
+	router := routers.InitRouter(services)
+
 	defer conn.Close()
-	r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
+
+	host := ":8080"
+	srv := &http.Server{
+		Addr:    host,
+		Handler: router,
+	}
+	log.Printf("Listening and serving HTTP on %s", host)
+	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.Fatalf("listen: %s\n", err)
+	}
 }

@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
@@ -12,17 +11,10 @@ type APIError struct {
 }
 
 // ErrorHandler captures errors and returns a consistent JSON error response
-func ErrorHandler() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.Next() // Process the request first
-
-		// Check if errors were added to the context
-		if len(c.Errors) > 0 {
-			err := c.Errors.Last().Err
-
-			c.JSON(http.StatusInternalServerError, APIError{Path: c.FullPath(), Status: http.StatusInternalServerError, Message: err.Error()})
-
-		}
-
-	}
+func ErrorHandler(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// In Chi, error handling is typically done in handlers, but you can add global error handling here if needed.
+		// For now, just call the next handler.
+		next.ServeHTTP(w, r)
+	})
 }

@@ -1,10 +1,10 @@
 package controller
 
 import (
-	"errors"
+	"encoding/json"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/walmaa/skemr-api/db/sqlc"
 	"github.com/walmaa/skemr-api/internal/dto"
@@ -19,126 +19,128 @@ func NewDatabaseController(s *service.DatabaseService) *DatabaseController {
 	return &DatabaseController{Service: s}
 }
 
-func (h *DatabaseController) RegisterRoutes(g *gin.RouterGroup) {
-	group := g.Group("/projects/:projectId/databases")
-	{
-		group.POST("", h.createDatabase)
-		group.GET("/:databaseId", h.getDatabase)
-		group.DELETE("/:databaseId", h.deleteDatabase)
-		group.GET("", h.listDatabasesByProject)
-		group.PATCH("/:databaseId", h.updateDatabase)
-		group.POST("/:databaseId/sync", h.syncDatabase)
+func (h *DatabaseController) RegisterRoutes(r chi.Router) {
+	r.Route("/databases", func(r chi.Router) {
+		r.Post("/", h.createDatabase)
+		r.Get("/", h.listDatabasesByProject)
+		r.Get("/{databaseId}", h.getDatabase)
+		r.Delete("/{databaseId}", h.deleteDatabase)
+		r.Patch("/{databaseId}", h.updateDatabase)
+		r.Post("/{databaseId}/sync", h.syncDatabase)
+	})
+}
+
+func (h *DatabaseController) deleteDatabase(w http.ResponseWriter, r *http.Request) {
+	databaseId, err := uuid.Parse(chi.URLParam(r, "databaseId"))
+	if err != nil {
+		http.Error(w, "Invalid ID format", http.StatusBadRequest)
+		return
+	}
+	err = h.Service.DeleteDatabase(r.Context(), databaseId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *DatabaseController) listDatabasesByProject(w http.ResponseWriter, r *http.Request) {
+	id, err := uuid.Parse(chi.URLParam(r, "projectId"))
+	if err != nil {
+		http.Error(w, "Invalid project ID format", http.StatusBadRequest)
+		return
+	}
+	databases, err := h.Service.ListDatabasesByProject(r.Context(), id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(databases); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
-func (h *DatabaseController) deleteDatabase(c *gin.Context) {
-	databaseId, err := uuid.Parse(c.Param("databaseId"))
+func (h *DatabaseController) createDatabase(w http.ResponseWriter, r *http.Request) {
+	projectId, err := uuid.Parse(chi.URLParam(r, "projectId"))
 	if err != nil {
-		c.JSON(400, gin.H{"error": "Invalid ID format"})
+		http.Error(w, "Invalid project ID format", http.StatusBadRequest)
 		return
 	}
-
-	err = h.Service.DeleteDatabase(c, databaseId)
-	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.Status(204) // No Content
-}
-
-func (h *DatabaseController) listDatabasesByProject(c *gin.Context) {
-	id, err := uuid.Parse(c.Param("projectId"))
-	if err != nil {
-		c.JSON(400, gin.H{"error": "Invalid project ID format"})
-		return
-	}
-
-	databases, err := h.Service.ListDatabasesByProject(c, id)
-	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(200, databases)
-}
-
-func (h *DatabaseController) createDatabase(c *gin.Context) {
-	projectId, err := uuid.Parse(c.Param("projectId"))
 	var body struct {
-		Name string `json:"name" binding:"required,min=3,max=50"`
+		Name string `json:"name"`
 	}
-	if err := c.ShouldBindJSON(&body); err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
 	args := sqlc.CreateDatabaseParams{
 		DisplayName: body.Name,
 		ProjectID:   projectId,
 	}
-
-	database, err := h.Service.CreateDatabase(c, args)
+	database, err := h.Service.CreateDatabase(r.Context(), args)
 	if err != nil {
-		c.Error(errors.New(err.Error()))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	c.JSON(201, database)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	if err := json.NewEncoder(w).Encode(database); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
-func (h *DatabaseController) updateDatabase(c *gin.Context) {
-	projectId := c.MustGet("projectID").(uuid.UUID)
-	databaseId, ok := paramUUID(c, "databaseId")
-	if !ok {
+func (h *DatabaseController) updateDatabase(w http.ResponseWriter, r *http.Request) {
+	projectId := r.Context().Value("projectId").(uuid.UUID)
+	databaseId, err := uuid.Parse(chi.URLParam(r, "databaseId"))
+	if err != nil {
+		http.Error(w, "Invalid database ID format", http.StatusBadRequest)
 		return
 	}
 	var body dto.DatabaseUpdateDto
-	if err := c.ShouldBindJSON(&body); err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
-	database, err := h.Service.UpdateDatabase(c, projectId, databaseId, body)
+	database, err := h.Service.UpdateDatabase(r.Context(), projectId, databaseId, body)
 	if err != nil {
-		c.Error(errors.New(err.Error()))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	c.JSON(http.StatusOK, database)
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(database); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
-func (h *DatabaseController) syncDatabase(c *gin.Context) {
-	projectId := c.MustGet("projectID").(uuid.UUID)
-	databaseId, ok := paramUUID(c, "databaseId")
-	if !ok {
-		return
-	}
-
-	err := h.Service.EnqueueManualDatabaseSync(c, projectId, databaseId)
-
+func (h *DatabaseController) syncDatabase(w http.ResponseWriter, r *http.Request) {
+	projectId := r.Context().Value("projectId").(uuid.UUID)
+	databaseId, err := uuid.Parse(chi.URLParam(r, "databaseId"))
 	if err != nil {
-		c.Error(errors.New(err.Error()))
+		http.Error(w, "Invalid database ID format", http.StatusBadRequest)
 		return
 	}
-
-	c.JSON(http.StatusNoContent, nil)
+	err = h.Service.EnqueueManualDatabaseSync(r.Context(), projectId, databaseId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
-func (h *DatabaseController) getDatabase(c *gin.Context) {
-
-	databaseId, err := uuid.Parse(c.Param("databaseId"))
-
+func (h *DatabaseController) getDatabase(w http.ResponseWriter, r *http.Request) {
+	databaseId, err := uuid.Parse(chi.URLParam(r, "databaseId"))
 	if err != nil {
-		c.JSON(400, gin.H{"error": "Invalid ID format"})
+		http.Error(w, "Invalid ID format", http.StatusBadRequest)
 		return
 	}
-
-	database, err := h.Service.GetDatabase(c, databaseId)
+	database, err := h.Service.GetDatabase(r.Context(), databaseId)
 	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	c.JSON(200, database)
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(database); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }

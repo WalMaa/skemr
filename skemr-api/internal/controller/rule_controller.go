@@ -1,13 +1,12 @@
 package controller
 
 import (
-	"errors"
+	"encoding/json"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/walmaa/skemr-api/internal/dto"
-	"github.com/walmaa/skemr-api/internal/middleware"
 	"github.com/walmaa/skemr-api/internal/service"
 )
 
@@ -19,91 +18,112 @@ func NewRuleController(s *service.RuleService) *RuleController {
 	return &RuleController{Service: s}
 }
 
-func (h *RuleController) RegisterRoutes(g *gin.RouterGroup) {
-	group := g.Group("projects/:projectId/databases/:databaseId/rules")
-	group.POST("", h.createRule)
-	group.GET("", h.ListRules)
-	group.GET("/:ruleId", h.GetRule)
-	group.DELETE("/:ruleId", h.deleteRule)
+func (h *RuleController) RegisterRoutes(r chi.Router) {
+	r.Route("/databases/{databaseId}/rules", func(r chi.Router) {
+		r.Post("/", h.createRule)
+		r.Get("/", h.ListRules)
+		r.Get("/{ruleId}", h.GetRule)
+		r.Delete("/{ruleId}", h.deleteRule)
+	})
 }
 
-func (h *RuleController) GetRule(c *gin.Context) {
-	projectID := c.MustGet(middleware.CtxProjectID).(uuid.UUID)
-	databaseId, ok := paramUUID(c, "databaseId")
+func (h *RuleController) GetRule(w http.ResponseWriter, r *http.Request) {
+	projectID, ok := r.Context().Value("projectID").(uuid.UUID)
 	if !ok {
+		http.Error(w, "projectID not found in context", http.StatusBadRequest)
 		return
 	}
-	ruleId, ok := paramUUID(c, "ruleId")
-	if !ok {
-		return
-	}
-	rule, err := h.Service.GetRule(c, projectID, databaseId, ruleId)
-
+	databaseId, err := uuid.Parse(chi.URLParam(r, "databaseId"))
 	if err != nil {
-		c.Error(errors.New(err.Error()))
+		http.Error(w, "invalid databaseId", http.StatusBadRequest)
 		return
 	}
-
-	c.JSON(http.StatusOK, rule)
-}
-
-func (h *RuleController) deleteRule(c *gin.Context) {
-	projectID := c.MustGet(middleware.CtxProjectID).(uuid.UUID)
-	databaseId, ok := paramUUID(c, "databaseId")
-	if !ok {
-		return
-	}
-	ruleId, ok := paramUUID(c, "ruleId")
-	if !ok {
-		return
-	}
-	err := h.Service.DeleteRule(c, projectID, databaseId, ruleId)
-
+	ruleId, err := uuid.Parse(chi.URLParam(r, "ruleId"))
 	if err != nil {
-		c.Error(errors.New(err.Error()))
+		http.Error(w, "invalid ruleId", http.StatusBadRequest)
 		return
 	}
-
-	c.Status(http.StatusNoContent)
+	rule, err := h.Service.GetRule(r.Context(), projectID, databaseId, ruleId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(rule); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
-func (h *RuleController) createRule(c *gin.Context) {
-	databaseId, ok := paramUUID(c, "databaseId")
+func (h *RuleController) deleteRule(w http.ResponseWriter, r *http.Request) {
+	projectID, ok := r.Context().Value("projectID").(uuid.UUID)
 	if !ok {
+		http.Error(w, "projectID not found in context", http.StatusBadRequest)
 		return
 	}
-	projectID := c.MustGet(middleware.CtxProjectID).(uuid.UUID)
+	databaseId, err := uuid.Parse(chi.URLParam(r, "databaseId"))
+	if err != nil {
+		http.Error(w, "invalid databaseId", http.StatusBadRequest)
+		return
+	}
+	ruleId, err := uuid.Parse(chi.URLParam(r, "ruleId"))
+	if err != nil {
+		http.Error(w, "invalid ruleId", http.StatusBadRequest)
+		return
+	}
+	err = h.Service.DeleteRule(r.Context(), projectID, databaseId, ruleId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
 
+func (h *RuleController) createRule(w http.ResponseWriter, r *http.Request) {
+	databaseId, err := uuid.Parse(chi.URLParam(r, "databaseId"))
+	if err != nil {
+		http.Error(w, "invalid databaseId", http.StatusBadRequest)
+		return
+	}
+	projectID, ok := r.Context().Value("projectID").(uuid.UUID)
+	if !ok {
+		http.Error(w, "projectID not found in context", http.StatusBadRequest)
+		return
+	}
 	var body dto.RuleCreationDto
-	if err := c.ShouldBindJSON(&body); err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
-	rule, err := h.Service.CreateRule(c, projectID, databaseId, body)
-
+	rule, err := h.Service.CreateRule(r.Context(), projectID, databaseId, body)
 	if err != nil {
-		c.Error(errors.New(err.Error()))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	c.JSON(http.StatusCreated, rule)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	if err := json.NewEncoder(w).Encode(rule); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
-func (h *RuleController) ListRules(c *gin.Context) {
-	databaseId, ok := paramUUID(c, "databaseId")
-	if !ok {
-		return
-	}
-	projectID := c.MustGet("projectID").(uuid.UUID)
-
-	rules, err := h.Service.ListRulesByDatabase(c, projectID, databaseId)
-
+func (h *RuleController) ListRules(w http.ResponseWriter, r *http.Request) {
+	databaseId, err := uuid.Parse(chi.URLParam(r, "databaseId"))
 	if err != nil {
-		c.Error(errors.New(err.Error()))
+		http.Error(w, "invalid databaseId", http.StatusBadRequest)
 		return
 	}
-
-	c.JSON(http.StatusOK, rules)
-
+	projectID, ok := r.Context().Value("projectID").(uuid.UUID)
+	if !ok {
+		http.Error(w, "projectID not found in context", http.StatusBadRequest)
+		return
+	}
+	rules, err := h.Service.ListRulesByDatabase(r.Context(), projectID, databaseId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(rules); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
