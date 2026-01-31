@@ -2,9 +2,13 @@ package controller
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/render"
+	"github.com/google/uuid"
+	"github.com/walmaa/skemr-api/internal/dto"
 	"github.com/walmaa/skemr-api/internal/service"
 )
 
@@ -18,7 +22,7 @@ func NewProjectSecretsController(s *service.ProjectSecretsService) *ProjectSecre
 
 func (h *ProjectSecretsController) RegisterRoutes(r chi.Router) {
 	r.Route("/secrets", func(r chi.Router) {
-		r.Post("/", h.createSecret)
+		r.Post("/", h.createToken)
 		r.Get("/", h.getSecrets)
 		r.Get("/{secretId}", h.getSecret)
 		r.Put("/{secretId}", h.updateSecret)
@@ -26,17 +30,26 @@ func (h *ProjectSecretsController) RegisterRoutes(r chi.Router) {
 	})
 }
 
-func (h *ProjectSecretsController) createSecret(w http.ResponseWriter, r *http.Request) {
-	type createSecretRequest struct {
-		Name      string  `json:"name"`
-		ExpiresAt *string `json:"expiresAt"`
-	}
-	var req createSecretRequest
+func (h *ProjectSecretsController) createToken(w http.ResponseWriter, r *http.Request) {
+	c := r.Context()
+	projectId := c.Value("projectId").(uuid.UUID)
+	var req dto.SecretCreationDto
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request", http.StatusBadRequest)
 		return
 	}
-	// TODO: Implement creation logic
+	token, err := h.Service.CreateToken(c, projectId, req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	type TokenResponse struct {
+		Token string `json:"token"`
+	}
+	response := TokenResponse{Token: token}
+	render.Status(r, http.StatusCreated)
+	render.JSON(w, r, response)
+
 }
 
 func (h *ProjectSecretsController) getSecret(w http.ResponseWriter, r *http.Request) {
@@ -44,7 +57,17 @@ func (h *ProjectSecretsController) getSecret(w http.ResponseWriter, r *http.Requ
 }
 
 func (h *ProjectSecretsController) getSecrets(w http.ResponseWriter, r *http.Request) {
-	// TODO: Implement listing logic
+	c := r.Context()
+	projectId := c.Value("projectId").(uuid.UUID)
+
+	tokens, err := h.Service.GetTokens(c, projectId)
+	if err != nil {
+		slog.Error("Error getting tokens", err)
+		return
+	}
+
+	render.Status(r, http.StatusOK)
+	render.JSON(w, r, tokens)
 }
 
 func (h *ProjectSecretsController) updateSecret(w http.ResponseWriter, r *http.Request) {

@@ -59,12 +59,14 @@ CREATE TABLE projects_sources
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE projects_secret_keys
+CREATE TABLE project_access_tokens
 (
     id         UUID PRIMARY KEY     DEFAULT gen_random_uuid(),
     project_id UUID        NOT NULL REFERENCES projects (id) ON DELETE CASCADE,
     name       TEXT        NOT NULL,
-    secret_key TEXT        NOT NULL,
+    prefix TEXT NOT NULL, -- lookup key of the token
+    hash TEXT        NOT NULL,
+    last_used TIMESTAMPTZ,
     expires_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

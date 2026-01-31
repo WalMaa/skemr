@@ -25,6 +25,8 @@ func InitRouter(services *Services) http.Handler {
 	r.Use(chimiddleware.RealIP)
 	r.Use(chimiddleware.Logger)
 	r.Use(chimiddleware.Recoverer)
+	r.Use(chimiddleware.RequestID)
+	r.Use(chimiddleware.StripSlashes)
 
 	// Public routes
 	r.Route("/api/v1/auth", func(r chi.Router) {
@@ -38,6 +40,9 @@ func InitRouter(services *Services) http.Handler {
 	// Protected routes
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Use(middleware.AuthMiddleware)
+		projectController := controller.NewProjectController(services.ProjectService)
+
+		projectController.RegisterRoutes(r)
 
 		// Project level routes
 		r.Route("/projects/{projectId}", func(r chi.Router) {
@@ -50,10 +55,9 @@ func InitRouter(services *Services) http.Handler {
 			projectSecretsController.RegisterRoutes(r)
 			ruleController.RegisterRoutes(r)
 			databaseEntityController.RegisterRoutes(r)
-		})
-		projectController := controller.NewProjectController(services.ProjectService)
 
-		projectController.RegisterRoutes(r)
+			r.Get("/", projectController.GetProject)
+		})
 	})
 
 	return r

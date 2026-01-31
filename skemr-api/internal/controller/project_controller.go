@@ -7,6 +7,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/walmaa/skemr-api/internal/errormsg"
+	"github.com/walmaa/skemr-api/internal/middleware"
 	"github.com/walmaa/skemr-api/internal/service"
 )
 
@@ -22,7 +23,8 @@ func (h *ProjectController) RegisterRoutes(r chi.Router) {
 	r.Route("/projects", func(r chi.Router) {
 		r.Post("/", h.createProject)
 		r.Get("/", h.getProjects)
-		r.Get("/{projectId}", h.getProject)
+		// Middleware must be defined before routes
+		r.With(middleware.ProjectIDMiddleware)
 	})
 }
 
@@ -33,7 +35,9 @@ func (h *ProjectController) getProjects(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(projects)
+	if err := json.NewEncoder(w).Encode(projects); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 func (h *ProjectController) createProject(w http.ResponseWriter, r *http.Request) {
@@ -51,10 +55,12 @@ func (h *ProjectController) createProject(w http.ResponseWriter, r *http.Request
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(user)
+	if err := json.NewEncoder(w).Encode(user); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
-func (h *ProjectController) getProject(w http.ResponseWriter, r *http.Request) {
+func (h *ProjectController) GetProject(w http.ResponseWriter, r *http.Request) {
 	projectID, err := uuid.Parse(chi.URLParam(r, "projectId"))
 	if err != nil {
 		http.Error(w, errormsg.ErrInvalidIdFormat.Error(), http.StatusBadRequest)
@@ -66,5 +72,7 @@ func (h *ProjectController) getProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(project)
+	if err := json.NewEncoder(w).Encode(project); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }

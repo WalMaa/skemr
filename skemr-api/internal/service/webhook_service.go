@@ -29,7 +29,7 @@ func (s *WebhookService) HandleGitLabWebhook(c context.Context, r *http.Request)
 	}
 
 	// TODO: Map the secret to a project and process the payload accordingly
-	project, err := s.db.GetProjectBySecretKey(c, webhookSecret)
+	project, err := s.db.GetProjectBySecretPrefix(c, webhookSecret)
 	if err != nil {
 		slog.Warn("Error getting project by secret", "err", err)
 		//return err

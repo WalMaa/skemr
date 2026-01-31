@@ -1,6 +1,10 @@
 package dto
 
-import "github.com/google/uuid"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type DatabaseCreationDto struct {
 	DisplayName string `json:"display_name"`
@@ -36,3 +40,8 @@ const (
 	RuleTypeAdvisory   RuleType = "advisory"
 	RuleTypeDeprecated RuleType = "deprecated"
 )
+
+type SecretCreationDto struct {
+	Name      string
+	ExpiresAt time.Time
+}
