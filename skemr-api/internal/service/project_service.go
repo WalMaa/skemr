@@ -52,8 +52,16 @@ func (r *ProjectService) GetProjects(c context.Context) ([]models.Project, error
 	return mapper.ToDomainProjects(projects), nil
 }
 
-func (r *ProjectService) GetProject(c context.Context, id uuid.UUID) (sqlc.Project, error) {
-	return r.db.GetProject(c, id)
+func (r *ProjectService) GetProject(c context.Context, projectId uuid.UUID) (models.Project, error) {
+	slog.Info("Getting project", "projectId", projectId)
+	project, err := r.db.GetProject(c, projectId)
+
+	if err != nil {
+		slog.Error("Error getting project", err)
+		return models.Project{}, err
+	}
+
+	return mapper.ToDomainProject(project), nil
 }
 
 func (r *ProjectService) DeleteProject(c context.Context, id uuid.UUID) error {
