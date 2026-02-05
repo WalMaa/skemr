@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/render"
 	"github.com/google/uuid"
 	"github.com/walmaa/skemr-api/internal/dto"
 	"github.com/walmaa/skemr-api/internal/service"
@@ -30,7 +31,7 @@ func (h *RuleController) RegisterRoutes(r chi.Router) {
 func (h *RuleController) GetRule(w http.ResponseWriter, r *http.Request) {
 	projectID, ok := r.Context().Value("projectID").(uuid.UUID)
 	if !ok {
-		http.Error(w, "projectID not found in context", http.StatusBadRequest)
+		http.Error(w, "projectId not found in context", http.StatusBadRequest)
 		return
 	}
 	databaseId, err := uuid.Parse(chi.URLParam(r, "databaseId"))
@@ -55,9 +56,9 @@ func (h *RuleController) GetRule(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *RuleController) deleteRule(w http.ResponseWriter, r *http.Request) {
-	projectID, ok := r.Context().Value("projectID").(uuid.UUID)
+	projectID, ok := r.Context().Value("projectId").(uuid.UUID)
 	if !ok {
-		http.Error(w, "projectID not found in context", http.StatusBadRequest)
+		http.Error(w, "projectId not found in context", http.StatusBadRequest)
 		return
 	}
 	databaseId, err := uuid.Parse(chi.URLParam(r, "databaseId"))
@@ -75,7 +76,7 @@ func (h *RuleController) deleteRule(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(http.StatusNoContent)
+	render.Status(r, http.StatusNoContent)
 }
 
 func (h *RuleController) createRule(w http.ResponseWriter, r *http.Request) {
@@ -84,9 +85,9 @@ func (h *RuleController) createRule(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid databaseId", http.StatusBadRequest)
 		return
 	}
-	projectID, ok := r.Context().Value("projectID").(uuid.UUID)
+	projectID, ok := r.Context().Value("projectId").(uuid.UUID)
 	if !ok {
-		http.Error(w, "projectID not found in context", http.StatusBadRequest)
+		http.Error(w, "projectId not found in context", http.StatusBadRequest)
 		return
 	}
 	var body dto.RuleCreationDto
@@ -99,11 +100,9 @@ func (h *RuleController) createRule(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	if err := json.NewEncoder(w).Encode(rule); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+
+	render.JSON(w, r, rule)
+	render.Status(r, http.StatusCreated)
 }
 
 func (h *RuleController) ListRules(w http.ResponseWriter, r *http.Request) {
@@ -112,9 +111,9 @@ func (h *RuleController) ListRules(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid databaseId", http.StatusBadRequest)
 		return
 	}
-	projectID, ok := r.Context().Value("projectID").(uuid.UUID)
+	projectID, ok := r.Context().Value("projectId").(uuid.UUID)
 	if !ok {
-		http.Error(w, "projectID not found in context", http.StatusBadRequest)
+		http.Error(w, "projectId not found in context", http.StatusBadRequest)
 		return
 	}
 	rules, err := h.Service.ListRulesByDatabase(r.Context(), projectID, databaseId)
@@ -122,8 +121,5 @@ func (h *RuleController) ListRules(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(rules); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+	render.JSON(w, r, rules)
 }
