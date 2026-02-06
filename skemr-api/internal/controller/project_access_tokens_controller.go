@@ -75,5 +75,16 @@ func (h *ProjectSecretsController) updateSecret(w http.ResponseWriter, r *http.R
 }
 
 func (h *ProjectSecretsController) deleteSecret(w http.ResponseWriter, r *http.Request) {
-	// TODO: Implement delete logic
+	c := r.Context()
+	projectId := c.Value("projectId").(uuid.UUID)
+
+	secretId, err := uuid.Parse(chi.URLParam(r, "secretId"))
+
+	if err != nil {
+		http.Error(w, "Invalid Secret ID", http.StatusBadRequest)
+	}
+
+	h.Service.DeleteToken(c, projectId, secretId)
+
+	render.Status(r, http.StatusNoContent)
 }

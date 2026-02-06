@@ -80,3 +80,17 @@ func (s *ProjectSecretsService) GetTokens(c context.Context, projectId uuid.UUID
 	return mapper.ToDomainProjectAccessKeys(accessTokens), nil
 
 }
+
+func (s *ProjectSecretsService) DeleteToken(c context.Context, projectId uuid.UUID, secretId uuid.UUID) error {
+	slog.Info("Deleting token", "projectId", projectId, "secretId", secretId)
+
+	project, err := CheckProjectExists(c, s.db, projectId)
+
+	if err != nil {
+		slog.Error("Unable to get project")
+		return err
+	}
+
+	return nil
+
+}
