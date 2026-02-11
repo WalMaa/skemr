@@ -26,8 +26,8 @@ CREATE TYPE migration_statement_action AS ENUM (
 CREATE TYPE rule_type AS ENUM (
     'locked',
     'warn',
-    'advisory'
-        'deprecated'
+    'advisory',
+    'deprecated'
     );
 
 CREATE TYPE database_type AS ENUM (

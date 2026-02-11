@@ -4,6 +4,8 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/walmaa/skemr-api/db/sqlc"
+	"github.com/walmaa/skemr-api/internal/dto"
 )
 
 func Text(v *string) pgtype.Text {
@@ -37,4 +39,17 @@ func Time(v *pgtype.Timestamptz) time.Time {
 		return v.Time
 	}
 	return time.Time{}
+}
+
+func NullDatabaseType(databaseType dto.DatabaseType) sqlc.NullDatabaseType {
+	if databaseType == "" {
+		return sqlc.NullDatabaseType{
+			DatabaseType: "",
+			Valid:        false,
+		}
+	}
+	return sqlc.NullDatabaseType{
+		DatabaseType: sqlc.DatabaseType(databaseType),
+		Valid:        true,
+	}
 }

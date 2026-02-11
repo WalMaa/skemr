@@ -5,8 +5,9 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/render"
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
-	"github.com/walmaa/skemr-api/db/sqlc"
 	"github.com/walmaa/skemr-api/internal/dto"
 	"github.com/walmaa/skemr-api/internal/service"
 )
@@ -67,27 +68,23 @@ func (h *DatabaseController) createDatabase(w http.ResponseWriter, r *http.Reque
 		http.Error(w, "Invalid project ID format", http.StatusBadRequest)
 		return
 	}
-	var body struct {
-		Name string `json:"name"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+	var body dto.DatabaseCreationDto
+
+	err = render.Decode(r, body)
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	args := sqlc.CreateDatabaseParams{
-		DisplayName: body.Name,
-		ProjectID:   projectId,
-	}
-	database, err := h.Service.CreateDatabase(r.Context(), args)
+
+	err = validate.Struct(body)
+
+	database, err := h.Service.CreateDatabase(r.Context(), projectId, body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	if err := json.NewEncoder(w).Encode(database); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+	render.JSON(w, r, database)
 }
 
 func (h *DatabaseController) updateDatabase(w http.ResponseWriter, r *http.Request) {

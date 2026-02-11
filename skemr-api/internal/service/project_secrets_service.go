@@ -91,6 +91,15 @@ func (s *ProjectSecretsService) DeleteToken(c context.Context, projectId uuid.UU
 		return err
 	}
 
+	err = s.db.DeleteProjectAccessToken(c, sqlc.DeleteProjectAccessTokenParams{
+		ProjectID: project.ID,
+		SecretID:  secretId,
+	})
+	if err != nil {
+		slog.Error("Unable to delete project access token", err)
+		return err
+	}
+
 	return nil
 
 }

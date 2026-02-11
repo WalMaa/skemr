@@ -7,7 +7,13 @@ import (
 )
 
 type DatabaseCreationDto struct {
-	DisplayName string `json:"display_name"`
+	DisplayName  string       `json:"displayName" validate:"required"`
+	DbName       *string      `json:"dbName"`
+	Username     *string      `json:"username"`
+	Password     *string      `json:"password"`
+	Host         *string      `json:"host"`
+	Port         int32        `json:"port"`
+	DatabaseType DatabaseType `json:"databaseType" validate:"required,oneof=postgres"`
 }
 
 type DatabaseUpdateDto struct {

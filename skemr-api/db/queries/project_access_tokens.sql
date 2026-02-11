@@ -22,3 +22,7 @@ LIMIT 1;
 INSERT INTO project_access_tokens (project_id, name, prefix, hash, expires_at)
 VALUES (@project_id, @name, @prefix, @hash, @expires_at)
 RETURNING id, project_id, name, expires_at, created_at, updated_at;
+
+
+-- name: DeleteProjectAccessToken :exec
+DELETE FROM project_access_tokens WHERE project_id = @project_id AND id = @secret_id;

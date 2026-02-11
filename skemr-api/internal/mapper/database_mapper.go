@@ -40,3 +40,16 @@ func ToUpdateDatabaseParams(databaseId uuid.UUID, dto dto.DatabaseUpdateDto) sql
 		Port:        Int4(dto.Port),
 	}
 }
+
+func ToCreateDatabaseParams(projectId uuid.UUID, dto dto.DatabaseCreationDto) sqlc.CreateDatabaseParams {
+	return sqlc.CreateDatabaseParams{
+		ProjectID:    projectId,
+		DisplayName:  dto.DisplayName,
+		DbName:       Text(dto.DbName),
+		Username:     Text(dto.Username),
+		Password:     Text(dto.Password),
+		Host:         Text(dto.Host),
+		Port:         Int4(&dto.Port),
+		DatabaseType: NullDatabaseType(dto.DatabaseType),
+	}
+}

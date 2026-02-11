@@ -41,31 +41,31 @@ func CheckDatabaseExists(c context.Context, db sqlc.Querier, projectId uuid.UUID
 	return mapper.ToDomainDatabase(database), nil
 }
 
-func (r *DatabaseService) CreateDatabase(c context.Context, args sqlc.CreateDatabaseParams) (models.Database, error) {
-	slog.Info("Creating database", "name", args)
+func (r *DatabaseService) CreateDatabase(c context.Context, projectId uuid.UUID, dto dto.DatabaseCreationDto) (models.Database, error) {
+	slog.Info("Creating database", "name", dto)
 
 	// Check if the project exists
-	_, err := CheckProjectExists(c, r.db, args.ProjectID)
+	_, err := CheckProjectExists(c, r.db, projectId)
 	if err != nil {
 		return models.Database{}, err
 	}
 
 	// Check a database with the given name already exists
 	exists, err := r.db.GetDatabaseByNameAndProject(c, sqlc.GetDatabaseByNameAndProjectParams{
-		ProjectID:   args.ProjectID,
-		DisplayName: args.DisplayName,
+		ProjectID:   projectId,
+		DisplayName: dto.DisplayName,
 	})
 
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
-		slog.Error("Error checking for existing database", "name", args.DisplayName, "err", err)
+		slog.Error("Error checking for existing database", "name", dto.DisplayName, "err", err)
 		return models.Database{}, err
 	}
 
 	if exists != (sqlc.Database{}) {
-		slog.Warn("Database already exists", "name", args.DisplayName, "project_id", args.ProjectID)
+		slog.Warn("Database already exists", "name", dto.DisplayName, "project_id", projectId)
 		return models.Database{}, errormsg.ErrDatabaseAlreadyExists
 	}
-	database, err := r.db.CreateDatabase(c, args)
+	database, err := r.db.CreateDatabase(c, mapper.ToCreateDatabaseParams(projectId, dto))
 
 	if err != nil {
 		slog.Error("Error creating database", err)

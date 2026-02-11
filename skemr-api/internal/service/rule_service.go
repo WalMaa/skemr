@@ -66,7 +66,7 @@ func (r *RuleService) CreateRule(c context.Context, projectID uuid.UUID, databas
 
 	rule, err := r.db.CreateRule(c, mapper.ToSqlcCreateRule(databaseId, dto))
 	if err != nil {
-		slog.Error("Unable to create a Rule")
+		slog.Error("Unable to create a Rule", err)
 		return models.Rule{}, err
 	}
 
