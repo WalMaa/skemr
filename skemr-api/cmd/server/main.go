@@ -13,6 +13,7 @@ import (
 	"github.com/walmaa/skemr-api/internal/routers"
 	"github.com/walmaa/skemr-api/internal/service"
 	"github.com/walmaa/skemr-api/internal/tasks"
+	"github.com/walmaa/skemr-api/internal/validation"
 	"github.com/walmaa/skemr-api/internal/worker"
 	"golang.org/x/net/context"
 )
@@ -41,6 +42,8 @@ func runSchema(conn *pgxpool.Pool) {
 
 func main() {
 	ctx := context.Background()
+
+	validation.Init()
 
 	// Logger colors
 	w := os.Stderr

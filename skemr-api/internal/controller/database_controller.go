@@ -6,10 +6,10 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
-	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/walmaa/skemr-api/internal/dto"
 	"github.com/walmaa/skemr-api/internal/service"
+	"github.com/walmaa/skemr-api/internal/validation"
 )
 
 type DatabaseController struct {
@@ -56,10 +56,7 @@ func (h *DatabaseController) listDatabasesByProject(w http.ResponseWriter, r *ht
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(databases); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+	render.JSON(w, r, databases)
 }
 
 func (h *DatabaseController) createDatabase(w http.ResponseWriter, r *http.Request) {
@@ -70,20 +67,25 @@ func (h *DatabaseController) createDatabase(w http.ResponseWriter, r *http.Reque
 	}
 	var body dto.DatabaseCreationDto
 
-	err = render.Decode(r, body)
+	err = render.Decode(r, &body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	err = validate.Struct(body)
+	err = validation.Validate.Struct(body)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	database, err := h.Service.CreateDatabase(r.Context(), projectId, body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(http.StatusCreated)
+	render.Status(r, http.StatusCreated)
 	render.JSON(w, r, database)
 }
 
@@ -104,10 +106,7 @@ func (h *DatabaseController) updateDatabase(w http.ResponseWriter, r *http.Reque
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(database); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+	render.JSON(w, r, database)
 }
 
 func (h *DatabaseController) syncDatabase(w http.ResponseWriter, r *http.Request) {
@@ -122,7 +121,7 @@ func (h *DatabaseController) syncDatabase(w http.ResponseWriter, r *http.Request
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(http.StatusNoContent)
+	render.Status(r, http.StatusAccepted)
 }
 
 func (h *DatabaseController) getDatabase(w http.ResponseWriter, r *http.Request) {
@@ -136,8 +135,5 @@ func (h *DatabaseController) getDatabase(w http.ResponseWriter, r *http.Request)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(database); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+	render.JSON(w, r, database)
 }

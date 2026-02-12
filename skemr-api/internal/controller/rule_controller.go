@@ -49,10 +49,7 @@ func (h *RuleController) GetRule(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(rule); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+	render.JSON(w, r, rule)
 }
 
 func (h *RuleController) deleteRule(w http.ResponseWriter, r *http.Request) {

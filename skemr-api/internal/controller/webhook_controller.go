@@ -1,11 +1,11 @@
 package controller
 
 import (
-	"encoding/json"
 	"log/slog"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/render"
 	"github.com/walmaa/skemr-api/internal/service"
 )
 
@@ -31,8 +31,5 @@ func (h *WebhookController) handleGitLabWebhook(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(map[string]string{"status": "GitLab webhook received"}); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+	render.JSON(w, r, map[string]string{"status": "GitLab webhook received"})
 }

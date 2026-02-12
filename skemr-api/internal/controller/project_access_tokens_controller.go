@@ -84,7 +84,12 @@ func (h *ProjectSecretsController) deleteSecret(w http.ResponseWriter, r *http.R
 		http.Error(w, "Invalid Secret ID", http.StatusBadRequest)
 	}
 
-	h.Service.DeleteToken(c, projectId, secretId)
+	err = h.Service.DeleteToken(c, projectId, secretId)
+	if err != nil {
+		slog.Error("Error deleting token", err)
+		http.Error(w, "Error deleting token", http.StatusInternalServerError)
+		return
+	}
 
 	render.Status(r, http.StatusNoContent)
 }

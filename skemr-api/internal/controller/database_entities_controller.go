@@ -1,10 +1,10 @@
 package controller
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/render"
 	"github.com/google/uuid"
 	"github.com/walmaa/skemr-api/internal/service"
 	"github.com/walmaa/skemr-common/models"
@@ -51,10 +51,8 @@ func (h *DatabaseEntityController) GetDatabaseEntity(w http.ResponseWriter, r *h
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(entity); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+
+	render.JSON(w, r, entity)
 }
 
 func (h *DatabaseEntityController) GetDatabaseEntities(w http.ResponseWriter, r *http.Request) {
@@ -87,8 +85,6 @@ func (h *DatabaseEntityController) GetDatabaseEntities(w http.ResponseWriter, r 
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(entities); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+
+	render.JSON(w, r, entities)
 }
