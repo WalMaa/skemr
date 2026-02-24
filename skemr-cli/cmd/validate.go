@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"github.com/walmaa/skemr-cli/controlplaneclient"
 	"github.com/walmaa/skemr-cli/rulengn"
 )
@@ -21,6 +22,11 @@ func init() {
 	validateCmd.Flags().StringVarP(&projectId, "projectId", "P", "", "ID of your project")
 	validateCmd.Flags().StringVarP(&databaseId, "databaseId", "D", "", "ID of your database")
 	validateCmd.Flags().StringVarP(&token, "token", "T", "", "API Token")
+	validateCmd.Flags().String("host", "https://api.skemr.com", "URL of the Skemr control plane")
+	viper.BindPFlag(
+		"controlPlaneUrl",
+		validateCmd.Flags().Lookup("host"),
+	)
 
 	mustMarkRequired(validateCmd, "projectId", "databaseId", "token")
 
@@ -38,7 +44,12 @@ var validateCmd = &cobra.Command{
 		ruleEngine := rulengn.NewRuleEngine()
 
 		// Get rules
-		rules := controlplaneclient.GetRules(cmd.Context(), projectId, databaseId, token)
+		rules, err := controlplaneclient.GetRules(cmd.Context(), projectId, databaseId, token)
+
+		if err != nil {
+			slog.Error("Error while fetching rules from control plane", "err", err)
+			os.Exit(1)
+		}
 
 		// Process files
 		filePaths := make([]string, 0)
@@ -49,7 +60,7 @@ var validateCmd = &cobra.Command{
 		for i, path := range filePaths {
 			dtos[i] = rulengn.MigrationFileDto{File: path}
 		}
-		_, err := ruleEngine.ProcessMigrationFiles(cmd.Context(), dtos, rules)
+		_, err = ruleEngine.ProcessMigrationFiles(cmd.Context(), dtos, rules)
 		if err != nil {
 			err = fmt.Errorf("Error while validating migrations")
 			fmt.Println(err)

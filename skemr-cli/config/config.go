@@ -1,22 +1,17 @@
 package config
 
 import (
-	"log/slog"
-
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-type AppConfig struct {
-	ControlPlaneUrl string
+func initConfig() {
+	viper.SetDefault("controlPlaneUrl", "https://api.skemr.com")
+
+	viper.SetEnvPrefix("SKEMR")
+	viper.AutomaticEnv()
 }
 
-var Cfg AppConfig
-
 func init() {
-	viper.SetDefault("controlPlaneUrl", "http://localhost:8080")
-	viper.BindEnv("controlPlaneUrl", "URL")
-	if err := viper.Unmarshal(&Cfg); err != nil {
-		slog.Error("Unable to unmarshal config", err)
-	}
-
+	cobra.OnInitialize(initConfig)
 }

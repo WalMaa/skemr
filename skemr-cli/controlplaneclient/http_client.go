@@ -9,16 +9,17 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/walmaa/skemr-cli/config"
+	"github.com/spf13/viper"
 	"github.com/walmaa/skemr-common/models"
 )
 
 var client = &http.Client{Timeout: 10 * time.Second}
 
-func GetRules(ctx context.Context, projectId string, databaseId string, token string) []models.Rule {
-	slog.Info("Fetching rules from control plane", "projectId", projectId, "databaseId", databaseId)
+func GetRules(ctx context.Context, projectId string, databaseId string, token string) ([]models.Rule, error) {
+	host := viper.GetString("controlPlaneUrl")
+	slog.Info("Fetching rules from control plane", "projectId", projectId, "databaseId", databaseId, "host", host)
 	var bearer = "Bearer " + token
-	var url = fmt.Sprintf("%s/api/v1/projects/%s/databases/%s/rules", config.Cfg.ControlPlaneUrl, projectId, databaseId)
+	var url = fmt.Sprintf("%s/api/v1/projects/%s/databases/%s/rules", host, projectId, databaseId)
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
@@ -26,15 +27,21 @@ func GetRules(ctx context.Context, projectId string, databaseId string, token st
 
 	if err != nil {
 		slog.Error("Error creating request", err)
-		panic(err)
+		return nil, err
 	}
 	req.Header.Add("Authorization", bearer)
 	resp, err := client.Do(req)
 
 	if err != nil {
 		slog.Error("HTTP request error", err)
-		panic(err)
+		return nil, err
 	}
+
+	if resp.StatusCode != http.StatusOK {
+		slog.Error("Error getting rules", "statusCode", strconv.Itoa(resp.StatusCode))
+		return nil, fmt.Errorf("Error getting rules, status code: %d", resp.StatusCode)
+	}
+	slog.Info(strconv.Itoa(resp.StatusCode))
 
 	if resp.StatusCode != http.StatusOK {
 		slog.Error("Error getting rules", "statusCode", strconv.Itoa(resp.StatusCode))
@@ -45,8 +52,8 @@ func GetRules(ctx context.Context, projectId string, databaseId string, token st
 	var out []models.Rule
 	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
 		slog.Error("Error decoding response body", err)
-		panic(err)
+		return nil, err
 	}
 
-	return out
+	return out, nil
 }

@@ -1,0 +1,36 @@
+FROM golang:1.24-alpine AS builder
+LABEL maintainer="github.com/walmaa"
+
+# Install CGO dependency
+RUN apk add --no-cache build-base
+
+ENV GOOS=linux \
+    GOARCH=amd64
+
+WORKDIR /app
+
+# Use workspaces initially
+COPY go.work ./
+COPY skemr-cli/ ./skemr-cli/
+COPY skemr-common/ ./skemr-common/
+COPY skemr-api/ ./skemr-api/
+
+RUN go work sync
+
+# Move to CLI module
+WORKDIR /app/skemr-cli
+
+# Download dependencies
+RUN go mod download
+
+# Build the Go binary
+RUN go build -o skemr-cli main.go
+
+# Final lightweight stage
+FROM alpine:3.21 AS runtime
+
+# Copy the compiled binary from the builder stage
+COPY --from=builder /app/skemr-cli/skemr-cli .
+
+# Run the application
+CMD ["./skemr-cli"]
