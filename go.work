@@ -1,0 +1,7 @@
+go 1.24.6
+
+use (
+	./skemr-api
+	./skemr-cli
+	./skemr-common
+)

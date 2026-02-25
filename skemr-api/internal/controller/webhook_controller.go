@@ -25,8 +25,9 @@ func (h *WebhookController) RegisterRoutes(r chi.Router) {
 
 func (h *WebhookController) handleGitLabWebhook(w http.ResponseWriter, r *http.Request) {
 	slog.Info("Received GitLab webhook", "remote_addr", r.RemoteAddr)
+	ctx := r.Context()
 
-	if err := h.Service.HandleGitLabWebhook(nil, r); err != nil { // TODO: Refactor service to not require gin.Context
+	if err := h.Service.HandleGitLabWebhook(ctx, r); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
