@@ -13,22 +13,24 @@ import (
 )
 
 var (
-	projectId  string
-	databaseId string
-	token      string
+	projectId         string
+	databaseId        string
+	token             string
+	migrationFilesDir string
 )
 
 func init() {
 	validateCmd.Flags().StringVarP(&projectId, "projectId", "P", "", "ID of your project")
 	validateCmd.Flags().StringVarP(&databaseId, "databaseId", "D", "", "ID of your database")
 	validateCmd.Flags().StringVarP(&token, "token", "T", "", "API Token")
+	validateCmd.Flags().StringVarP(&migrationFilesDir, "migrationFilesDir", "M", "migrations", "Directory containing migration files to validate")
 	validateCmd.Flags().String("host", "https://api.skemr.com", "URL of the Skemr control plane")
 	viper.BindPFlag(
 		"controlPlaneUrl",
 		validateCmd.Flags().Lookup("host"),
 	)
 
-	mustMarkRequired(validateCmd, "projectId", "databaseId", "token")
+	mustMarkRequired(validateCmd, "projectId", "databaseId", "token", "migrationFilesDir")
 
 	rootCmd.AddCommand(validateCmd)
 }
@@ -45,6 +47,7 @@ var validateCmd = &cobra.Command{
 
 		// Get rules
 		rules, err := controlplaneclient.GetRules(cmd.Context(), projectId, databaseId, token)
+		slog.Info("Fetched rules from control plane", "ruleCount", len(rules))
 
 		if err != nil {
 			slog.Error("Error while fetching rules from control plane", "err", err)
@@ -53,7 +56,7 @@ var validateCmd = &cobra.Command{
 
 		// Process files
 		filePaths := make([]string, 0)
-		collectFilePathsFromDir(&filePaths, "./skemr-cli/test")
+		collectFilePathsFromDir(&filePaths, migrationFilesDir)
 
 		// Rule check
 		dtos := make([]rulengn.MigrationFileDto, len(filePaths))

@@ -1,0 +1,39 @@
+FROM golang:1.24-alpine AS builder
+
+# Set environment variables
+ENV CGO_ENABLED=0 \
+    GOOS=linux \
+    GOARCH=amd64
+
+# Set working directory inside the container
+WORKDIR /app
+
+# Use workspaces initially
+COPY go.work ./
+COPY skemr-cli/ ./skemr-cli/
+COPY skemr-common/ ./skemr-common/
+COPY skemr-api/ ./skemr-api/
+
+RUN go work sync
+
+# Move to API module
+WORKDIR /app/skemr-api
+
+# Download dependencies
+RUN go mod download
+
+# Build the Go binary
+RUN go build -o skemr-api cmd/server/main.go
+
+# Final lightweight stage
+FROM alpine:3.21 AS final
+
+WORKDIR /app
+
+# Copy the compiled binary from the builder stage
+COPY --from=builder /app/skemr-api/skemr-api /usr/local/bin/skemr-api
+
+EXPOSE 8080
+
+# Run the application
+CMD ["skemr-api"]

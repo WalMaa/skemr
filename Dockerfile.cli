@@ -29,8 +29,10 @@ RUN go build -o skemr-cli main.go
 # Final lightweight stage
 FROM alpine:3.21 AS runtime
 
-# Copy the compiled binary from the builder stage
-COPY --from=builder /app/skemr-cli/skemr-cli .
+WORKDIR /app
+
+# Copy the compiled binary to PATH dir from the builder stage
+COPY --from=builder /app/skemr-cli/skemr-cli /usr/local/bin/skemr-cli
 
 # Run the application
-CMD ["./skemr-cli"]
+ENTRYPOINT ["skemr-cli"]
