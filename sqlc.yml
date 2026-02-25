@@ -2,7 +2,7 @@ version: "2"
 sql:
   - engine: "postgresql"
     queries: "./skemr-api/db/queries"
-    schema: "./skemr-api/db/schema.sql"
+    schema: "./skemr-api/db/migrations"
     gen:
       go:
         emit_json_tags: true

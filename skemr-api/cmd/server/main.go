@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"log/slog"
 	"net/http"
@@ -8,7 +9,10 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/lmittmann/tint"
+	"github.com/pressly/goose/v3"
+	"github.com/walmaa/skemr-api/config"
 	"github.com/walmaa/skemr-api/db/sqlc"
 	"github.com/walmaa/skemr-api/internal/routers"
 	"github.com/walmaa/skemr-api/internal/service"
@@ -18,17 +22,21 @@ import (
 	"golang.org/x/net/context"
 )
 
-// runSchema drops the current schema, reads schema.sql file and executes it to set up the database schema.
+// runSchema sets up the database schema.
 func runSchema(conn *pgxpool.Pool) {
-	schema, err := os.ReadFile("./db/schema.sql")
-	if err != nil {
-		log.Fatal(err)
+
+	_, err := conn.Exec(context.Background(), `
+		DROP SCHEMA public CASCADE;
+		CREATE SCHEMA public;
+	`)
+
+	db := stdlib.OpenDBFromPool(conn)
+
+	goose.SetDialect("postgres")
+	if err := goose.Up(db, "./db/migrations"); err != nil {
+		panic(err)
 	}
-	_, err = conn.Exec(context.Background(), "DROP SCHEMA IF EXISTS public CASCADE")
-	_, err = conn.Exec(context.Background(), string(schema))
-	if err != nil {
-		log.Fatal(err)
-	}
+
 	// Seed data
 	seed, err := os.ReadFile("./db/seed.sql")
 	if err != nil {
@@ -55,7 +63,14 @@ func main() {
 		}),
 	))
 
-	conn, err := pgxpool.New(context.Background(), "postgres://postgres:pass@localhost:5432/postgres")
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		log.Fatal("Error loading config: ", err)
+	}
+
+	slog.Info("Starting Skemr API server", "environment", cfg.App.Env)
+
+	conn, err := pgxpool.New(context.Background(), fmt.Sprintf("postgres://%s:%s@%s:%d/%s", cfg.Database.User, cfg.Database.Password, cfg.Database.Host, cfg.Database.Port, cfg.Database.Name))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -69,7 +84,9 @@ func main() {
 	ruleService := service.NewRuleService(queries)
 	databaseEntityService := service.NewDatabaseEntityService(queries)
 
-	runSchema(conn)
+	if cfg.App.Env == "dev" {
+		runSchema(conn)
+	}
 
 	worker.StartTaskWorkers(queries)
 
@@ -88,12 +105,12 @@ func main() {
 
 	defer conn.Close()
 
-	host := ":8080"
+	host := fmt.Sprintf(":%d", cfg.App.Port)
 	srv := &http.Server{
 		Addr:    host,
 		Handler: router,
 	}
-	log.Printf("Listening and serving HTTP on %s", host)
+	slog.Info("Listening and serving HTTP", "host", host)
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("listen: %s\n", err)
 	}
