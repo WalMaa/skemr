@@ -42,7 +42,8 @@ func InitRouter(services *Services) http.Handler {
 		r.Use(middleware.AuthMiddleware)
 		projectController := controller.NewProjectController(services.ProjectService)
 
-		projectController.RegisterRoutes(r)
+		r.Get("/projects", projectController.GetProjects)
+		r.Post("/projects", projectController.CreateProject)
 
 		// Project level routes
 		r.Route("/projects/{projectId}", func(r chi.Router) {
@@ -57,6 +58,7 @@ func InitRouter(services *Services) http.Handler {
 			databaseEntityController.RegisterRoutes(r)
 
 			r.Get("/", projectController.GetProject)
+			r.Delete("/", projectController.DeleteProject)
 		})
 	})
 

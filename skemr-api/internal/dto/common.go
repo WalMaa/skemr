@@ -6,6 +6,10 @@ import (
 	"github.com/google/uuid"
 )
 
+type ProjectCreationDto struct {
+	Name string `json:"name" validate:"required,min=3,max=100"`
+}
+
 type DatabaseCreationDto struct {
 	DisplayName  string       `json:"displayName" validate:"required"`
 	DbName       *string      `json:"dbName"`

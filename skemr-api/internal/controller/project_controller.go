@@ -7,9 +7,10 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
+	"github.com/walmaa/skemr-api/internal/dto"
 	"github.com/walmaa/skemr-api/internal/errormsg"
-	"github.com/walmaa/skemr-api/internal/middleware"
 	"github.com/walmaa/skemr-api/internal/service"
+	"github.com/walmaa/skemr-api/internal/validation"
 )
 
 type ProjectController struct {
@@ -20,16 +21,7 @@ func NewProjectController(s *service.ProjectService) *ProjectController {
 	return &ProjectController{Service: s}
 }
 
-func (h *ProjectController) RegisterRoutes(r chi.Router) {
-	r.Route("/projects", func(r chi.Router) {
-		r.Post("/", h.createProject)
-		r.Get("/", h.getProjects)
-		// Middleware must be defined before routes
-		r.With(middleware.ProjectIDMiddleware)
-	})
-}
-
-func (h *ProjectController) getProjects(w http.ResponseWriter, r *http.Request) {
+func (h *ProjectController) GetProjects(w http.ResponseWriter, r *http.Request) {
 	projects, err := h.Service.GetProjects(r.Context())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -41,14 +33,22 @@ func (h *ProjectController) getProjects(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-func (h *ProjectController) createProject(w http.ResponseWriter, r *http.Request) {
-	var body struct {
-		Name string `json:"name"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+func (h *ProjectController) CreateProject(w http.ResponseWriter, r *http.Request) {
+	var body dto.ProjectCreationDto
+
+	if err := render.Decode(r, &body); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
+	err := validation.Validate.Struct(body)
+	if err != nil {
+		errorResponse := validation.CreateErrorResponse(err)
+		render.Status(r, http.StatusBadRequest)
+		render.JSON(w, r, errorResponse)
+		return
+	}
+
 	user, err := h.Service.CreateProject(r.Context(), body.Name)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -69,8 +69,21 @@ func (h *ProjectController) GetProject(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(project); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+
+	render.Status(r, http.StatusOK)
+	render.JSON(w, r, project)
+}
+
+func (h *ProjectController) DeleteProject(w http.ResponseWriter, r *http.Request) {
+	projectID, err := uuid.Parse(chi.URLParam(r, "projectId"))
+	if err != nil {
+		http.Error(w, errormsg.ErrInvalidIdFormat.Error(), http.StatusBadRequest)
+		return
 	}
+	err = h.Service.DeleteProject(r.Context(), projectID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
