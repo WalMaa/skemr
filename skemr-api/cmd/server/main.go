@@ -77,9 +77,10 @@ func main() {
 
 	slog.Info("Starting Skemr API server", "environment", cfg.App.Env)
 
+	slog.Info("Connecting to database", "host", cfg.Database.Host, "port", cfg.Database.Port, "name", cfg.Database.Name, "sslmode", cfg.Database.SSLMode)
 	conn, err := pgxpool.New(context.Background(), fmt.Sprintf("postgres://%s:%s@%s:%d/%s", cfg.Database.User, cfg.Database.Password, cfg.Database.Host, cfg.Database.Port, cfg.Database.Name))
 	if err != nil {
-		log.Fatal(err)
+		slog.Error("Error connecting to DB", err)
 	}
 
 	taskClient := tasks.StartTaskClient(ctx, asynq.RedisClientOpt{

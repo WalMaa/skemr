@@ -10,7 +10,7 @@ import (
 )
 
 func StartTaskClient(ctx context.Context, clientOpt asynq.RedisClientOpt) *asynq.Client {
-	slog.Info("Starting Asynq client")
+	slog.Info("Starting Asynq client", "redis_addr", clientOpt.Addr, "redis_db", clientOpt.DB)
 	client := asynq.NewClient(clientOpt)
 
 	go func() {
