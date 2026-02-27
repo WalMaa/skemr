@@ -97,9 +97,8 @@ func main() {
 	ruleService := service.NewRuleService(queries)
 	databaseEntityService := service.NewDatabaseEntityService(queries)
 
-	runSchema(conn)
-
 	if cfg.App.Env == "dev" {
+		runSchema(conn)
 		seedTestData(conn)
 	}
 
