@@ -8,6 +8,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/hibiken/asynq"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/lmittmann/tint"
@@ -30,6 +31,10 @@ func runSchema(conn *pgxpool.Pool) {
 		CREATE SCHEMA public;
 	`)
 
+	if err != nil {
+		slog.Error("Error refreshing schema", err)
+	}
+
 	db := stdlib.OpenDBFromPool(conn)
 
 	goose.SetDialect("postgres")
@@ -37,7 +42,9 @@ func runSchema(conn *pgxpool.Pool) {
 		panic(err)
 	}
 
-	// Seed data
+}
+
+func seedTestData(conn *pgxpool.Pool) {
 	seed, err := os.ReadFile("./db/seed.sql")
 	if err != nil {
 		log.Fatal(err)
@@ -75,7 +82,13 @@ func main() {
 		log.Fatal(err)
 	}
 
-	taskClient := tasks.StartTaskClient(ctx, "localhost:6379")
+	taskClient := tasks.StartTaskClient(ctx, asynq.RedisClientOpt{
+		Addr:      fmt.Sprintf("%s:%d", cfg.Redis.Host, cfg.Redis.Port),
+		Password:  cfg.Redis.Password,
+		DB:        cfg.Redis.DB,
+		TLSConfig: nil,
+	})
+
 	queries := sqlc.New(conn)
 	projectService := service.NewProjectService(queries)
 	databaseService := service.NewDatabaseService(queries, taskClient)
@@ -84,8 +97,10 @@ func main() {
 	ruleService := service.NewRuleService(queries)
 	databaseEntityService := service.NewDatabaseEntityService(queries)
 
+	runSchema(conn)
+
 	if cfg.App.Env == "dev" {
-		runSchema(conn)
+		seedTestData(conn)
 	}
 
 	worker.StartTaskWorkers(queries)

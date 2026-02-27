@@ -9,9 +9,9 @@ import (
 	"github.com/hibiken/asynq"
 )
 
-func StartTaskClient(ctx context.Context, addr string) *asynq.Client {
+func StartTaskClient(ctx context.Context, clientOpt asynq.RedisClientOpt) *asynq.Client {
 	slog.Info("Starting Asynq client")
-	client := asynq.NewClient(asynq.RedisClientOpt{Addr: addr})
+	client := asynq.NewClient(clientOpt)
 
 	go func() {
 		<-ctx.Done()
