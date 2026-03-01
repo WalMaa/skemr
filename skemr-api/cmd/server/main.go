@@ -127,6 +127,6 @@ func main() {
 	}
 	slog.Info("Listening and serving HTTP", "host", host)
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		log.Fatalf("listen: %s\n", err)
+		slog.Error("listen: %s\n", err)
 	}
 }

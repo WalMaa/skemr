@@ -10,8 +10,8 @@ func ToDomainProjectAccessKey(token sqlc.ProjectAccessToken) models.ProjectAcces
 		ID:        token.ID,
 		ProjectID: token.ProjectID,
 		Name:      token.Name,
-		LastUsed:  Time(&token.LastUsed),
-		ExpiresAt: Time(&token.ExpiresAt),
+		LastUsed:  TimePtr(&token.LastUsed),
+		ExpiresAt: TimePtr(&token.ExpiresAt),
 		CreatedAt: Time(&token.CreatedAt),
 		UpdatedAt: Time(&token.UpdatedAt),
 	}

@@ -1,8 +1,6 @@
 package dto
 
 import (
-	"time"
-
 	"github.com/google/uuid"
 )
 
@@ -52,6 +50,6 @@ const (
 )
 
 type SecretCreationDto struct {
-	Name      string
-	ExpiresAt time.Time
+	Name      string `json:"name" validate:"required"`
+	ExpiresAt string `json:"expiresAt" validate:"omitempty,datetime=2006-01-02T15:04:05Z07:00"`
 }

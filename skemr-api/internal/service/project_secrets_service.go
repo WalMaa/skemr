@@ -2,12 +2,16 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
+	"net/http"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/walmaa/skemr-api/db/sqlc"
 	"github.com/walmaa/skemr-api/internal/dto"
+	"github.com/walmaa/skemr-api/internal/errormsg"
 	"github.com/walmaa/skemr-api/internal/mapper"
 	"github.com/walmaa/skemr-api/internal/tokens"
 	"github.com/walmaa/skemr-common/models"
@@ -45,6 +49,30 @@ func (s *ProjectSecretsService) CreateToken(c context.Context, projectId uuid.UU
 		slog.Error("Unable to hash token", err)
 		return "", err
 	}
+	expires := pgtype.Timestamptz{
+		Time:  time.Time{},
+		Valid: false,
+	}
+	if dto.ExpiresAt != "" {
+		expiry, err := time.Parse(time.RFC3339, dto.ExpiresAt)
+		if err != nil {
+			slog.Error("Unable to parse expiry time", err)
+			return "", err
+		}
+		if expiry.Before(time.Now()) {
+			slog.Error("Expiry time is in the past")
+			err = fmt.Errorf("expiry time is in the past")
+			return "", &errormsg.ErrorResponse{
+				Message: errormsg.ErrExpiryTimeInPast.Error(),
+				Status:  http.StatusBadRequest,
+			}
+		}
+		expires = pgtype.Timestamptz{
+			Time:  expiry,
+			Valid: true,
+		}
+
+	}
 
 	// Save the prefix for lookup, and the hash for verification
 	_, err = s.db.CreateProjectSecretKey(c, sqlc.CreateProjectSecretKeyParams{
@@ -52,7 +80,7 @@ func (s *ProjectSecretsService) CreateToken(c context.Context, projectId uuid.UU
 		Name:      dto.Name,
 		Prefix:    prefix,
 		Hash:      verifier,
-		ExpiresAt: pgtype.Timestamptz{},
+		ExpiresAt: expires,
 	})
 	if err != nil {
 		slog.Error("Error saving a project access token", err)

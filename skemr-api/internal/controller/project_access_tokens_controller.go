@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"encoding/json"
 	"log/slog"
 	"net/http"
 
@@ -9,7 +8,9 @@ import (
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
 	"github.com/walmaa/skemr-api/internal/dto"
+	"github.com/walmaa/skemr-api/internal/errormsg"
 	"github.com/walmaa/skemr-api/internal/service"
+	"github.com/walmaa/skemr-api/internal/validation"
 )
 
 type ProjectSecretsController struct {
@@ -33,16 +34,25 @@ func (h *ProjectSecretsController) RegisterRoutes(r chi.Router) {
 func (h *ProjectSecretsController) createToken(w http.ResponseWriter, r *http.Request) {
 	c := r.Context()
 	projectId := c.Value("projectId").(uuid.UUID)
-	var req dto.SecretCreationDto
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	var body dto.SecretCreationDto
+	if err := render.Decode(r, &body); err != nil {
 		http.Error(w, "Invalid request", http.StatusBadRequest)
 		return
 	}
-	token, err := h.Service.CreateToken(c, projectId, req)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+
+	if err := validation.Validate.Struct(body); err != nil {
+		errorResponse := validation.CreateErrorResponse(err)
+		render.Status(r, http.StatusBadRequest)
+		render.JSON(w, r, errorResponse)
 		return
 	}
+
+	token, err := h.Service.CreateToken(c, projectId, body)
+	if err != nil {
+		errormsg.WriteErrorResponse(w, r, err)
+		return
+	}
+
 	type TokenResponse struct {
 		Token string `json:"token"`
 	}
@@ -53,7 +63,11 @@ func (h *ProjectSecretsController) createToken(w http.ResponseWriter, r *http.Re
 }
 
 func (h *ProjectSecretsController) getSecret(w http.ResponseWriter, r *http.Request) {
-	// TODO: Implement retrieval logic
+	errormsg.WriteErrorResponse(w, r, &errormsg.ErrorResponse{
+		Message: "Not implemented",
+		Errors:  nil,
+		Status:  http.StatusBadRequest,
+	})
 }
 
 func (h *ProjectSecretsController) getSecrets(w http.ResponseWriter, r *http.Request) {

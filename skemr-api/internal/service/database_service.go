@@ -149,6 +149,20 @@ func (r *DatabaseService) UpdateDatabase(c context.Context, projectId uuid.UUID,
 
 	slog.Info("Updating database", "id", databaseId)
 
+	project, err := CheckProjectExists(c, r.db, projectId)
+
+	if err != nil {
+		slog.Error("Error fetching project")
+		return models.Database{}, err
+	}
+
+	_, err = CheckDatabaseExists(c, r.db, project.ID, databaseId)
+
+	if err != nil {
+		slog.Error("Error getting database")
+		return models.Database{}, err
+	}
+
 	database, err := r.db.UpdateDatabase(c, mapper.ToUpdateDatabaseParams(databaseId, dto))
 
 	if err != nil {

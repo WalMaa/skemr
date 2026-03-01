@@ -41,6 +41,13 @@ func Time(v *pgtype.Timestamptz) time.Time {
 	return time.Time{}
 }
 
+func TimePtr(v *pgtype.Timestamptz) *time.Time {
+	if v != nil && v.Valid {
+		return &v.Time
+	}
+	return nil
+}
+
 func NullDatabaseType(databaseType dto.DatabaseType) sqlc.NullDatabaseType {
 	if databaseType == "" {
 		return sqlc.NullDatabaseType{

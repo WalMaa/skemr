@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/walmaa/skemr-api/internal/errormsg"
 )
 
 var Validate *validator.Validate
@@ -12,14 +13,9 @@ func Init() {
 	Validate = validator.New(validator.WithRequiredStructEnabled())
 }
 
-type ErrorResponse struct {
-	Message string            `json:"message"`
-	Errors  map[string]string `json:"errors"`
-}
-
-func CreateErrorResponse(err error) ErrorResponse {
+func CreateErrorResponse(err error) errormsg.ErrorResponse {
 	validationErrors := err.(validator.ValidationErrors)
-	errorResponse := ErrorResponse{
+	errorResponse := errormsg.ErrorResponse{
 		Message: "Validation failed",
 		Errors:  make(map[string]string),
 	}
