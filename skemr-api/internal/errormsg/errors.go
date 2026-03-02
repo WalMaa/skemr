@@ -38,9 +38,9 @@ func WriteErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
 }
 
 var (
-	ErrDatabaseAlreadyExists = errors.New("database already exists")
-	ErrDatabaseNotFound      = errors.New("database not found")
-	ErrProjectNotFound       = errors.New("project not found")
-	ErrInvalidIdFormat       = errors.New("invalid id format")
-	ErrExpiryTimeInPast      = errors.New("expiry time is in the past")
+	ErrDatabaseAlreadyExists = "database already exists"
+	ErrDatabaseNotFound      = "database not found"
+	ErrProjectNotFound       = "project not found"
+	ErrInvalidIdFormat       = "invalid id format"
+	ErrExpiryTimeInPast      = "expiry time is in the past"
 )

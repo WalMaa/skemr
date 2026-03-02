@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"net/http"
 
 	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
@@ -35,7 +36,11 @@ func CheckDatabaseExists(c context.Context, db sqlc.Querier, projectId uuid.UUID
 	})
 	if err != nil {
 		slog.Error("Error getting database", "database_id", dbId, "err", err)
-		return models.Database{}, errormsg.ErrDatabaseNotFound
+		return models.Database{}, &errormsg.ErrorResponse{
+			Message: errormsg.ErrDatabaseNotFound,
+			Errors:  nil,
+			Status:  http.StatusNotFound,
+		}
 	}
 
 	return mapper.ToDomainDatabase(database), nil
@@ -63,7 +68,10 @@ func (r *DatabaseService) CreateDatabase(c context.Context, projectId uuid.UUID,
 
 	if exists != (sqlc.Database{}) {
 		slog.Warn("Database already exists", "name", dto.DisplayName, "project_id", projectId)
-		return models.Database{}, errormsg.ErrDatabaseAlreadyExists
+		return models.Database{}, &errormsg.ErrorResponse{
+			Message: errormsg.ErrDatabaseAlreadyExists,
+			Status:  http.StatusConflict,
+		}
 	}
 	database, err := r.db.CreateDatabase(c, mapper.ToCreateDatabaseParams(projectId, dto))
 

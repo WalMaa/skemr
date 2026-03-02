@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/walmaa/skemr-api/db/sqlc"
+	"github.com/walmaa/skemr-api/internal/dto"
 	"github.com/walmaa/skemr-api/internal/errormsg"
 	"github.com/walmaa/skemr-api/internal/mapper"
 	"github.com/walmaa/skemr-common/models"
@@ -30,16 +31,25 @@ func CheckProjectExists(c context.Context, db sqlc.Querier, projectID uuid.UUID)
 	project, err := db.GetProject(c, projectID)
 	if err != nil {
 		slog.Error("Error getting project", "project_id", projectID, "err", err)
-		return models.Project{}, errormsg.ErrProjectNotFound
+		return models.Project{}, &errormsg.ErrorResponse{
+			Message: errormsg.ErrProjectNotFound,
+			Errors:  nil,
+			Status:  404,
+		}
 	}
 
 	return mapper.ToDomainProject(project), nil
 }
 
-func (r *ProjectService) CreateProject(c context.Context, name string) (sqlc.Project, error) {
+func (r *ProjectService) CreateProject(c context.Context, dto dto.ProjectCreationDto) (models.Project, error) {
 
-	slog.Info("Creating project", "name", name)
-	return r.db.CreateProject(c, name)
+	slog.Info("Creating project", "name", dto.Name)
+	project, err := r.db.CreateProject(c, dto.Name)
+	if err != nil {
+		slog.Error("Error creating project", "name", dto.Name, "err", err)
+		return models.Project{}, err
+	}
+	return mapper.ToDomainProject(project), nil
 }
 
 func (r *ProjectService) GetProjects(c context.Context) ([]models.Project, error) {

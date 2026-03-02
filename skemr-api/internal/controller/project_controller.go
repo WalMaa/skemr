@@ -49,9 +49,9 @@ func (h *ProjectController) CreateProject(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	user, err := h.Service.CreateProject(r.Context(), body.Name)
+	user, err := h.Service.CreateProject(r.Context(), body)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		errormsg.WriteErrorResponse(w, r, err)
 		return
 	}
 	render.Status(r, http.StatusCreated)
@@ -61,7 +61,10 @@ func (h *ProjectController) CreateProject(w http.ResponseWriter, r *http.Request
 func (h *ProjectController) GetProject(w http.ResponseWriter, r *http.Request) {
 	projectID, err := uuid.Parse(chi.URLParam(r, "projectId"))
 	if err != nil {
-		http.Error(w, errormsg.ErrInvalidIdFormat.Error(), http.StatusBadRequest)
+		errormsg.WriteErrorResponse(w, r, &errormsg.ErrorResponse{
+			Message: errormsg.ErrInvalidIdFormat,
+			Status:  http.StatusBadRequest,
+		})
 		return
 	}
 	project, err := h.Service.GetProject(r.Context(), projectID)
@@ -77,7 +80,10 @@ func (h *ProjectController) GetProject(w http.ResponseWriter, r *http.Request) {
 func (h *ProjectController) DeleteProject(w http.ResponseWriter, r *http.Request) {
 	projectID, err := uuid.Parse(chi.URLParam(r, "projectId"))
 	if err != nil {
-		http.Error(w, errormsg.ErrInvalidIdFormat.Error(), http.StatusBadRequest)
+		errormsg.WriteErrorResponse(w, r, &errormsg.ErrorResponse{
+			Message: errormsg.ErrInvalidIdFormat,
+			Status:  http.StatusBadRequest,
+		})
 		return
 	}
 	err = h.Service.DeleteProject(r.Context(), projectID)

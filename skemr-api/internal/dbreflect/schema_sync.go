@@ -6,10 +6,12 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/walmaa/skemr-api/db/sqlc"
 	"github.com/walmaa/skemr-api/internal/mapper"
 	"github.com/walmaa/skemr-api/internal/tasks"
@@ -40,6 +42,28 @@ func (s *SchemaSyncService) ProcessSyncTask(c context.Context, t *asynq.Task) er
 	}
 	err = s.SyncSchema(c, mapper.ToDomainDatabase(database))
 	if err != nil {
+		slog.Error("Error syncing database schema", "databaseId", p.DatabaseID, "error", err)
+		_, err := s.db.UpdateDatabaseSyncFail(c, sqlc.UpdateDatabaseSyncFailParams{
+			SyncError:  pgtype.Text{String: err.Error(), Valid: true},
+			SyncedAt:   pgtype.Timestamptz{Time: time.Now(), Valid: true},
+			DatabaseID: p.DatabaseID,
+		})
+		if err != nil {
+			slog.Error("error updating database sync fail", "error", err)
+			// Do not return this error as we want to keep the original sync error for debugging.
+		}
+
+		return err
+	}
+
+	// Update database object with last synced time
+	_, err = s.db.UpdateDatabaseSyncedAt(c, sqlc.UpdateDatabaseSyncedAtParams{
+		SyncedAt:   pgtype.Timestamptz{Time: time.Now(), Valid: true},
+		DatabaseID: database.ID,
+	},
+	)
+	if err != nil {
+		slog.Error("error updating database synced at", "error", err)
 		return err
 	}
 

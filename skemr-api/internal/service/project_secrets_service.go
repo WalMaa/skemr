@@ -63,7 +63,7 @@ func (s *ProjectSecretsService) CreateToken(c context.Context, projectId uuid.UU
 			slog.Error("Expiry time is in the past")
 			err = fmt.Errorf("expiry time is in the past")
 			return "", &errormsg.ErrorResponse{
-				Message: errormsg.ErrExpiryTimeInPast.Error(),
+				Message: errormsg.ErrExpiryTimeInPast,
 				Status:  http.StatusBadRequest,
 			}
 		}

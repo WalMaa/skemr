@@ -21,8 +21,11 @@ type TableRef struct {
 }
 
 type ColumnRef struct {
-	Name     string
-	DataType string
+	Name      string
+	DataType  string
+	Default   *string
+	Nullable  bool
+	Updatable bool
 }
 
 func NewPostgresConnector(db models.Database) *PostgresConnector {
@@ -32,7 +35,7 @@ func NewPostgresConnector(db models.Database) *PostgresConnector {
 }
 
 func (dc *PostgresConnector) ListColumnsInTable(ctx context.Context, conn *pgx.Conn, tableRef TableRef) ([]ColumnRef, error) {
-	rows, err := conn.Query(ctx, "SELECT column_name, data_type FROM information_schema.columns WHERE table_schema=$1 AND table_name=$2", tableRef.Schema, tableRef.Name)
+	rows, err := conn.Query(ctx, "SELECT column_name, data_type, column_default, is_nullable, is_updatable FROM information_schema.columns WHERE table_schema=$1 AND table_name=$2", tableRef.Schema, tableRef.Name)
 	if err != nil {
 		slog.Error("Error querying columns", "schema", tableRef.Schema, "table", tableRef.Name, "err", err)
 		return nil, err
@@ -41,7 +44,7 @@ func (dc *PostgresConnector) ListColumnsInTable(ctx context.Context, conn *pgx.C
 	var columns []ColumnRef
 	for rows.Next() {
 		var columnRef ColumnRef
-		if err := rows.Scan(&columnRef.Name, &columnRef.DataType); err != nil {
+		if err := rows.Scan(&columnRef.Name, &columnRef.DataType, &columnRef.Default, &columnRef.Nullable, &columnRef.Updatable); err != nil {
 			slog.Error("Error scanning column name", "err", err)
 			return nil, err
 		}

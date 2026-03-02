@@ -21,6 +21,13 @@ func Text(v *string) pgtype.Text {
 	}
 }
 
+func TextPtr(v *pgtype.Text) *string {
+	if v != nil && v.Valid {
+		return &v.String
+	}
+	return nil
+}
+
 func Int4(v *int32) pgtype.Int4 {
 	if v == nil {
 		return pgtype.Int4{

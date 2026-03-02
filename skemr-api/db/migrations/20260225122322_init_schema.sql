@@ -122,10 +122,11 @@ CREATE TABLE database_entities
 
     -- generic identity at this node
     name           text        NOT NULL, -- e.g. "public", "users", "email", "my_view"
+    attributes     jsonb       NOT NULL DEFAULT '{}'::jsonb, -- Store any additional metadata about the entity here
 
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-    UNIQUE (database_id, name, entity_type, parent_id) -- Ensure we do not map the same entity twice
+    UNIQUE NULLS NOT DISTINCT (database_id, name, entity_type, parent_id)  -- Ensure we do not map the same entity twice, use NULLS NOT DISTINCT so parentless are not duplicated
 );
 
 

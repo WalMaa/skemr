@@ -42,6 +42,8 @@ type Querier interface {
 	ListRulesByCriteria(ctx context.Context, arg ListRulesByCriteriaParams) ([]Rule, error)
 	ListRulesByDatabaseId(ctx context.Context, databaseID uuid.UUID) ([]Rule, error)
 	UpdateDatabase(ctx context.Context, arg UpdateDatabaseParams) (Database, error)
+	UpdateDatabaseSyncFail(ctx context.Context, arg UpdateDatabaseSyncFailParams) (Database, error)
+	UpdateDatabaseSyncedAt(ctx context.Context, arg UpdateDatabaseSyncedAtParams) (Database, error)
 	UpdateProject(ctx context.Context, arg UpdateProjectParams) error
 	UpdateRule(ctx context.Context, arg UpdateRuleParams) error
 }

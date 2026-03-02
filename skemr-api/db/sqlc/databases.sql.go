@@ -301,3 +301,76 @@ func (q *Queries) UpdateDatabase(ctx context.Context, arg UpdateDatabaseParams) 
 	)
 	return i, err
 }
+
+const updateDatabaseSyncFail = `-- name: UpdateDatabaseSyncFail :one
+UPDATE databases
+SET last_sync_error            = $1,
+    failed_connection_attempts = failed_connection_attempts + 1,
+    last_synced_at             = $2
+WHERE id = $3
+RETURNING id, display_name, db_name, username, password, host, port, database_type, project_id, last_synced_at, last_sync_error, failed_connection_attempts, created_at, updated_at
+`
+
+type UpdateDatabaseSyncFailParams struct {
+	SyncError  pgtype.Text        `json:"sync_error"`
+	SyncedAt   pgtype.Timestamptz `json:"synced_at"`
+	DatabaseID uuid.UUID          `json:"database_id"`
+}
+
+func (q *Queries) UpdateDatabaseSyncFail(ctx context.Context, arg UpdateDatabaseSyncFailParams) (Database, error) {
+	row := q.db.QueryRow(ctx, updateDatabaseSyncFail, arg.SyncError, arg.SyncedAt, arg.DatabaseID)
+	var i Database
+	err := row.Scan(
+		&i.ID,
+		&i.DisplayName,
+		&i.DbName,
+		&i.Username,
+		&i.Password,
+		&i.Host,
+		&i.Port,
+		&i.DatabaseType,
+		&i.ProjectID,
+		&i.LastSyncedAt,
+		&i.LastSyncError,
+		&i.FailedConnectionAttempts,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateDatabaseSyncedAt = `-- name: UpdateDatabaseSyncedAt :one
+UPDATE databases
+SET last_synced_at             = $1,
+    last_sync_error            = NULL,
+    failed_connection_attempts = 0
+WHERE id = $2
+RETURNING id, display_name, db_name, username, password, host, port, database_type, project_id, last_synced_at, last_sync_error, failed_connection_attempts, created_at, updated_at
+`
+
+type UpdateDatabaseSyncedAtParams struct {
+	SyncedAt   pgtype.Timestamptz `json:"synced_at"`
+	DatabaseID uuid.UUID          `json:"database_id"`
+}
+
+func (q *Queries) UpdateDatabaseSyncedAt(ctx context.Context, arg UpdateDatabaseSyncedAtParams) (Database, error) {
+	row := q.db.QueryRow(ctx, updateDatabaseSyncedAt, arg.SyncedAt, arg.DatabaseID)
+	var i Database
+	err := row.Scan(
+		&i.ID,
+		&i.DisplayName,
+		&i.DbName,
+		&i.Username,
+		&i.Password,
+		&i.Host,
+		&i.Port,
+		&i.DatabaseType,
+		&i.ProjectID,
+		&i.LastSyncedAt,
+		&i.LastSyncError,
+		&i.FailedConnectionAttempts,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}

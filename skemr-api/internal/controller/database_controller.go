@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
 	"github.com/walmaa/skemr-api/internal/dto"
+	"github.com/walmaa/skemr-api/internal/errormsg"
 	"github.com/walmaa/skemr-api/internal/service"
 	"github.com/walmaa/skemr-api/internal/validation"
 )
@@ -82,7 +83,7 @@ func (h *DatabaseController) createDatabase(w http.ResponseWriter, r *http.Reque
 
 	database, err := h.Service.CreateDatabase(r.Context(), projectId, body)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		errormsg.WriteErrorResponse(w, r, err)
 		return
 	}
 	render.Status(r, http.StatusCreated)

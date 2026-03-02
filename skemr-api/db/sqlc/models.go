@@ -255,6 +255,7 @@ type DatabaseEntity struct {
 	EntityType DatabaseEntityType `json:"entity_type"`
 	ParentID   *uuid.UUID         `json:"parent_id"`
 	Name       string             `json:"name"`
+	Attributes []byte             `json:"attributes"`
 	CreatedAt  pgtype.Timestamptz `json:"created_at"`
 }
 

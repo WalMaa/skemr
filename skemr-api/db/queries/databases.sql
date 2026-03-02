@@ -43,6 +43,22 @@ SET display_name  = COALESCE(sqlc.narg(display_name), display_name),
 WHERE id = @database_id
 RETURNING *;
 
+-- name: UpdateDatabaseSyncedAt :one
+UPDATE databases
+SET last_synced_at             = @synced_at,
+    last_sync_error            = NULL,
+    failed_connection_attempts = 0
+WHERE id = @database_id
+RETURNING *;
+
+-- name: UpdateDatabaseSyncFail :one
+UPDATE databases
+SET last_sync_error            = @sync_error,
+    failed_connection_attempts = failed_connection_attempts + 1,
+    last_synced_at             = @synced_at
+WHERE id = @database_id
+RETURNING *;
+
 -- name: DeleteDatabase :exec
 DELETE
 FROM databases
