@@ -24,8 +24,8 @@ type ColumnRef struct {
 	Name      string
 	DataType  string
 	Default   *string
-	Nullable  bool
-	Updatable bool
+	Nullable  string // YES or NO
+	Updatable string // YES or NO
 }
 
 func NewPostgresConnector(db models.Database) *PostgresConnector {
