@@ -9,9 +9,10 @@ import (
 
 func ToDomainRule(e sqlc.Rule) models.Rule {
 	return models.Rule{
-		ID:       e.ID,
-		Name:     e.Name,
-		RuleType: models.RuleType(e.Type),
+		ID:        e.ID,
+		Name:      e.Name,
+		RuleType:  models.RuleType(e.Type),
+		CreatedAt: Time(&e.CreatedAt),
 	}
 }
 
@@ -21,6 +22,7 @@ func ToDomainRuleWithEntity(e sqlc.GetRuleWithEntityRow) models.Rule {
 		Name:           e.Rule.Name,
 		RuleType:       models.RuleType(e.Rule.Type),
 		DataBaseEntity: ToDomainDatabaseEntity(e.DatabaseEntity),
+		CreatedAt:      Time(&e.Rule.CreatedAt),
 	}
 }
 

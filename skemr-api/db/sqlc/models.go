@@ -297,11 +297,12 @@ type ProjectsSource struct {
 }
 
 type Rule struct {
-	ID               uuid.UUID `json:"id"`
-	Name             string    `json:"name"`
-	Type             RuleType  `json:"type"`
-	DatabaseEntityID uuid.UUID `json:"database_entity_id"`
-	DatabaseID       uuid.UUID `json:"database_id"`
+	ID               uuid.UUID          `json:"id"`
+	Name             string             `json:"name"`
+	Type             RuleType           `json:"type"`
+	DatabaseEntityID uuid.UUID          `json:"database_entity_id"`
+	DatabaseID       uuid.UUID          `json:"database_id"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
 }
 
 type Table struct {

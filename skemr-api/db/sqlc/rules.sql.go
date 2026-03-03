@@ -15,7 +15,7 @@ const createRule = `-- name: CreateRule :one
 INSERT INTO rules
     (name, type, database_entity_id, database_id)
 VALUES ($1, $2, $3, $4)
-RETURNING id, name, type, database_entity_id, database_id
+RETURNING id, name, type, database_entity_id, database_id, created_at
 `
 
 type CreateRuleParams struct {
@@ -39,6 +39,7 @@ func (q *Queries) CreateRule(ctx context.Context, arg CreateRuleParams) (Rule, e
 		&i.Type,
 		&i.DatabaseEntityID,
 		&i.DatabaseID,
+		&i.CreatedAt,
 	)
 	return i, err
 }
@@ -60,7 +61,7 @@ func (q *Queries) DeleteRule(ctx context.Context, arg DeleteRuleParams) error {
 }
 
 const getRule = `-- name: GetRule :one
-SELECT id, name, type, database_entity_id, database_id
+SELECT id, name, type, database_entity_id, database_id, created_at
 FROM rules
 WHERE database_id = $1 AND id = $2
 LIMIT 1
@@ -80,13 +81,14 @@ func (q *Queries) GetRule(ctx context.Context, arg GetRuleParams) (Rule, error) 
 		&i.Type,
 		&i.DatabaseEntityID,
 		&i.DatabaseID,
+		&i.CreatedAt,
 	)
 	return i, err
 }
 
 const getRuleWithEntity = `-- name: GetRuleWithEntity :one
 SELECT
-    r.id, r.name, r.type, r.database_entity_id, r.database_id,
+    r.id, r.name, r.type, r.database_entity_id, r.database_id, r.created_at,
     de.id, de.project_id, de.database_id, de.entity_type, de.parent_id, de.name, de.attributes, de.created_at
 FROM rules r
 JOIN database_entities de ON r.database_entity_id = de.id
@@ -113,6 +115,7 @@ func (q *Queries) GetRuleWithEntity(ctx context.Context, arg GetRuleWithEntityPa
 		&i.Rule.Type,
 		&i.Rule.DatabaseEntityID,
 		&i.Rule.DatabaseID,
+		&i.Rule.CreatedAt,
 		&i.DatabaseEntity.ID,
 		&i.DatabaseEntity.ProjectID,
 		&i.DatabaseEntity.DatabaseID,
@@ -127,7 +130,7 @@ func (q *Queries) GetRuleWithEntity(ctx context.Context, arg GetRuleWithEntityPa
 
 const getRulesWithEntities = `-- name: GetRulesWithEntities :many
 SELECT
-    r.id, r.name, r.type, r.database_entity_id, r.database_id,
+    r.id, r.name, r.type, r.database_entity_id, r.database_id, r.created_at,
     de.id, de.project_id, de.database_id, de.entity_type, de.parent_id, de.name, de.attributes, de.created_at
 FROM rules r
 JOIN database_entities de ON r.database_entity_id = de.id
@@ -154,6 +157,7 @@ func (q *Queries) GetRulesWithEntities(ctx context.Context, databaseID uuid.UUID
 			&i.Rule.Type,
 			&i.Rule.DatabaseEntityID,
 			&i.Rule.DatabaseID,
+			&i.Rule.CreatedAt,
 			&i.DatabaseEntity.ID,
 			&i.DatabaseEntity.ProjectID,
 			&i.DatabaseEntity.DatabaseID,
@@ -174,7 +178,7 @@ func (q *Queries) GetRulesWithEntities(ctx context.Context, databaseID uuid.UUID
 }
 
 const listRulesByCriteria = `-- name: ListRulesByCriteria :many
-SELECT id, name, type, database_entity_id, database_id
+SELECT id, name, type, database_entity_id, database_id, created_at
 FROM rules
 WHERE database_id = $1
   AND (database_entity_id = $2 OR $2 IS NULL)
@@ -200,6 +204,7 @@ func (q *Queries) ListRulesByCriteria(ctx context.Context, arg ListRulesByCriter
 			&i.Type,
 			&i.DatabaseEntityID,
 			&i.DatabaseID,
+			&i.CreatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -212,7 +217,7 @@ func (q *Queries) ListRulesByCriteria(ctx context.Context, arg ListRulesByCriter
 }
 
 const listRulesByDatabaseId = `-- name: ListRulesByDatabaseId :many
-SELECT id, name, type, database_entity_id, database_id
+SELECT id, name, type, database_entity_id, database_id, created_at
 FROM rules
 WHERE database_id = $1
 `
@@ -232,6 +237,7 @@ func (q *Queries) ListRulesByDatabaseId(ctx context.Context, databaseID uuid.UUI
 			&i.Type,
 			&i.DatabaseEntityID,
 			&i.DatabaseID,
+			&i.CreatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -248,7 +254,7 @@ UPDATE rules
 SET name = $2,
     type = $3
 WHERE id = $1
-RETURNING id, name, type, database_entity_id, database_id
+RETURNING id, name, type, database_entity_id, database_id, created_at
 `
 
 type UpdateRuleParams struct {

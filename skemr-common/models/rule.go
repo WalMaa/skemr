@@ -1,6 +1,8 @@
 package models
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 )
 
@@ -9,6 +11,7 @@ type Rule struct {
 	Name           string         `json:"name"`
 	RuleType       RuleType       `json:"ruleType"`
 	DataBaseEntity DatabaseEntity `json:"databaseEntity"`
+	CreatedAt      time.Time      `json:"createdAt"`
 }
 
 type RuleType string
