@@ -21,7 +21,7 @@ func NewDatabaseEntityService(q sqlc.Querier) *DatabaseEntityService {
 }
 
 func (s *DatabaseEntityService) GetDatabaseEntityByID(c context.Context, projectId uuid.UUID, databaseId uuid.UUID, entityId uuid.UUID) (models.DatabaseEntity, error) {
-	slog.Info("Getting database entity for project %q, database %q and entity %q", projectId, databaseId, entityId)
+	slog.Info("Getting database entity", "projectId", projectId, "database", databaseId, "entityId", entityId)
 	project, err := CheckProjectExists(c, s.db, projectId)
 
 	if err != nil {

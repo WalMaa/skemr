@@ -32,7 +32,7 @@ func runSchema(conn *pgxpool.Pool) {
 	`)
 
 	if err != nil {
-		slog.Error("Error refreshing schema", err)
+		slog.Error("Error refreshing schema", "error", err)
 	}
 
 	db := stdlib.OpenDBFromPool(conn)
@@ -72,7 +72,8 @@ func main() {
 
 	cfg, err := config.LoadConfig()
 	if err != nil {
-		log.Fatal("Error loading config: ", err)
+		slog.Error("Error loading config", "error", err)
+		os.Exit(1)
 	}
 
 	slog.Info("Starting Skemr API server", "environment", cfg.App.Env)
@@ -80,7 +81,8 @@ func main() {
 	slog.Info("Connecting to database", "host", cfg.Database.Host, "port", cfg.Database.Port, "name", cfg.Database.Name, "sslmode", cfg.Database.SSLMode)
 	conn, err := pgxpool.New(context.Background(), fmt.Sprintf("postgres://%s:%s@%s:%d/%s", cfg.Database.User, cfg.Database.Password, cfg.Database.Host, cfg.Database.Port, cfg.Database.Name))
 	if err != nil {
-		slog.Error("Error connecting to DB", err)
+		slog.Error("Error connecting to DB", "error", err)
+		os.Exit(1)
 	}
 
 	taskClient := tasks.StartTaskClient(ctx, asynq.RedisClientOpt{
@@ -127,6 +129,7 @@ func main() {
 	}
 	slog.Info("Listening and serving HTTP", "host", host)
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		slog.Error("listen: %s\n", err)
+		slog.Error("HTTP server ListenAndServe error", "error", err)
+		os.Exit(1)
 	}
 }
