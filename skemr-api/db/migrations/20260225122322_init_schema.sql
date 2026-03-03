@@ -65,9 +65,9 @@ CREATE TABLE project_access_tokens
     id         UUID PRIMARY KEY     DEFAULT gen_random_uuid(),
     project_id UUID        NOT NULL REFERENCES projects (id) ON DELETE CASCADE,
     name       TEXT        NOT NULL,
-    prefix TEXT NOT NULL, -- lookup key of the token
-    hash TEXT        NOT NULL,
-    last_used TIMESTAMPTZ,
+    prefix     TEXT        NOT NULL, -- lookup key of the token
+    hash       TEXT        NOT NULL,
+    last_used  TIMESTAMPTZ,
     expires_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -76,20 +76,20 @@ CREATE TABLE project_access_tokens
 
 CREATE TABLE databases
 (
-    id           UUID PRIMARY KEY       DEFAULT gen_random_uuid(),
-    display_name TEXT          NOT NULL,
-    db_name      TEXT,
-    username     TEXT,
-    password     TEXT,
-    host         TEXT,
-    port         INTEGER,
-    database_type         database_type DEFAULT 'postgres',
-    project_id   uuid          NOT NULL REFERENCES projects (id) ON DELETE CASCADE,
-    last_synced_at TIMESTAMPTZ,
-    last_sync_error TEXT,
-    failed_connection_attempts INTEGER NOT NULL DEFAULT 0,
-    created_at   TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
-    updated_at   TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+    id                         UUID PRIMARY KEY     DEFAULT gen_random_uuid(),
+    display_name               TEXT        NOT NULL,
+    db_name                    TEXT,
+    username                   TEXT,
+    password                   TEXT,
+    host                       TEXT,
+    port                       INTEGER,
+    database_type              database_type        DEFAULT 'postgres',
+    project_id                 uuid        NOT NULL REFERENCES projects (id) ON DELETE CASCADE,
+    last_synced_at             TIMESTAMPTZ,
+    last_sync_error            TEXT,
+    failed_connection_attempts INTEGER     NOT NULL DEFAULT 0,
+    created_at                 TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at                 TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT unique_database_name_per_project UNIQUE (display_name, project_id)
 );
 
@@ -113,29 +113,29 @@ CREATE TABLE tables
 
 CREATE TABLE database_entities
 (
-    id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    project_id     uuid NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-    database_id    uuid NOT NULL REFERENCES databases(id) ON DELETE CASCADE,
+    id          uuid PRIMARY KEY              DEFAULT gen_random_uuid(),
+    project_id  uuid                 NOT NULL REFERENCES projects (id) ON DELETE CASCADE,
+    database_id uuid                 NOT NULL REFERENCES databases (id) ON DELETE CASCADE,
 
-    entity_type           database_entity_type  NOT NULL,
-    parent_id      uuid        NULL REFERENCES database_entities (id),
+    entity_type database_entity_type NOT NULL,
+    parent_id   uuid                 NULL REFERENCES database_entities (id),
 
     -- generic identity at this node
-    name           text        NOT NULL, -- e.g. "public", "users", "email", "my_view"
-    attributes     jsonb       NOT NULL DEFAULT '{}'::jsonb, -- Store any additional metadata about the entity here
+    name        text                 NOT NULL,                            -- e.g. "public", "users", "email", "my_view"
+    attributes  jsonb,                                                    -- Store any additional metadata about the entity here
 
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_at  TIMESTAMPTZ          NOT NULL DEFAULT NOW(),
 
-    UNIQUE NULLS NOT DISTINCT (database_id, name, entity_type, parent_id)  -- Ensure we do not map the same entity twice, use NULLS NOT DISTINCT so parentless are not duplicated
+    UNIQUE NULLS NOT DISTINCT (database_id, name, entity_type, parent_id) -- Ensure we do not map the same entity twice, use NULLS NOT DISTINCT so parentless are not duplicated
 );
 
 
 -- Rules specify the protection mechanisms for databases, schemas, tables, and columns.
 CREATE TABLE rules
 (
-    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name          TEXT       NOT NULL, -- User defined for rule
-    type          rule_type  NOT NULL,
-    database_entity_id uuid NOT NULL REFERENCES database_entities(id) ON DELETE CASCADE,
-    database_id uuid NOT NULL REFERENCES databases(id) ON DELETE CASCADE
+    id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name               TEXT      NOT NULL, -- User defined for rule
+    type               rule_type NOT NULL,
+    database_entity_id uuid      NOT NULL REFERENCES database_entities (id) ON DELETE CASCADE,
+    database_id        uuid      NOT NULL REFERENCES databases (id) ON DELETE CASCADE
 );

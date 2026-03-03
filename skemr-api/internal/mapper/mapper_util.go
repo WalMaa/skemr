@@ -1,6 +1,8 @@
 package mapper
 
 import (
+	"encoding/json"
+	"log/slog"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
@@ -19,6 +21,16 @@ func Text(v *string) pgtype.Text {
 		String: *v,
 		Valid:  true,
 	}
+}
+
+func ToMap(b []byte) map[string]interface{} {
+	var m map[string]interface{}
+	err := json.Unmarshal(b, &m)
+	if err != nil {
+		slog.Error("Unable to unmarshal JSON", err)
+		return nil
+	}
+	return m
 }
 
 func TextPtr(v *pgtype.Text) *string {

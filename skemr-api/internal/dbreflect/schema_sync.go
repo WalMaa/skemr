@@ -22,6 +22,13 @@ type SchemaSyncService struct {
 	db sqlc.Querier
 }
 
+type ColumnAttributes struct {
+	DataType  string  `json:"dataType"`
+	Default   *string `json:"default"`
+	Nullable  string  `json:"nullable"`  // YES or NO
+	Updatable string  `json:"updatable"` // YES or NO
+}
+
 func NewSchemaSyncService(db sqlc.Querier) *SchemaSyncService {
 	return &SchemaSyncService{db: db}
 }
@@ -207,6 +214,18 @@ func (s *SchemaSyncService) UpdateColumn(c context.Context, columnRef ColumnRef,
 		return sqlc.DatabaseEntity{}, err
 	}
 
+	columnAttributes := ColumnAttributes{
+		DataType:  columnRef.DataType,
+		Default:   columnRef.Default,
+		Nullable:  columnRef.Nullable,
+		Updatable: columnRef.Updatable,
+	}
+	attributesJson, jsonError := json.Marshal(columnAttributes)
+	if jsonError != nil {
+		slog.Error("error marshalling column attributes", "error", err)
+		return sqlc.DatabaseEntity{}, err
+	}
+
 	// If that schema does not exist yet, save it
 	if errors.Is(err, pgx.ErrNoRows) {
 		args := sqlc.CreateDatabaseEntityParams{
@@ -215,6 +234,7 @@ func (s *SchemaSyncService) UpdateColumn(c context.Context, columnRef ColumnRef,
 			ParentID:   &tableId,
 			DatabaseID: database.ID,
 			Name:       columnRef.Name,
+			Attributes: attributesJson,
 		}
 		column, err := s.db.CreateDatabaseEntity(c, args)
 		if err != nil {

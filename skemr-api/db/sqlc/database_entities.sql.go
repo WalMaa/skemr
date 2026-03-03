@@ -13,9 +13,9 @@ import (
 
 const createDatabaseEntity = `-- name: CreateDatabaseEntity :one
 INSERT INTO database_entities
-(project_id, database_id, entity_type, parent_id, name)
+(project_id, database_id, entity_type, parent_id, name, attributes)
 VALUES
-($1, $2, $3, $4, $5)
+($1, $2, $3, $4, $5, $6)
 RETURNING id, project_id, database_id, entity_type, parent_id, name, attributes, created_at
 `
 
@@ -25,6 +25,7 @@ type CreateDatabaseEntityParams struct {
 	EntityType DatabaseEntityType `json:"entity_type"`
 	ParentID   *uuid.UUID         `json:"parent_id"`
 	Name       string             `json:"name"`
+	Attributes []byte             `json:"attributes"`
 }
 
 func (q *Queries) CreateDatabaseEntity(ctx context.Context, arg CreateDatabaseEntityParams) (DatabaseEntity, error) {
@@ -34,6 +35,7 @@ func (q *Queries) CreateDatabaseEntity(ctx context.Context, arg CreateDatabaseEn
 		arg.EntityType,
 		arg.ParentID,
 		arg.Name,
+		arg.Attributes,
 	)
 	var i DatabaseEntity
 	err := row.Scan(

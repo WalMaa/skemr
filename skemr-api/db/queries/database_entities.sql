@@ -35,9 +35,9 @@ LIMIT 1;
 
 -- name: CreateDatabaseEntity :one
 INSERT INTO database_entities
-(project_id, database_id, entity_type, parent_id, name)
+(project_id, database_id, entity_type, parent_id, name, attributes)
 VALUES
-(@project_id, @database_id, @entity_type, @parent_id, @name)
+(@project_id, @database_id, @entity_type, @parent_id, @name, @attributes)
 RETURNING *;
 
 
