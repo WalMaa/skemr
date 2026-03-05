@@ -24,7 +24,8 @@ type Querier interface {
 	GetDatabaseByIDAndProjectID(ctx context.Context, arg GetDatabaseByIDAndProjectIDParams) (Database, error)
 	GetDatabaseByIdAndProject(ctx context.Context, arg GetDatabaseByIdAndProjectParams) (Database, error)
 	GetDatabaseByNameAndProject(ctx context.Context, arg GetDatabaseByNameAndProjectParams) (Database, error)
-	GetDatabaseEntitiesByDatabaseId(ctx context.Context, arg GetDatabaseEntitiesByDatabaseIdParams) ([]DatabaseEntity, error)
+	GetDatabaseEntities(ctx context.Context, arg GetDatabaseEntitiesParams) ([]DatabaseEntity, error)
+	GetDatabaseEntitiesByDatabaseId(ctx context.Context, databaseID uuid.UUID) ([]DatabaseEntity, error)
 	GetDatabaseEntitiesByDatabaseIdAndParentId(ctx context.Context, arg GetDatabaseEntitiesByDatabaseIdAndParentIdParams) ([]DatabaseEntity, error)
 	GetDatabaseEntitiesByProjectId(ctx context.Context, projectID uuid.UUID) ([]DatabaseEntity, error)
 	GetDatabaseEntity(ctx context.Context, id uuid.UUID) (DatabaseEntity, error)
@@ -42,6 +43,7 @@ type Querier interface {
 	ListRulesByCriteria(ctx context.Context, arg ListRulesByCriteriaParams) ([]Rule, error)
 	ListRulesByDatabaseId(ctx context.Context, databaseID uuid.UUID) ([]Rule, error)
 	UpdateDatabase(ctx context.Context, arg UpdateDatabaseParams) (Database, error)
+	UpdateDatabaseEntityAsDeleted(ctx context.Context, id uuid.UUID) error
 	UpdateDatabaseSyncFail(ctx context.Context, arg UpdateDatabaseSyncFailParams) (Database, error)
 	UpdateDatabaseSyncedAt(ctx context.Context, arg UpdateDatabaseSyncedAtParams) (Database, error)
 	UpdateProject(ctx context.Context, arg UpdateProjectParams) error

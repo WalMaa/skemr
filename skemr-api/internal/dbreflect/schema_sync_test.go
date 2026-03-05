@@ -40,6 +40,7 @@ func TestSchemaSync(t *testing.T) {
 		DatabaseType: models.Postgres,
 		ProjectID:    uuid.New(),
 	}
+	connector := NewPostgresConnector(dbModel)
 
 	mockDB := mocks.NewMockQuerier(t)
 
@@ -48,7 +49,15 @@ func TestSchemaSync(t *testing.T) {
 		Name:       "testSchemaName",
 		DatabaseID: uuid.UUID{},
 	}, nil)
-	syncService := NewSchemaSyncService(mockDB)
+	mockDB.On("GetDatabaseEntitiesByDatabaseId", mock.Anything, mock.Anything).Return([]sqlc.DatabaseEntity{
+		{
+			ID:         uuid.New(),
+			Name:       "testSchemaName",
+			DatabaseID: dbID,
+		},
+	}, nil)
+	mockDB.On("UpdateDatabaseEntityAsDeleted", mock.Anything, mock.Anything).Return(nil)
+	syncService := NewSchemaSyncService(mockDB, func(_ models.Database) DatabaseConnector { return connector })
 
 	err = syncService.SyncSchema(ctx, dbModel)
 	require.NoError(t, err)
@@ -61,6 +70,7 @@ func TestUpdateSchemaCreatesNew(t *testing.T) {
 	c := context.Background()
 	dataBaseId := uuid.New()
 	schemaName := "testSchemaName"
+	mockConnector := new(MockPostgresConnector)
 
 	database := models.Database{
 		ID:        dataBaseId,
@@ -75,7 +85,7 @@ func TestUpdateSchemaCreatesNew(t *testing.T) {
 		DatabaseID: dataBaseId,
 	}, nil)
 
-	syncService := NewSchemaSyncService(mockDB)
+	syncService := NewSchemaSyncService(mockDB, func(_ models.Database) DatabaseConnector { return mockConnector })
 	schema, err := syncService.updateSchema(c, schemaName, database)
 
 	require.NoError(t, err)
@@ -88,6 +98,7 @@ func TestUpdateSchemaUpdatesExisting(t *testing.T) {
 	c := context.Background()
 	dataBaseId := uuid.New()
 	schemaName := "testSchemaName"
+	mockConnector := new(MockPostgresConnector)
 
 	database := models.Database{
 		ID:        dataBaseId,
@@ -101,11 +112,56 @@ func TestUpdateSchemaUpdatesExisting(t *testing.T) {
 		DatabaseID: dataBaseId,
 	}, nil)
 
-	syncService := NewSchemaSyncService(mockDB)
+	syncService := NewSchemaSyncService(mockDB, func(_ models.Database) DatabaseConnector { return mockConnector })
 	schema, err := syncService.updateSchema(c, schemaName, database)
 
 	require.NoError(t, err)
 	require.Equal(t, schema.Name, schemaName)
 	mockDB.AssertExpectations(t)
+}
 
+func TestMarkEntityAsDeletedWhenEntityNotAppearingInSync(t *testing.T) {
+	c := context.Background()
+	entityId := uuid.New()
+	entityId2 := uuid.New()
+	databaseId := uuid.New()
+	projectId := uuid.New()
+
+	mockConnector := new(MockPostgresConnector)
+
+	oldEntities := []sqlc.DatabaseEntity{
+		{
+			ID:         entityId,
+			Name:       "testSchemaName",
+			DatabaseID: databaseId,
+		},
+		{
+			ID:         entityId2,
+			Name:       "testSchemaName2",
+			DatabaseID: databaseId,
+		},
+	}
+
+	mockDB := mocks.NewMockQuerier(t)
+	mockDB.On("GetDatabaseEntitiesByDatabaseId", mock.Anything, mock.Anything).Return(oldEntities, nil)
+	mockDB.On("UpdateDatabaseEntityAsDeleted", mock.Anything, mock.Anything).Return(nil)
+	mockDB.On("GetDatabaseEntityByDatabaseIdAndTypeAndName", c, sqlc.GetDatabaseEntityByDatabaseIdAndTypeAndNameParams{
+		DatabaseID: databaseId,
+		EntityType: "schema",
+		Name:       "testSchemaName",
+	}).Return(oldEntities[0], nil)
+
+	mockDB.On("GetDatabaseEntityByDatabaseIdAndTypeAndName", mock.Anything, mock.Anything).Return(sqlc.DatabaseEntity{}, pgx.ErrNoRows)
+	mockConnector.On("GetTablesInSchema", mock.Anything, mock.Anything, mock.Anything).Return([]TableRef{}, nil)
+	// Return only the first entity, simulating that the second one has been removed in the database and should be marked as deleted
+	mockConnector.On("GetSchemas", mock.Anything, mock.Anything).Return([]string{"testSchemaName"}, nil)
+	mockConnector.On("Connect", mock.Anything).Return(nil, nil)
+	mockConnector.On("Disconnect", mock.Anything, mock.Anything).Return(nil)
+
+	syncService := NewSchemaSyncService(mockDB, func(_ models.Database) DatabaseConnector { return mockConnector })
+	err := syncService.SyncSchema(c, models.Database{ID: databaseId, ProjectID: projectId})
+
+	require.NoError(t, err)
+	mockDB.AssertCalled(t, "UpdateDatabaseEntityAsDeleted", c, entityId2)
+	mockDB.AssertExpectations(t)
 }

@@ -15,12 +15,23 @@ SELECT *
 FROM database_entities
 WHERE project_id = @project_id;
 
--- name: GetDatabaseEntitiesByDatabaseId :many
+-- name: UpdateDatabaseEntityAsDeleted :exec
+UPDATE database_entities
+SET status = 'deleted', deleted_at = NOW()
+WHERE id = @id;
+
+-- name: GetDatabaseEntities :many
 SELECT  *
 FROM database_entities
 WHERE database_id = @database_id
     AND ( entity_type = sqlc.narg('entity_type') OR sqlc.narg('entity_type') IS NULL)
     AND ( parent_id = sqlc.narg('parent_id') OR sqlc.narg('parent_id') IS NULL);
+
+
+-- name: GetDatabaseEntitiesByDatabaseId :many
+SELECT  *
+FROM database_entities
+WHERE database_id = @database_id;
 
 -- name: GetDatabaseEntitiesByDatabaseIdAndParentId :many
 SELECT  *

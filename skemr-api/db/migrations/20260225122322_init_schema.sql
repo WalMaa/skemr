@@ -15,6 +15,11 @@ CREATE TYPE migration_status AS ENUM (
     'failed'
     );
 
+CREATE TYPE database_entity_status AS ENUM (
+    'active',
+    'deleted'
+    );
+
 CREATE TYPE migration_statement_action AS ENUM (
     'create',
     'alter',
@@ -113,18 +118,20 @@ CREATE TABLE tables
 
 CREATE TABLE database_entities
 (
-    id          uuid PRIMARY KEY              DEFAULT gen_random_uuid(),
-    project_id  uuid                 NOT NULL REFERENCES projects (id) ON DELETE CASCADE,
-    database_id uuid                 NOT NULL REFERENCES databases (id) ON DELETE CASCADE,
-
-    entity_type database_entity_type NOT NULL,
-    parent_id   uuid                 NULL REFERENCES database_entities (id),
+    id            uuid PRIMARY KEY                DEFAULT gen_random_uuid(),
+    project_id    uuid                   NOT NULL REFERENCES projects (id) ON DELETE CASCADE,
+    database_id   uuid                   NOT NULL REFERENCES databases (id) ON DELETE CASCADE,
+    status        database_entity_status NOT NULL DEFAULT 'active',
+    deleted_at    TIMESTAMPTZ            NULL,                            -- Set when status is 'deleted' to track when it was deleted
+    first_seen_at TIMESTAMPTZ            NOT NULL DEFAULT NOW(),          -- Track when we first saw this entity
+    entity_type   database_entity_type   NOT NULL,
+    parent_id     uuid                   NULL REFERENCES database_entities (id),
 
     -- generic identity at this node
-    name        text                 NOT NULL,                            -- e.g. "public", "users", "email", "my_view"
-    attributes  jsonb,                                                    -- Store any additional metadata about the entity here
+    name          text                   NOT NULL,                        -- e.g. "public", "users", "email", "my_view"
+    attributes    jsonb,                                                  -- Store any additional metadata about the entity here
 
-    created_at  TIMESTAMPTZ          NOT NULL DEFAULT NOW(),
+    created_at    TIMESTAMPTZ            NOT NULL DEFAULT NOW(),
 
     UNIQUE NULLS NOT DISTINCT (database_id, name, entity_type, parent_id) -- Ensure we do not map the same entity twice, use NULLS NOT DISTINCT so parentless are not duplicated
 );
@@ -133,10 +140,10 @@ CREATE TABLE database_entities
 -- Rules specify the protection mechanisms for databases, schemas, tables, and columns.
 CREATE TABLE rules
 (
-    id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name               TEXT      NOT NULL, -- User defined for rule
-    type               rule_type NOT NULL,
-    database_entity_id uuid      NOT NULL REFERENCES database_entities (id) ON DELETE CASCADE,
-    database_id        uuid      NOT NULL REFERENCES databases (id) ON DELETE CASCADE,
-    created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    id                 UUID PRIMARY KEY     DEFAULT gen_random_uuid(),
+    name               TEXT        NOT NULL, -- User defined for rule
+    type               rule_type   NOT NULL,
+    database_entity_id uuid        NOT NULL REFERENCES database_entities (id) ON DELETE CASCADE,
+    database_id        uuid        NOT NULL REFERENCES databases (id) ON DELETE CASCADE,
+    created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

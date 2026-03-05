@@ -7,13 +7,15 @@ import (
 
 func ToDomainDatabaseEntity(e sqlc.DatabaseEntity) models.DatabaseEntity {
 	return models.DatabaseEntity{
-		ID:         e.ID,
-		ProjectId:  e.ProjectID,
-		Type:       models.DatabaseEntityType(e.EntityType),
-		ParentId:   e.ParentID,
-		Name:       e.Name,
-		Attributes: ToMap(e.Attributes),
-		CreatedAt:  Time(&e.CreatedAt),
+		ID:          e.ID,
+		Type:        models.DatabaseEntityType(e.EntityType),
+		ParentId:    e.ParentID,
+		Name:        e.Name,
+		Status:      models.DatabaseEntityStatus(e.Status),
+		Attributes:  ToMap(e.Attributes),
+		DeletedAt:   TimePtr(&e.DeletedAt),
+		FirstSeenAt: Time(&e.FirstSeenAt),
+		CreatedAt:   Time(&e.CreatedAt),
 	}
 }
 

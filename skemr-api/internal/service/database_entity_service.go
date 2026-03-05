@@ -59,7 +59,7 @@ func (s *DatabaseEntityService) ListDatabaseEntitiesByDatabase(c context.Context
 		}
 	}
 
-	entities, err := s.db.GetDatabaseEntitiesByDatabaseId(c, sqlc.GetDatabaseEntitiesByDatabaseIdParams{
+	entities, err := s.db.GetDatabaseEntities(c, sqlc.GetDatabaseEntitiesParams{
 		DatabaseID: database.ID,
 		EntityType: et,
 		ParentID:   parentId,

@@ -89,7 +89,7 @@ func (q *Queries) GetRule(ctx context.Context, arg GetRuleParams) (Rule, error) 
 const getRuleWithEntity = `-- name: GetRuleWithEntity :one
 SELECT
     r.id, r.name, r.type, r.database_entity_id, r.database_id, r.created_at,
-    de.id, de.project_id, de.database_id, de.entity_type, de.parent_id, de.name, de.attributes, de.created_at
+    de.id, de.project_id, de.database_id, de.status, de.deleted_at, de.first_seen_at, de.entity_type, de.parent_id, de.name, de.attributes, de.created_at
 FROM rules r
 JOIN database_entities de ON r.database_entity_id = de.id
 WHERE r.database_id = $1 AND r.id = $2
@@ -119,6 +119,9 @@ func (q *Queries) GetRuleWithEntity(ctx context.Context, arg GetRuleWithEntityPa
 		&i.DatabaseEntity.ID,
 		&i.DatabaseEntity.ProjectID,
 		&i.DatabaseEntity.DatabaseID,
+		&i.DatabaseEntity.Status,
+		&i.DatabaseEntity.DeletedAt,
+		&i.DatabaseEntity.FirstSeenAt,
 		&i.DatabaseEntity.EntityType,
 		&i.DatabaseEntity.ParentID,
 		&i.DatabaseEntity.Name,
@@ -131,7 +134,7 @@ func (q *Queries) GetRuleWithEntity(ctx context.Context, arg GetRuleWithEntityPa
 const getRulesWithEntities = `-- name: GetRulesWithEntities :many
 SELECT
     r.id, r.name, r.type, r.database_entity_id, r.database_id, r.created_at,
-    de.id, de.project_id, de.database_id, de.entity_type, de.parent_id, de.name, de.attributes, de.created_at
+    de.id, de.project_id, de.database_id, de.status, de.deleted_at, de.first_seen_at, de.entity_type, de.parent_id, de.name, de.attributes, de.created_at
 FROM rules r
 JOIN database_entities de ON r.database_entity_id = de.id
 WHERE r.database_id = $1
@@ -161,6 +164,9 @@ func (q *Queries) GetRulesWithEntities(ctx context.Context, databaseID uuid.UUID
 			&i.DatabaseEntity.ID,
 			&i.DatabaseEntity.ProjectID,
 			&i.DatabaseEntity.DatabaseID,
+			&i.DatabaseEntity.Status,
+			&i.DatabaseEntity.DeletedAt,
+			&i.DatabaseEntity.FirstSeenAt,
 			&i.DatabaseEntity.EntityType,
 			&i.DatabaseEntity.ParentID,
 			&i.DatabaseEntity.Name,

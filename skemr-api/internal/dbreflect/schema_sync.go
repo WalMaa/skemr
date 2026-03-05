@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"slices"
 	"time"
 
 	"github.com/google/uuid"
@@ -19,7 +20,8 @@ import (
 )
 
 type SchemaSyncService struct {
-	db sqlc.Querier
+	db               sqlc.Querier
+	connectorFactory func(database models.Database) DatabaseConnector
 }
 
 type ColumnAttributes struct {
@@ -29,8 +31,8 @@ type ColumnAttributes struct {
 	Updatable string  `json:"updatable"` // YES or NO
 }
 
-func NewSchemaSyncService(db sqlc.Querier) *SchemaSyncService {
-	return &SchemaSyncService{db: db}
+func NewSchemaSyncService(db sqlc.Querier, connectorFactory func(database models.Database) DatabaseConnector) *SchemaSyncService {
+	return &SchemaSyncService{db: db, connectorFactory: connectorFactory}
 }
 
 func (s *SchemaSyncService) ProcessSyncTask(c context.Context, t *asynq.Task) error {
@@ -79,22 +81,33 @@ func (s *SchemaSyncService) ProcessSyncTask(c context.Context, t *asynq.Task) er
 
 func (s *SchemaSyncService) SyncSchema(c context.Context, database models.Database) error {
 
-	postgresConn := NewPostgresConnector(database)
-
-	conn, err := postgresConn.Connect(c)
+	connector := s.connectorFactory(database)
+	conn, err := connector.Connect(c)
 
 	if err != nil {
 		return fmt.Errorf("error connecting to database: %w", err)
 	}
 	defer func(conn *pgx.Conn, ctx context.Context) {
+		if conn == nil {
+			slog.Warn("No connection to close")
+			return
+		}
 		err := conn.Close(ctx)
 		if err != nil {
 			fmt.Printf("error closing connection: %v\n", err)
 		}
 	}(conn, c)
 
+	// Get all saved entities for the database. Any entities that are not found in the new schema will be marked as deleted at the end.
+	savedEntities, err := s.db.GetDatabaseEntitiesByDatabaseId(c, database.ID)
+	if err != nil {
+		return fmt.Errorf("error getting saved database entities: %w", err)
+	}
+	// Create a map of current entity ids to easily check which entities are still present in the new schema after the sync.
+	currentEntityIds := make([]uuid.UUID, len(savedEntities))
+
 	// Get all schemas in the database
-	schemas, err := postgresConn.GetSchemas(c, conn)
+	schemas, err := connector.GetSchemas(c, conn)
 	if err != nil {
 		return fmt.Errorf("error getting schemas: %w", err)
 	}
@@ -105,29 +118,57 @@ func (s *SchemaSyncService) SyncSchema(c context.Context, database models.Databa
 		if err != nil {
 			return err
 		}
-		tables, err := postgresConn.GetTablesInSchema(c, conn, schema.Name)
+		// Add schema ID to current entity ids
+		slog.Debug("Adding schema to current entity ids", "schemaName", schema.Name, "schemaId", schema.ID)
+		currentEntityIds = append(currentEntityIds, schema.ID)
+		tables, err := connector.GetTablesInSchema(c, conn, schema.Name)
 		if err != nil {
 			return fmt.Errorf("error getting tables in schema %q: %w", schema.Name, err)
 		}
 		for _, tableRef := range tables {
 			table, err := s.UpdateTable(c, tableRef, database, schema.ID)
-			columns, err := postgresConn.ListColumnsInTable(c, conn, tableRef)
+
+			if err != nil {
+				return fmt.Errorf("Error updating tables: %w", err)
+			}
+			// Add table ID to current entity ids
+			slog.Debug("Adding table to current entity ids", "tableName", table.Name, "tableId", table.ID)
+			currentEntityIds = append(currentEntityIds, table.ID)
+			columns, err := connector.ListColumnsInTable(c, conn, tableRef)
 			if err != nil {
 				return fmt.Errorf("error getting columns in table %q.%q: %w", schema.Name, tableRef.Name, err)
 			}
 			for _, column := range columns {
-				_, err := s.UpdateColumn(c, column, database, table.ID)
+				column, err := s.UpdateColumn(c, column, database, table.ID)
 				if err != nil {
-					return fmt.Errorf("Error updating tables: %w", err)
+					return fmt.Errorf("Error updating column: %w", err)
 				}
+
+				// Add column ID to current entity ids
+				slog.Debug("Adding column to current entity ids", "columnName", column.Name, "columnId", column.ID)
+				currentEntityIds = append(currentEntityIds, column.ID)
 			}
 
+		}
+	}
+
+	// Mark any entities that were not found in the new schema as deleted
+	for _, entity := range savedEntities {
+		if !slices.Contains(currentEntityIds, entity.ID) {
+			err := s.markEntityAsDeleted(c, entity.ID)
+			if err != nil {
+				slog.Error("Error marking entity as deleted", "entityId", entity.ID, "error", err)
+				// Do not return error as we want to continue marking other entities as deleted
+			}
 		}
 	}
 
 	return nil
 }
 
+// updateSchema checks if a schema with the given name exists for the database.
+// If it does not exist, it creates a new schema entity.
+// If it does exist, it currently does nothing but can be extended to update schema attributes if needed.
 func (s *SchemaSyncService) updateSchema(c context.Context, schemaName string, database models.Database) (sqlc.DatabaseEntity, error) {
 	args := sqlc.GetDatabaseEntityByDatabaseIdAndTypeAndNameParams{
 		DatabaseID: database.ID,
@@ -157,11 +198,23 @@ func (s *SchemaSyncService) updateSchema(c context.Context, schemaName string, d
 		return schema, err
 	}
 
-	// If schema does exist, update if needed. Currently no-op
+	// TODO: If schema does exist, update if needed. Currently no-op
 	slog.Info("schema exists", "schema", schema)
 
 	return schema, err
 
+}
+
+// markEntityAsDeleted sets the status of the entity to deleted.
+// This is used for entities that were not found in the new schema during sync.
+// We want to keep these entities in the database to show how the schema has changed.
+func (s *SchemaSyncService) markEntityAsDeleted(c context.Context, entityId uuid.UUID) error {
+	err := s.db.UpdateDatabaseEntityAsDeleted(c, entityId)
+	if err != nil {
+		slog.Error("error marking entity as deleted", "error", err)
+		return err
+	}
+	return nil
 }
 
 func (s *SchemaSyncService) UpdateTable(c context.Context, tableRef TableRef, database models.Database, schemaId uuid.UUID) (sqlc.DatabaseEntity, error) {
@@ -195,7 +248,7 @@ func (s *SchemaSyncService) UpdateTable(c context.Context, tableRef TableRef, da
 		return table, err
 	}
 
-	// If table does exist, update if needed. Currently no-op
+	// TODO: If table does exist, update if needed. Currently no-op
 	slog.Info("table exists", "schema", table)
 
 	return table, err

@@ -16,7 +16,7 @@ INSERT INTO database_entities
 (project_id, database_id, entity_type, parent_id, name, attributes)
 VALUES
 ($1, $2, $3, $4, $5, $6)
-RETURNING id, project_id, database_id, entity_type, parent_id, name, attributes, created_at
+RETURNING id, project_id, database_id, status, deleted_at, first_seen_at, entity_type, parent_id, name, attributes, created_at
 `
 
 type CreateDatabaseEntityParams struct {
@@ -42,6 +42,9 @@ func (q *Queries) CreateDatabaseEntity(ctx context.Context, arg CreateDatabaseEn
 		&i.ID,
 		&i.ProjectID,
 		&i.DatabaseID,
+		&i.Status,
+		&i.DeletedAt,
+		&i.FirstSeenAt,
 		&i.EntityType,
 		&i.ParentID,
 		&i.Name,
@@ -51,22 +54,22 @@ func (q *Queries) CreateDatabaseEntity(ctx context.Context, arg CreateDatabaseEn
 	return i, err
 }
 
-const getDatabaseEntitiesByDatabaseId = `-- name: GetDatabaseEntitiesByDatabaseId :many
-SELECT  id, project_id, database_id, entity_type, parent_id, name, attributes, created_at
+const getDatabaseEntities = `-- name: GetDatabaseEntities :many
+SELECT  id, project_id, database_id, status, deleted_at, first_seen_at, entity_type, parent_id, name, attributes, created_at
 FROM database_entities
 WHERE database_id = $1
     AND ( entity_type = $2 OR $2 IS NULL)
     AND ( parent_id = $3 OR $3 IS NULL)
 `
 
-type GetDatabaseEntitiesByDatabaseIdParams struct {
+type GetDatabaseEntitiesParams struct {
 	DatabaseID uuid.UUID              `json:"database_id"`
 	EntityType NullDatabaseEntityType `json:"entity_type"`
 	ParentID   *uuid.UUID             `json:"parent_id"`
 }
 
-func (q *Queries) GetDatabaseEntitiesByDatabaseId(ctx context.Context, arg GetDatabaseEntitiesByDatabaseIdParams) ([]DatabaseEntity, error) {
-	rows, err := q.db.Query(ctx, getDatabaseEntitiesByDatabaseId, arg.DatabaseID, arg.EntityType, arg.ParentID)
+func (q *Queries) GetDatabaseEntities(ctx context.Context, arg GetDatabaseEntitiesParams) ([]DatabaseEntity, error) {
+	rows, err := q.db.Query(ctx, getDatabaseEntities, arg.DatabaseID, arg.EntityType, arg.ParentID)
 	if err != nil {
 		return nil, err
 	}
@@ -78,6 +81,47 @@ func (q *Queries) GetDatabaseEntitiesByDatabaseId(ctx context.Context, arg GetDa
 			&i.ID,
 			&i.ProjectID,
 			&i.DatabaseID,
+			&i.Status,
+			&i.DeletedAt,
+			&i.FirstSeenAt,
+			&i.EntityType,
+			&i.ParentID,
+			&i.Name,
+			&i.Attributes,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getDatabaseEntitiesByDatabaseId = `-- name: GetDatabaseEntitiesByDatabaseId :many
+SELECT  id, project_id, database_id, status, deleted_at, first_seen_at, entity_type, parent_id, name, attributes, created_at
+FROM database_entities
+WHERE database_id = $1
+`
+
+func (q *Queries) GetDatabaseEntitiesByDatabaseId(ctx context.Context, databaseID uuid.UUID) ([]DatabaseEntity, error) {
+	rows, err := q.db.Query(ctx, getDatabaseEntitiesByDatabaseId, databaseID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []DatabaseEntity{}
+	for rows.Next() {
+		var i DatabaseEntity
+		if err := rows.Scan(
+			&i.ID,
+			&i.ProjectID,
+			&i.DatabaseID,
+			&i.Status,
+			&i.DeletedAt,
+			&i.FirstSeenAt,
 			&i.EntityType,
 			&i.ParentID,
 			&i.Name,
@@ -95,7 +139,7 @@ func (q *Queries) GetDatabaseEntitiesByDatabaseId(ctx context.Context, arg GetDa
 }
 
 const getDatabaseEntitiesByDatabaseIdAndParentId = `-- name: GetDatabaseEntitiesByDatabaseIdAndParentId :many
-SELECT  id, project_id, database_id, entity_type, parent_id, name, attributes, created_at
+SELECT  id, project_id, database_id, status, deleted_at, first_seen_at, entity_type, parent_id, name, attributes, created_at
 FROM database_entities
 WHERE database_id = $1 AND parent_id = $2
 `
@@ -118,6 +162,9 @@ func (q *Queries) GetDatabaseEntitiesByDatabaseIdAndParentId(ctx context.Context
 			&i.ID,
 			&i.ProjectID,
 			&i.DatabaseID,
+			&i.Status,
+			&i.DeletedAt,
+			&i.FirstSeenAt,
 			&i.EntityType,
 			&i.ParentID,
 			&i.Name,
@@ -135,7 +182,7 @@ func (q *Queries) GetDatabaseEntitiesByDatabaseIdAndParentId(ctx context.Context
 }
 
 const getDatabaseEntitiesByProjectId = `-- name: GetDatabaseEntitiesByProjectId :many
-SELECT id, project_id, database_id, entity_type, parent_id, name, attributes, created_at
+SELECT id, project_id, database_id, status, deleted_at, first_seen_at, entity_type, parent_id, name, attributes, created_at
 FROM database_entities
 WHERE project_id = $1
 `
@@ -153,6 +200,9 @@ func (q *Queries) GetDatabaseEntitiesByProjectId(ctx context.Context, projectID 
 			&i.ID,
 			&i.ProjectID,
 			&i.DatabaseID,
+			&i.Status,
+			&i.DeletedAt,
+			&i.FirstSeenAt,
 			&i.EntityType,
 			&i.ParentID,
 			&i.Name,
@@ -170,7 +220,7 @@ func (q *Queries) GetDatabaseEntitiesByProjectId(ctx context.Context, projectID 
 }
 
 const getDatabaseEntity = `-- name: GetDatabaseEntity :one
-SELECT id, project_id, database_id, entity_type, parent_id, name, attributes, created_at
+SELECT id, project_id, database_id, status, deleted_at, first_seen_at, entity_type, parent_id, name, attributes, created_at
 FROM database_entities
 WHERE id = $1
 LIMIT 1
@@ -183,6 +233,9 @@ func (q *Queries) GetDatabaseEntity(ctx context.Context, id uuid.UUID) (Database
 		&i.ID,
 		&i.ProjectID,
 		&i.DatabaseID,
+		&i.Status,
+		&i.DeletedAt,
+		&i.FirstSeenAt,
 		&i.EntityType,
 		&i.ParentID,
 		&i.Name,
@@ -193,7 +246,7 @@ func (q *Queries) GetDatabaseEntity(ctx context.Context, id uuid.UUID) (Database
 }
 
 const getDatabaseEntityByDatabaseIdAndTypeAndName = `-- name: GetDatabaseEntityByDatabaseIdAndTypeAndName :one
-SELECT id, project_id, database_id, entity_type, parent_id, name, attributes, created_at
+SELECT id, project_id, database_id, status, deleted_at, first_seen_at, entity_type, parent_id, name, attributes, created_at
 FROM database_entities
 WHERE database_id = $1 AND entity_type = $2 AND name = $3
 LIMIT 1
@@ -212,6 +265,9 @@ func (q *Queries) GetDatabaseEntityByDatabaseIdAndTypeAndName(ctx context.Contex
 		&i.ID,
 		&i.ProjectID,
 		&i.DatabaseID,
+		&i.Status,
+		&i.DeletedAt,
+		&i.FirstSeenAt,
 		&i.EntityType,
 		&i.ParentID,
 		&i.Name,
@@ -222,7 +278,7 @@ func (q *Queries) GetDatabaseEntityByDatabaseIdAndTypeAndName(ctx context.Contex
 }
 
 const getDatabaseEntityByProjectIdAndId = `-- name: GetDatabaseEntityByProjectIdAndId :one
-SELECT id, project_id, database_id, entity_type, parent_id, name, attributes, created_at
+SELECT id, project_id, database_id, status, deleted_at, first_seen_at, entity_type, parent_id, name, attributes, created_at
 FROM database_entities
 WHERE id = $1 AND project_id = $2
 LIMIT 1
@@ -240,6 +296,9 @@ func (q *Queries) GetDatabaseEntityByProjectIdAndId(ctx context.Context, arg Get
 		&i.ID,
 		&i.ProjectID,
 		&i.DatabaseID,
+		&i.Status,
+		&i.DeletedAt,
+		&i.FirstSeenAt,
 		&i.EntityType,
 		&i.ParentID,
 		&i.Name,
@@ -247,4 +306,15 @@ func (q *Queries) GetDatabaseEntityByProjectIdAndId(ctx context.Context, arg Get
 		&i.CreatedAt,
 	)
 	return i, err
+}
+
+const updateDatabaseEntityAsDeleted = `-- name: UpdateDatabaseEntityAsDeleted :exec
+UPDATE database_entities
+SET status = 'deleted', deleted_at = NOW()
+WHERE id = $1
+`
+
+func (q *Queries) UpdateDatabaseEntityAsDeleted(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, updateDatabaseEntityAsDeleted, id)
+	return err
 }

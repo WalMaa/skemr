@@ -15,7 +15,7 @@ func StartTaskWorkers(db sqlc.Querier) {
 	srv := asynq.NewServer(asynq.RedisClientOpt{Addr: "localhost:6379"}, asynq.Config{
 		Concurrency: 10,
 	})
-	syncService := dbreflect.NewSchemaSyncService(db)
+	syncService := dbreflect.NewSchemaSyncService(db, dbreflect.NewPostgresConnector)
 
 	mux := asynq.NewServeMux()
 	mux.HandleFunc(tasks.TypeDatabaseSync, syncService.ProcessSyncTask)

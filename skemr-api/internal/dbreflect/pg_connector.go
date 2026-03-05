@@ -28,7 +28,17 @@ type ColumnRef struct {
 	Updatable string // YES or NO
 }
 
-func NewPostgresConnector(db models.Database) *PostgresConnector {
+type DatabaseConnector interface {
+	Connect(ctx context.Context) (*pgx.Conn, error)
+	Disconnect(ctx context.Context, conn *pgx.Conn) error
+	TestConnection(ctx context.Context) error
+	GetSchemas(ctx context.Context, conn *pgx.Conn) ([]string, error)
+	GetTablesInSchema(ctx context.Context, conn *pgx.Conn, schema string) ([]TableRef, error)
+	ListColumnsInTable(ctx context.Context, conn *pgx.Conn, tableRef TableRef) ([]ColumnRef, error)
+	getConnectionString() (string, error)
+}
+
+func NewPostgresConnector(db models.Database) DatabaseConnector {
 	return &PostgresConnector{
 		Database: db,
 	}

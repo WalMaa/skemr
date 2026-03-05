@@ -861,9 +861,77 @@ func (_c *MockQuerier_GetDatabaseByNameAndProject_Call) RunAndReturn(run func(ct
 	return _c
 }
 
-// GetDatabaseEntitiesByDatabaseId provides a mock function for the type MockQuerier
-func (_mock *MockQuerier) GetDatabaseEntitiesByDatabaseId(ctx context.Context, arg sqlc.GetDatabaseEntitiesByDatabaseIdParams) ([]sqlc.DatabaseEntity, error) {
+// GetDatabaseEntities provides a mock function for the type MockQuerier
+func (_mock *MockQuerier) GetDatabaseEntities(ctx context.Context, arg sqlc.GetDatabaseEntitiesParams) ([]sqlc.DatabaseEntity, error) {
 	ret := _mock.Called(ctx, arg)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetDatabaseEntities")
+	}
+
+	var r0 []sqlc.DatabaseEntity
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sqlc.GetDatabaseEntitiesParams) ([]sqlc.DatabaseEntity, error)); ok {
+		return returnFunc(ctx, arg)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sqlc.GetDatabaseEntitiesParams) []sqlc.DatabaseEntity); ok {
+		r0 = returnFunc(ctx, arg)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]sqlc.DatabaseEntity)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, sqlc.GetDatabaseEntitiesParams) error); ok {
+		r1 = returnFunc(ctx, arg)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockQuerier_GetDatabaseEntities_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetDatabaseEntities'
+type MockQuerier_GetDatabaseEntities_Call struct {
+	*mock.Call
+}
+
+// GetDatabaseEntities is a helper method to define mock.On call
+//   - ctx context.Context
+//   - arg sqlc.GetDatabaseEntitiesParams
+func (_e *MockQuerier_Expecter) GetDatabaseEntities(ctx interface{}, arg interface{}) *MockQuerier_GetDatabaseEntities_Call {
+	return &MockQuerier_GetDatabaseEntities_Call{Call: _e.mock.On("GetDatabaseEntities", ctx, arg)}
+}
+
+func (_c *MockQuerier_GetDatabaseEntities_Call) Run(run func(ctx context.Context, arg sqlc.GetDatabaseEntitiesParams)) *MockQuerier_GetDatabaseEntities_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sqlc.GetDatabaseEntitiesParams
+		if args[1] != nil {
+			arg1 = args[1].(sqlc.GetDatabaseEntitiesParams)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockQuerier_GetDatabaseEntities_Call) Return(databaseEntitys []sqlc.DatabaseEntity, err error) *MockQuerier_GetDatabaseEntities_Call {
+	_c.Call.Return(databaseEntitys, err)
+	return _c
+}
+
+func (_c *MockQuerier_GetDatabaseEntities_Call) RunAndReturn(run func(ctx context.Context, arg sqlc.GetDatabaseEntitiesParams) ([]sqlc.DatabaseEntity, error)) *MockQuerier_GetDatabaseEntities_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetDatabaseEntitiesByDatabaseId provides a mock function for the type MockQuerier
+func (_mock *MockQuerier) GetDatabaseEntitiesByDatabaseId(ctx context.Context, databaseID uuid.UUID) ([]sqlc.DatabaseEntity, error) {
+	ret := _mock.Called(ctx, databaseID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetDatabaseEntitiesByDatabaseId")
@@ -871,18 +939,18 @@ func (_mock *MockQuerier) GetDatabaseEntitiesByDatabaseId(ctx context.Context, a
 
 	var r0 []sqlc.DatabaseEntity
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, sqlc.GetDatabaseEntitiesByDatabaseIdParams) ([]sqlc.DatabaseEntity, error)); ok {
-		return returnFunc(ctx, arg)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) ([]sqlc.DatabaseEntity, error)); ok {
+		return returnFunc(ctx, databaseID)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, sqlc.GetDatabaseEntitiesByDatabaseIdParams) []sqlc.DatabaseEntity); ok {
-		r0 = returnFunc(ctx, arg)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) []sqlc.DatabaseEntity); ok {
+		r0 = returnFunc(ctx, databaseID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]sqlc.DatabaseEntity)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, sqlc.GetDatabaseEntitiesByDatabaseIdParams) error); ok {
-		r1 = returnFunc(ctx, arg)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
+		r1 = returnFunc(ctx, databaseID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -896,20 +964,20 @@ type MockQuerier_GetDatabaseEntitiesByDatabaseId_Call struct {
 
 // GetDatabaseEntitiesByDatabaseId is a helper method to define mock.On call
 //   - ctx context.Context
-//   - arg sqlc.GetDatabaseEntitiesByDatabaseIdParams
-func (_e *MockQuerier_Expecter) GetDatabaseEntitiesByDatabaseId(ctx interface{}, arg interface{}) *MockQuerier_GetDatabaseEntitiesByDatabaseId_Call {
-	return &MockQuerier_GetDatabaseEntitiesByDatabaseId_Call{Call: _e.mock.On("GetDatabaseEntitiesByDatabaseId", ctx, arg)}
+//   - databaseID uuid.UUID
+func (_e *MockQuerier_Expecter) GetDatabaseEntitiesByDatabaseId(ctx interface{}, databaseID interface{}) *MockQuerier_GetDatabaseEntitiesByDatabaseId_Call {
+	return &MockQuerier_GetDatabaseEntitiesByDatabaseId_Call{Call: _e.mock.On("GetDatabaseEntitiesByDatabaseId", ctx, databaseID)}
 }
 
-func (_c *MockQuerier_GetDatabaseEntitiesByDatabaseId_Call) Run(run func(ctx context.Context, arg sqlc.GetDatabaseEntitiesByDatabaseIdParams)) *MockQuerier_GetDatabaseEntitiesByDatabaseId_Call {
+func (_c *MockQuerier_GetDatabaseEntitiesByDatabaseId_Call) Run(run func(ctx context.Context, databaseID uuid.UUID)) *MockQuerier_GetDatabaseEntitiesByDatabaseId_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 sqlc.GetDatabaseEntitiesByDatabaseIdParams
+		var arg1 uuid.UUID
 		if args[1] != nil {
-			arg1 = args[1].(sqlc.GetDatabaseEntitiesByDatabaseIdParams)
+			arg1 = args[1].(uuid.UUID)
 		}
 		run(
 			arg0,
@@ -924,7 +992,7 @@ func (_c *MockQuerier_GetDatabaseEntitiesByDatabaseId_Call) Return(databaseEntit
 	return _c
 }
 
-func (_c *MockQuerier_GetDatabaseEntitiesByDatabaseId_Call) RunAndReturn(run func(ctx context.Context, arg sqlc.GetDatabaseEntitiesByDatabaseIdParams) ([]sqlc.DatabaseEntity, error)) *MockQuerier_GetDatabaseEntitiesByDatabaseId_Call {
+func (_c *MockQuerier_GetDatabaseEntitiesByDatabaseId_Call) RunAndReturn(run func(ctx context.Context, databaseID uuid.UUID) ([]sqlc.DatabaseEntity, error)) *MockQuerier_GetDatabaseEntitiesByDatabaseId_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -2057,6 +2125,63 @@ func (_c *MockQuerier_UpdateDatabase_Call) Return(database sqlc.Database, err er
 }
 
 func (_c *MockQuerier_UpdateDatabase_Call) RunAndReturn(run func(ctx context.Context, arg sqlc.UpdateDatabaseParams) (sqlc.Database, error)) *MockQuerier_UpdateDatabase_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateDatabaseEntityAsDeleted provides a mock function for the type MockQuerier
+func (_mock *MockQuerier) UpdateDatabaseEntityAsDeleted(ctx context.Context, id uuid.UUID) error {
+	ret := _mock.Called(ctx, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateDatabaseEntityAsDeleted")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) error); ok {
+		r0 = returnFunc(ctx, id)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockQuerier_UpdateDatabaseEntityAsDeleted_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateDatabaseEntityAsDeleted'
+type MockQuerier_UpdateDatabaseEntityAsDeleted_Call struct {
+	*mock.Call
+}
+
+// UpdateDatabaseEntityAsDeleted is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id uuid.UUID
+func (_e *MockQuerier_Expecter) UpdateDatabaseEntityAsDeleted(ctx interface{}, id interface{}) *MockQuerier_UpdateDatabaseEntityAsDeleted_Call {
+	return &MockQuerier_UpdateDatabaseEntityAsDeleted_Call{Call: _e.mock.On("UpdateDatabaseEntityAsDeleted", ctx, id)}
+}
+
+func (_c *MockQuerier_UpdateDatabaseEntityAsDeleted_Call) Run(run func(ctx context.Context, id uuid.UUID)) *MockQuerier_UpdateDatabaseEntityAsDeleted_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockQuerier_UpdateDatabaseEntityAsDeleted_Call) Return(err error) *MockQuerier_UpdateDatabaseEntityAsDeleted_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockQuerier_UpdateDatabaseEntityAsDeleted_Call) RunAndReturn(run func(ctx context.Context, id uuid.UUID) error) *MockQuerier_UpdateDatabaseEntityAsDeleted_Call {
 	_c.Call.Return(run)
 	return _c
 }

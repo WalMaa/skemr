@@ -12,6 +12,48 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type DatabaseEntityStatus string
+
+const (
+	DatabaseEntityStatusActive  DatabaseEntityStatus = "active"
+	DatabaseEntityStatusDeleted DatabaseEntityStatus = "deleted"
+)
+
+func (e *DatabaseEntityStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = DatabaseEntityStatus(s)
+	case string:
+		*e = DatabaseEntityStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for DatabaseEntityStatus: %T", src)
+	}
+	return nil
+}
+
+type NullDatabaseEntityStatus struct {
+	DatabaseEntityStatus DatabaseEntityStatus `json:"database_entity_status"`
+	Valid                bool                 `json:"valid"` // Valid is true if DatabaseEntityStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullDatabaseEntityStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.DatabaseEntityStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.DatabaseEntityStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullDatabaseEntityStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.DatabaseEntityStatus), nil
+}
+
 type DatabaseEntityType string
 
 const (
@@ -249,14 +291,17 @@ type Database struct {
 }
 
 type DatabaseEntity struct {
-	ID         uuid.UUID          `json:"id"`
-	ProjectID  uuid.UUID          `json:"project_id"`
-	DatabaseID uuid.UUID          `json:"database_id"`
-	EntityType DatabaseEntityType `json:"entity_type"`
-	ParentID   *uuid.UUID         `json:"parent_id"`
-	Name       string             `json:"name"`
-	Attributes []byte             `json:"attributes"`
-	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	ID          uuid.UUID            `json:"id"`
+	ProjectID   uuid.UUID            `json:"project_id"`
+	DatabaseID  uuid.UUID            `json:"database_id"`
+	Status      DatabaseEntityStatus `json:"status"`
+	DeletedAt   pgtype.Timestamptz   `json:"deleted_at"`
+	FirstSeenAt pgtype.Timestamptz   `json:"first_seen_at"`
+	EntityType  DatabaseEntityType   `json:"entity_type"`
+	ParentID    *uuid.UUID           `json:"parent_id"`
+	Name        string               `json:"name"`
+	Attributes  []byte               `json:"attributes"`
+	CreatedAt   pgtype.Timestamptz   `json:"created_at"`
 }
 
 type MigrationStatement struct {
