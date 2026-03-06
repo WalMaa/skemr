@@ -292,6 +292,7 @@ type Database struct {
 
 type DatabaseEntity struct {
 	ID          uuid.UUID            `json:"id"`
+	Fingerprint pgtype.Text          `json:"fingerprint"`
 	ProjectID   uuid.UUID            `json:"project_id"`
 	DatabaseID  uuid.UUID            `json:"database_id"`
 	Status      DatabaseEntityStatus `json:"status"`

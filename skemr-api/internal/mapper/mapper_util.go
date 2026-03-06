@@ -24,6 +24,10 @@ func Text(v *string) pgtype.Text {
 }
 
 func ToMap(b []byte) map[string]interface{} {
+	if b == nil {
+		return nil
+	}
+
 	var m map[string]interface{}
 	err := json.Unmarshal(b, &m)
 	if err != nil {

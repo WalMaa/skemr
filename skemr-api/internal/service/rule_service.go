@@ -74,7 +74,7 @@ func (r *RuleService) CreateRule(c context.Context, projectID uuid.UUID, databas
 }
 
 func (r *RuleService) ListRulesByDatabase(c context.Context, projectID uuid.UUID, databaseID uuid.UUID) ([]models.Rule, error) {
-	slog.Info("Listing rules for project %q and database %q", projectID, databaseID)
+	slog.Info("Listing rules", "projectID", projectID, "databaseID", databaseID)
 
 	project, err := CheckProjectExists(c, r.db, projectID)
 

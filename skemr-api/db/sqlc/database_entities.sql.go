@@ -9,23 +9,24 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createDatabaseEntity = `-- name: CreateDatabaseEntity :one
 INSERT INTO database_entities
-(project_id, database_id, entity_type, parent_id, name, attributes)
-VALUES
-($1, $2, $3, $4, $5, $6)
-RETURNING id, project_id, database_id, status, deleted_at, first_seen_at, entity_type, parent_id, name, attributes, created_at
+(project_id, database_id, entity_type, parent_id, name, attributes, fingerprint)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
+RETURNING id, fingerprint, project_id, database_id, status, deleted_at, first_seen_at, entity_type, parent_id, name, attributes, created_at
 `
 
 type CreateDatabaseEntityParams struct {
-	ProjectID  uuid.UUID          `json:"project_id"`
-	DatabaseID uuid.UUID          `json:"database_id"`
-	EntityType DatabaseEntityType `json:"entity_type"`
-	ParentID   *uuid.UUID         `json:"parent_id"`
-	Name       string             `json:"name"`
-	Attributes []byte             `json:"attributes"`
+	ProjectID   uuid.UUID          `json:"project_id"`
+	DatabaseID  uuid.UUID          `json:"database_id"`
+	EntityType  DatabaseEntityType `json:"entity_type"`
+	ParentID    *uuid.UUID         `json:"parent_id"`
+	Name        string             `json:"name"`
+	Attributes  []byte             `json:"attributes"`
+	Fingerprint pgtype.Text        `json:"fingerprint"`
 }
 
 func (q *Queries) CreateDatabaseEntity(ctx context.Context, arg CreateDatabaseEntityParams) (DatabaseEntity, error) {
@@ -36,10 +37,12 @@ func (q *Queries) CreateDatabaseEntity(ctx context.Context, arg CreateDatabaseEn
 		arg.ParentID,
 		arg.Name,
 		arg.Attributes,
+		arg.Fingerprint,
 	)
 	var i DatabaseEntity
 	err := row.Scan(
 		&i.ID,
+		&i.Fingerprint,
 		&i.ProjectID,
 		&i.DatabaseID,
 		&i.Status,
@@ -55,11 +58,11 @@ func (q *Queries) CreateDatabaseEntity(ctx context.Context, arg CreateDatabaseEn
 }
 
 const getDatabaseEntities = `-- name: GetDatabaseEntities :many
-SELECT  id, project_id, database_id, status, deleted_at, first_seen_at, entity_type, parent_id, name, attributes, created_at
+SELECT id, fingerprint, project_id, database_id, status, deleted_at, first_seen_at, entity_type, parent_id, name, attributes, created_at
 FROM database_entities
 WHERE database_id = $1
-    AND ( entity_type = $2 OR $2 IS NULL)
-    AND ( parent_id = $3 OR $3 IS NULL)
+  AND (entity_type = $2 OR $2 IS NULL)
+  AND (parent_id = $3 OR $3 IS NULL)
 `
 
 type GetDatabaseEntitiesParams struct {
@@ -79,6 +82,7 @@ func (q *Queries) GetDatabaseEntities(ctx context.Context, arg GetDatabaseEntiti
 		var i DatabaseEntity
 		if err := rows.Scan(
 			&i.ID,
+			&i.Fingerprint,
 			&i.ProjectID,
 			&i.DatabaseID,
 			&i.Status,
@@ -101,7 +105,7 @@ func (q *Queries) GetDatabaseEntities(ctx context.Context, arg GetDatabaseEntiti
 }
 
 const getDatabaseEntitiesByDatabaseId = `-- name: GetDatabaseEntitiesByDatabaseId :many
-SELECT  id, project_id, database_id, status, deleted_at, first_seen_at, entity_type, parent_id, name, attributes, created_at
+SELECT id, fingerprint, project_id, database_id, status, deleted_at, first_seen_at, entity_type, parent_id, name, attributes, created_at
 FROM database_entities
 WHERE database_id = $1
 `
@@ -117,6 +121,7 @@ func (q *Queries) GetDatabaseEntitiesByDatabaseId(ctx context.Context, databaseI
 		var i DatabaseEntity
 		if err := rows.Scan(
 			&i.ID,
+			&i.Fingerprint,
 			&i.ProjectID,
 			&i.DatabaseID,
 			&i.Status,
@@ -139,9 +144,10 @@ func (q *Queries) GetDatabaseEntitiesByDatabaseId(ctx context.Context, databaseI
 }
 
 const getDatabaseEntitiesByDatabaseIdAndParentId = `-- name: GetDatabaseEntitiesByDatabaseIdAndParentId :many
-SELECT  id, project_id, database_id, status, deleted_at, first_seen_at, entity_type, parent_id, name, attributes, created_at
+SELECT id, fingerprint, project_id, database_id, status, deleted_at, first_seen_at, entity_type, parent_id, name, attributes, created_at
 FROM database_entities
-WHERE database_id = $1 AND parent_id = $2
+WHERE database_id = $1
+  AND parent_id = $2
 `
 
 type GetDatabaseEntitiesByDatabaseIdAndParentIdParams struct {
@@ -160,6 +166,7 @@ func (q *Queries) GetDatabaseEntitiesByDatabaseIdAndParentId(ctx context.Context
 		var i DatabaseEntity
 		if err := rows.Scan(
 			&i.ID,
+			&i.Fingerprint,
 			&i.ProjectID,
 			&i.DatabaseID,
 			&i.Status,
@@ -182,7 +189,7 @@ func (q *Queries) GetDatabaseEntitiesByDatabaseIdAndParentId(ctx context.Context
 }
 
 const getDatabaseEntitiesByProjectId = `-- name: GetDatabaseEntitiesByProjectId :many
-SELECT id, project_id, database_id, status, deleted_at, first_seen_at, entity_type, parent_id, name, attributes, created_at
+SELECT id, fingerprint, project_id, database_id, status, deleted_at, first_seen_at, entity_type, parent_id, name, attributes, created_at
 FROM database_entities
 WHERE project_id = $1
 `
@@ -198,6 +205,7 @@ func (q *Queries) GetDatabaseEntitiesByProjectId(ctx context.Context, projectID 
 		var i DatabaseEntity
 		if err := rows.Scan(
 			&i.ID,
+			&i.Fingerprint,
 			&i.ProjectID,
 			&i.DatabaseID,
 			&i.Status,
@@ -220,7 +228,7 @@ func (q *Queries) GetDatabaseEntitiesByProjectId(ctx context.Context, projectID 
 }
 
 const getDatabaseEntity = `-- name: GetDatabaseEntity :one
-SELECT id, project_id, database_id, status, deleted_at, first_seen_at, entity_type, parent_id, name, attributes, created_at
+SELECT id, fingerprint, project_id, database_id, status, deleted_at, first_seen_at, entity_type, parent_id, name, attributes, created_at
 FROM database_entities
 WHERE id = $1
 LIMIT 1
@@ -231,6 +239,7 @@ func (q *Queries) GetDatabaseEntity(ctx context.Context, id uuid.UUID) (Database
 	var i DatabaseEntity
 	err := row.Scan(
 		&i.ID,
+		&i.Fingerprint,
 		&i.ProjectID,
 		&i.DatabaseID,
 		&i.Status,
@@ -245,24 +254,67 @@ func (q *Queries) GetDatabaseEntity(ctx context.Context, id uuid.UUID) (Database
 	return i, err
 }
 
-const getDatabaseEntityByDatabaseIdAndTypeAndName = `-- name: GetDatabaseEntityByDatabaseIdAndTypeAndName :one
-SELECT id, project_id, database_id, status, deleted_at, first_seen_at, entity_type, parent_id, name, attributes, created_at
+const getDatabaseEntityByDatabaseIdAndTypeAndParentAndName = `-- name: GetDatabaseEntityByDatabaseIdAndTypeAndParentAndName :one
+SELECT id, fingerprint, project_id, database_id, status, deleted_at, first_seen_at, entity_type, parent_id, name, attributes, created_at
 FROM database_entities
-WHERE database_id = $1 AND entity_type = $2 AND name = $3
+WHERE database_id = $1
+  AND entity_type = $2
+  AND parent_id IS NOT DISTINCT FROM $3 -- this can be null in case of schema so we use is not distinct to compare
+  AND name = $4
 LIMIT 1
 `
 
-type GetDatabaseEntityByDatabaseIdAndTypeAndNameParams struct {
+type GetDatabaseEntityByDatabaseIdAndTypeAndParentAndNameParams struct {
 	DatabaseID uuid.UUID          `json:"database_id"`
 	EntityType DatabaseEntityType `json:"entity_type"`
+	ParentID   *uuid.UUID         `json:"parent_id"`
 	Name       string             `json:"name"`
 }
 
-func (q *Queries) GetDatabaseEntityByDatabaseIdAndTypeAndName(ctx context.Context, arg GetDatabaseEntityByDatabaseIdAndTypeAndNameParams) (DatabaseEntity, error) {
-	row := q.db.QueryRow(ctx, getDatabaseEntityByDatabaseIdAndTypeAndName, arg.DatabaseID, arg.EntityType, arg.Name)
+func (q *Queries) GetDatabaseEntityByDatabaseIdAndTypeAndParentAndName(ctx context.Context, arg GetDatabaseEntityByDatabaseIdAndTypeAndParentAndNameParams) (DatabaseEntity, error) {
+	row := q.db.QueryRow(ctx, getDatabaseEntityByDatabaseIdAndTypeAndParentAndName,
+		arg.DatabaseID,
+		arg.EntityType,
+		arg.ParentID,
+		arg.Name,
+	)
 	var i DatabaseEntity
 	err := row.Scan(
 		&i.ID,
+		&i.Fingerprint,
+		&i.ProjectID,
+		&i.DatabaseID,
+		&i.Status,
+		&i.DeletedAt,
+		&i.FirstSeenAt,
+		&i.EntityType,
+		&i.ParentID,
+		&i.Name,
+		&i.Attributes,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getDatabaseEntityByFingerprint = `-- name: GetDatabaseEntityByFingerprint :one
+SELECT id, fingerprint, project_id, database_id, status, deleted_at, first_seen_at, entity_type, parent_id, name, attributes, created_at
+FROM database_entities
+WHERE database_id = $1
+  AND fingerprint = $2
+LIMIT 1
+`
+
+type GetDatabaseEntityByFingerprintParams struct {
+	DatabaseID  uuid.UUID   `json:"database_id"`
+	Fingerprint pgtype.Text `json:"fingerprint"`
+}
+
+func (q *Queries) GetDatabaseEntityByFingerprint(ctx context.Context, arg GetDatabaseEntityByFingerprintParams) (DatabaseEntity, error) {
+	row := q.db.QueryRow(ctx, getDatabaseEntityByFingerprint, arg.DatabaseID, arg.Fingerprint)
+	var i DatabaseEntity
+	err := row.Scan(
+		&i.ID,
+		&i.Fingerprint,
 		&i.ProjectID,
 		&i.DatabaseID,
 		&i.Status,
@@ -278,9 +330,10 @@ func (q *Queries) GetDatabaseEntityByDatabaseIdAndTypeAndName(ctx context.Contex
 }
 
 const getDatabaseEntityByProjectIdAndId = `-- name: GetDatabaseEntityByProjectIdAndId :one
-SELECT id, project_id, database_id, status, deleted_at, first_seen_at, entity_type, parent_id, name, attributes, created_at
+SELECT id, fingerprint, project_id, database_id, status, deleted_at, first_seen_at, entity_type, parent_id, name, attributes, created_at
 FROM database_entities
-WHERE id = $1 AND project_id = $2
+WHERE id = $1
+  AND project_id = $2
 LIMIT 1
 `
 
@@ -294,6 +347,7 @@ func (q *Queries) GetDatabaseEntityByProjectIdAndId(ctx context.Context, arg Get
 	var i DatabaseEntity
 	err := row.Scan(
 		&i.ID,
+		&i.Fingerprint,
 		&i.ProjectID,
 		&i.DatabaseID,
 		&i.Status,
@@ -310,11 +364,44 @@ func (q *Queries) GetDatabaseEntityByProjectIdAndId(ctx context.Context, arg Get
 
 const updateDatabaseEntityAsDeleted = `-- name: UpdateDatabaseEntityAsDeleted :exec
 UPDATE database_entities
-SET status = 'deleted', deleted_at = NOW()
+SET status     = 'deleted',
+    deleted_at = NOW()
 WHERE id = $1
 `
 
 func (q *Queries) UpdateDatabaseEntityAsDeleted(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.Exec(ctx, updateDatabaseEntityAsDeleted, id)
 	return err
+}
+
+const updateDatabaseEntityName = `-- name: UpdateDatabaseEntityName :one
+UPDATE database_entities
+SET name = $1
+WHERE id = $2
+RETURNING id, fingerprint, project_id, database_id, status, deleted_at, first_seen_at, entity_type, parent_id, name, attributes, created_at
+`
+
+type UpdateDatabaseEntityNameParams struct {
+	Name string    `json:"name"`
+	ID   uuid.UUID `json:"id"`
+}
+
+func (q *Queries) UpdateDatabaseEntityName(ctx context.Context, arg UpdateDatabaseEntityNameParams) (DatabaseEntity, error) {
+	row := q.db.QueryRow(ctx, updateDatabaseEntityName, arg.Name, arg.ID)
+	var i DatabaseEntity
+	err := row.Scan(
+		&i.ID,
+		&i.Fingerprint,
+		&i.ProjectID,
+		&i.DatabaseID,
+		&i.Status,
+		&i.DeletedAt,
+		&i.FirstSeenAt,
+		&i.EntityType,
+		&i.ParentID,
+		&i.Name,
+		&i.Attributes,
+		&i.CreatedAt,
+	)
+	return i, err
 }

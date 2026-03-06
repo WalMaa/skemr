@@ -15,17 +15,95 @@ type PostgresConnector struct {
 	models.Database
 }
 
+// language=SQL
+const tableDefQuery = `
+WITH rels AS (
+    SELECT
+        t.table_schema,
+        t.table_name,
+        c.oid AS relid
+    FROM information_schema.tables t
+             JOIN pg_namespace n
+                  ON n.nspname = t.table_schema
+             JOIN pg_class c
+                  ON c.relnamespace = n.oid
+                      AND c.relname = t.table_name
+    WHERE t.table_type IN ('BASE TABLE', 'FOREIGN')
+      AND t.table_schema = $1
+),
+     coldefs AS (
+         SELECT
+             r.table_schema,
+             r.table_name,
+             r.relid,
+             a.attnum,
+             lower(format_type(a.atttypid, a.atttypmod)) AS data_type,
+             a.attnotnull,
+             a.attidentity,
+             a.attgenerated,
+             pg_get_expr(ad.adbin, ad.adrelid) AS default_expr
+         FROM rels r
+                  JOIN pg_attribute a
+                       ON a.attrelid = r.relid
+                           AND a.attnum > 0
+                           AND NOT a.attisdropped
+                  LEFT JOIN pg_attrdef ad
+                            ON ad.adrelid = a.attrelid
+                                AND ad.adnum = a.attnum
+     ),
+     pk_shape AS (
+         SELECT
+             r.relid,
+             COALESCE(string_agg(k.attnum::text, ',' ORDER BY k.ordinality), '') AS pk_shape
+         FROM rels r
+                  LEFT JOIN pg_constraint pk
+                            ON pk.conrelid = r.relid
+                                AND pk.contype = 'p'
+                  LEFT JOIN LATERAL unnest(pk.conkey) WITH ORDINALITY AS k(attnum, ordinality)
+                            ON TRUE
+         GROUP BY r.relid
+     )
+SELECT
+    c.table_schema,
+    c.table_name,
+    string_agg(
+            concat_ws(
+                    ':',
+                    c.attnum,
+                    c.data_type,
+                    CASE WHEN c.attnotnull THEN 'NO' ELSE 'YES' END,
+                    CASE
+                        WHEN c.attgenerated <> '' THEN 'generated'
+                        WHEN c.default_expr IS NULL THEN 'none'
+                        WHEN c.default_expr ~* '^nextval\(' THEN 'sequence'
+                        WHEN c.default_expr ~* '^(now|current_timestamp|transaction_timestamp)\(' THEN 'volatile_time'
+                        ELSE 'default'
+                        END,
+                    COALESCE(NULLIF(c.attidentity, ''), 'none'),
+                    COALESCE(NULLIF(c.attgenerated, ''), 'none')
+            ),
+            ';' ORDER BY c.attnum
+    ) AS column_shape,
+    pk.pk_shape
+FROM coldefs c
+         JOIN pk_shape pk
+              ON pk.relid = c.relid
+GROUP BY c.table_schema, c.table_name, c.relid, pk.pk_shape;`
+
 type TableRef struct {
-	Schema string // The parent Schema
-	Name   string // The name of the table itself
+	Schema      string // The parent Schema
+	Name        string // The name of the table itself
+	ColumnShape string // A string representation of the column names and data types, used for fingerprinting
+	PrimaryKey  string // A string representation of the primary key columns, used for fingerprinting
 }
 
 type ColumnRef struct {
-	Name      string
-	DataType  string
-	Default   *string
-	Nullable  string // YES or NO
-	Updatable string // YES or NO
+	Name            string
+	DataType        string
+	Default         *string
+	Nullable        string // YES or NO
+	Updatable       string // YES or NO
+	OrdinalPosition int
 }
 
 type DatabaseConnector interface {
@@ -45,7 +123,7 @@ func NewPostgresConnector(db models.Database) DatabaseConnector {
 }
 
 func (dc *PostgresConnector) ListColumnsInTable(ctx context.Context, conn *pgx.Conn, tableRef TableRef) ([]ColumnRef, error) {
-	rows, err := conn.Query(ctx, "SELECT column_name, data_type, column_default, is_nullable, is_updatable FROM information_schema.columns WHERE table_schema=$1 AND table_name=$2", tableRef.Schema, tableRef.Name)
+	rows, err := conn.Query(ctx, "SELECT column_name, data_type, column_default, is_nullable, is_updatable, ordinal_position FROM information_schema.columns WHERE table_schema=$1 AND table_name=$2", tableRef.Schema, tableRef.Name)
 	if err != nil {
 		slog.Error("Error querying columns", "schema", tableRef.Schema, "table", tableRef.Name, "err", err)
 		return nil, err
@@ -54,7 +132,7 @@ func (dc *PostgresConnector) ListColumnsInTable(ctx context.Context, conn *pgx.C
 	var columns []ColumnRef
 	for rows.Next() {
 		var columnRef ColumnRef
-		if err := rows.Scan(&columnRef.Name, &columnRef.DataType, &columnRef.Default, &columnRef.Nullable, &columnRef.Updatable); err != nil {
+		if err := rows.Scan(&columnRef.Name, &columnRef.DataType, &columnRef.Default, &columnRef.Nullable, &columnRef.Updatable, &columnRef.OrdinalPosition); err != nil {
 			slog.Error("Error scanning column name", "err", err)
 			return nil, err
 		}
@@ -64,7 +142,7 @@ func (dc *PostgresConnector) ListColumnsInTable(ctx context.Context, conn *pgx.C
 }
 
 func (dc *PostgresConnector) GetTablesInSchema(ctx context.Context, conn *pgx.Conn, schema string) ([]TableRef, error) {
-	rows, err := conn.Query(ctx, "SELECT table_schema, table_name FROM information_schema.tables WHERE table_schema=$1", schema)
+	rows, err := conn.Query(ctx, tableDefQuery, schema)
 	if err != nil {
 		slog.Error("Error querying tables", "schema", schema, "err", err)
 		return nil, err
@@ -73,7 +151,7 @@ func (dc *PostgresConnector) GetTablesInSchema(ctx context.Context, conn *pgx.Co
 	var tables []TableRef
 	for rows.Next() {
 		var tableRef TableRef
-		if err := rows.Scan(&tableRef.Schema, &tableRef.Name); err != nil {
+		if err := rows.Scan(&tableRef.Schema, &tableRef.Name, &tableRef.ColumnShape, &tableRef.PrimaryKey); err != nil {
 			slog.Error("Error scanning table name", "err", err)
 			return nil, err
 		}

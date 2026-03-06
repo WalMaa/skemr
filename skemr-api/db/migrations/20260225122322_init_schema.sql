@@ -119,6 +119,7 @@ CREATE TABLE tables
 CREATE TABLE database_entities
 (
     id            uuid PRIMARY KEY                DEFAULT gen_random_uuid(),
+    fingerprint   text,                                                   -- this is used to track the same entity across syncs even if it is renamed.
     project_id    uuid                   NOT NULL REFERENCES projects (id) ON DELETE CASCADE,
     database_id   uuid                   NOT NULL REFERENCES databases (id) ON DELETE CASCADE,
     status        database_entity_status NOT NULL DEFAULT 'active',
