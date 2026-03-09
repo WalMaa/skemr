@@ -4,27 +4,33 @@ LABEL maintainer="github.com/walmaa"
 # Install CGO dependency
 RUN apk add --no-cache build-base
 
+# build for linux/amd64 with CGO enabled since pgquery requires CGO
 ENV GOOS=linux \
-    GOARCH=amd64
+    GOARCH=amd64 \
+    CGO_ENABLED=1
 
 WORKDIR /app
 
 # Use workspaces initially
 COPY go.work ./
+# Copy go.mod and go.sum for all modules to leverage caching
+COPY skemr-cli/go.mod skemr-cli/go.sum ./skemr-cli/
+COPY skemr-common/go.mod skemr-common/go.sum ./skemr-common/
+COPY skemr-api/go.mod skemr-api/go.sum ./skemr-api/
+
+# Sync workspace and download deps for CLI
+RUN go work sync \
+    cd /app/skemr-cli && go mod download
+
 COPY skemr-cli/ ./skemr-cli/
 COPY skemr-common/ ./skemr-common/
 COPY skemr-api/ ./skemr-api/
 
-RUN go work sync
-
 # Move to CLI module
 WORKDIR /app/skemr-cli
 
-# Download dependencies
-RUN go mod download
-
 # Build the Go binary
-RUN go build -o skemr-cli main.go
+RUN go build -trimpath -o /out/skemr-cli .
 
 # Final lightweight stage
 FROM alpine:3.21 AS runtime
@@ -32,7 +38,7 @@ FROM alpine:3.21 AS runtime
 WORKDIR /app
 
 # Copy the compiled binary to PATH dir from the builder stage
-COPY --from=builder /app/skemr-cli/skemr-cli /usr/local/bin/skemr-cli
+COPY --from=builder /out/skemr-cli /usr/local/bin/skemr-cli
 
 # Run the application
 ENTRYPOINT ["skemr-cli"]

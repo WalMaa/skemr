@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/walmaa/skemr-cli/controlplaneclient"
+	"github.com/walmaa/skemr-cli/reporter"
 	"github.com/walmaa/skemr-cli/rulengn"
 )
 
@@ -41,13 +42,13 @@ var validateCmd = &cobra.Command{
 	Long:  `Validate SQL statements for correctness and compliance with Skemr rules.`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		slog.Info("Validate command executed", slog.String("project_id", projectId))
+		slog.Debug("Validate command executed", "project_id", projectId, "database_id", databaseId, "migration_files_dir", migrationFilesDir)
 		cmd.Context()
 		ruleEngine := rulengn.NewRuleEngine()
 
 		// Get rules
 		rules, err := controlplaneclient.GetRules(cmd.Context(), projectId, databaseId, token)
-		slog.Info("Fetched rules from control plane", "ruleCount", len(rules))
+		slog.Debug("Fetched rules from control plane", "ruleCount", len(rules))
 
 		if err != nil {
 			slog.Error("Error while fetching rules from control plane", "err", err)
@@ -63,13 +64,30 @@ var validateCmd = &cobra.Command{
 		for i, path := range filePaths {
 			dtos[i] = rulengn.MigrationFileDto{File: path}
 		}
-		_, err = ruleEngine.ProcessMigrationFiles(cmd.Context(), dtos, rules)
+		statementResults, err := ruleEngine.ProcessMigrationFiles(cmd.Context(), dtos, rules)
 		if err != nil {
-			err = fmt.Errorf("Error while validating migrations")
-			fmt.Println(err)
+			err = fmt.Errorf("error while validating migrations")
+			slog.Error("Error while validating migrations", "err", err)
 			os.Exit(1)
 		}
-		slog.Info("Processed migration files", "fileCount", len(filePaths))
+
+		reporter.PrintSummary(statementResults)
+
+		// Check if any results are of type error and exit with non-zero code if so
+		hasErrors := false
+		for _, res := range statementResults {
+			if res.Error != nil {
+				hasErrors = true
+				slog.Debug("Validation error encountered", "file", res.File, "line", res.Line, "error", res.Error)
+			} else {
+				slog.Debug("Validation result", "file", res.File, "line", res.Line, "rule", res.Rule.Name, "type", res.Type)
+			}
+		}
+
+		if hasErrors {
+			os.Exit(1)
+		}
+
 	},
 }
 

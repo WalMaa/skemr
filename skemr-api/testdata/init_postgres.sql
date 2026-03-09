@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS products (
 -- Orders
 CREATE TABLE IF NOT EXISTS orders (
                                       id          BIGSERIAL PRIMARY KEY,
-                                      customer_id BIGINT NOT NULL REFERENCES customers3(id) ON DELETE CASCADE,
+                                      customer_id BIGINT NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
                                       status      TEXT   NOT NULL DEFAULT 'pending'
                                           CHECK (status IN ('pending','paid','shipped','cancelled')),
                                       created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -47,7 +47,7 @@ CREATE INDEX IF NOT EXISTS idx_orders_customer_id ON orders(customer_id);
 -- -----------------------------
 
 -- Customers
-INSERT INTO customers3 (id, email, name)
+INSERT INTO customers (id, email, name)
 VALUES
     (1, 'alice@example.com', 'Alice'),
     (2, 'bob@example.com',   'Bob')
@@ -80,7 +80,7 @@ ON CONFLICT DO NOTHING;
 -- Reset sequences to max(id)
 -- -----------------------------
 SELECT setval(pg_get_serial_sequence('customers','id'),
-              COALESCE((SELECT MAX(id) FROM customers3), 0), true);
+              COALESCE((SELECT MAX(id) FROM customers), 0), true);
 
 SELECT setval(pg_get_serial_sequence('products','id'),
               COALESCE((SELECT MAX(id) FROM products), 0), true);
@@ -93,15 +93,15 @@ SELECT setval(pg_get_serial_sequence('orders','id'),
 CREATE SCHEMA IF NOT EXISTS analytics;
 
 -- Create table in analytics schema
-CREATE TABLE IF NOT EXISTS analyticss.page_views (
+CREATE TABLE IF NOT EXISTS analytics.page_views (
                                                     id         BIGSERIAL PRIMARY KEY,
-                                                    customer_id BIGINT REFERENCES public.customers3(id) ON DELETE SET NULL,
+                                                    customer_id BIGINT REFERENCES public.customers(id) ON DELETE SET NULL,
                                                     page_url   TEXT NOT NULL,
                                                     viewed_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 -- Seed data for analytics.page_views
-INSERT INTO analyticss.page_views (id, customer_id, page_url, viewed_at)
+INSERT INTO analytics.page_views (id, customer_id, page_url, viewed_at)
 VALUES
     (1, 1, '/home',      now() - INTERVAL '2 days'),
     (2, 1, '/products',  now() - INTERVAL '1 day'),
@@ -110,4 +110,4 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Reset sequence for analytics.page_views
 SELECT setval(pg_get_serial_sequence('analytics.page_views','id'),
-              COALESCE((SELECT MAX(id) FROM analyticss.page_views), 0), true);
+              COALESCE((SELECT MAX(id) FROM analytics.page_views), 0), true);

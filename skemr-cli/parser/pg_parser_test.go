@@ -29,6 +29,28 @@ func TestParseSqlDropTable(t *testing.T) {
 	assert.Equal(t, "rules", statementAction[0].Relation, "Expected relation 'rules'")
 }
 
+func TestParseSqlDropTableCascade(t *testing.T) {
+	sql := "DROP TABLE rules CASCADE"
+	statementAction, err := ParseSql(sql)
+
+	assert.Nil(t, err)
+
+	assert.Equal(t, "rules", statementAction[0].Target, "Expected target 'rules'")
+	assert.Equal(t, SqlActionDropTable, statementAction[0].Action, "Expected action 'DROP TABLE'")
+	assert.Equal(t, "rules", statementAction[0].Relation, "Expected relation 'rules'")
+}
+
+func TestParseCreateIndex(t *testing.T) {
+	sql := "CREATE INDEX idx_name ON rules (name)"
+	statementAction, err := ParseSql(sql)
+
+	assert.Nil(t, err)
+
+	assert.Equal(t, "", statementAction[0].Target, "Expected target ''")
+	assert.Equal(t, SqlActionUndefined, statementAction[0].Action, "Expected action 'UNDEFINED' for unsupported statement")
+	assert.Equal(t, "", statementAction[0].Relation, "Expected relation ''")
+}
+
 func TestParseSqlRenameColumn(t *testing.T) {
 	sql := "ALTER TABLE rules RENAME COLUMN name TO new_name"
 	statementAction, err := ParseSql(sql)

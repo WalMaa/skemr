@@ -139,6 +139,39 @@ func TestLockedRuleViolation(t *testing.T) {
 	assert.Equal(t, migrationFile, result[0].File)
 }
 
+func TestLockedTableRuleViolationOnColumnAdd(t *testing.T) {
+	ruleEngine := NewRuleEngine()
+
+	// Create a temporary migration file
+	tmpFile, err := os.CreateTemp(t.TempDir(), "migration-*.sql")
+	assert.NoError(t, err)
+	defer func() { _ = tmpFile.Close() }()
+	content := "CREATE TABLE users (age INT);\nALTER TABLE users ADD COLUMN name VARCHAR(255);"
+	_, err = tmpFile.WriteString(content)
+	assert.NoError(t, err)
+	migrationFile := tmpFile.Name()
+
+	rules := []models.Rule{
+		{
+			ID:       uuid.New(),
+			Name:     "Locked Users Table Rule",
+			RuleType: models.RuleTypeLocked,
+			DataBaseEntity: models.DatabaseEntity{
+				Name: "users",
+			},
+		},
+	}
+
+	result, err := ruleEngine.CheckStatement(MigrationFileDto{File: migrationFile}, rules)
+	assert.NoError(t, err)
+
+	// Assert the result
+	assert.Equal(t, 1, len(result))
+	assert.Equal(t, models.RuleTypeLocked, result[0].Type)
+	assert.Equal(t, "Locked Users Table Rule", result[0].Rule.Name)
+	assert.Equal(t, migrationFile, result[0].File)
+}
+
 func TestAdvisoryRuleTrigger(t *testing.T) {
 	ruleEngine := NewRuleEngine()
 

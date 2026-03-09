@@ -39,17 +39,17 @@ func (r *RuleEngine) ProcessMigrationFiles(c context.Context, statements []Migra
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			slog.Info("Processing migration file", "file", stmt.File)
-			stmtResult, err := r.CheckStatement(stmt, rules)
+			slog.Debug("Processing migration file", "file", stmt.File)
+			stmtResults, err := r.CheckStatement(stmt, rules)
 			if err != nil {
 				slog.Error("Error checking statement", slog.String("statement", stmt.File), slog.String("error", err.Error()))
 				return
 			}
 
-			for _, res := range stmtResult {
+			for _, res := range stmtResults {
 				select {
 				case results <- res:
-					slog.Info("Statement result sent", slog.String("statement", stmt.File), slog.String("rule", res.Rule.Name))
+					slog.Debug("Statement result sent", slog.String("statement", stmt.File), slog.String("rule", res.Rule.Name))
 				case <-c.Done():
 					slog.Warn("Context done before sending result", slog.String("statement", stmt.File))
 					return
@@ -62,7 +62,6 @@ func (r *RuleEngine) ProcessMigrationFiles(c context.Context, statements []Migra
 	go func() {
 		wg.Wait()
 		close(results)
-
 	}()
 	// Collect chan to slice
 	resultsSlice := make([]StatementResult, 0)
@@ -75,10 +74,11 @@ func (r *RuleEngine) ProcessMigrationFiles(c context.Context, statements []Migra
 
 // CheckStatement checks if the given SQL statement matches any rules in the database for the specified project.
 func (r *RuleEngine) CheckStatement(migrationFileDto MigrationFileDto, rules []models.Rule) ([]StatementResult, error) {
-	slog.Info("Checking migration file", "file", migrationFileDto.File)
+	slog.Debug("Checking migration file", "file", migrationFileDto.File)
 
 	file, err := os.ReadFile(migrationFileDto.File)
 	if err != nil {
+		slog.Error("Error reading migration file", "file", migrationFileDto.File, "err", err)
 		return nil, err
 	}
 
@@ -91,10 +91,11 @@ func (r *RuleEngine) CheckStatement(migrationFileDto MigrationFileDto, rules []m
 	}
 
 	for _, rule := range rules {
+		slog.Debug("Evaluating rule against migration file", slog.String("rule_name", rule.Name), slog.String("migration_file", migrationFileDto.File))
 		for _, action := range statementActions {
 
 			if rule.DataBaseEntity.Name == action.Target {
-				slog.Info("Rule target matches migrationFileDto target", slog.String("rule_database_entity", rule.DataBaseEntity.Name), slog.String("statement_target", action.Target))
+				slog.Debug("Rule target matches migrationFileDto target", slog.String("rule_database_entity", rule.DataBaseEntity.Name), slog.String("statement_target", action.Target))
 				switch rule.RuleType {
 				case models.RuleTypeLocked:
 					violation := r.lockAction(rule, action, migrationFileDto)
@@ -122,7 +123,6 @@ func (r *RuleEngine) CheckStatement(migrationFileDto MigrationFileDto, rules []m
 // lockAction handles rule matches where the rule type was defined as "locked"
 func (r *RuleEngine) lockAction(rule models.Rule, statementAction parser.StatementAction, statementDto MigrationFileDto) StatementResult {
 	err := fmt.Errorf("Lock rule violated: rule %q violated by action %q on target %q", rule.Name, statementAction.Action, statementAction.Target)
-	fmt.Fprintln(os.Stderr, err)
 	return StatementResult{
 		Type:  models.RuleTypeLocked,
 		Rule:  rule,
@@ -132,7 +132,6 @@ func (r *RuleEngine) lockAction(rule models.Rule, statementAction parser.Stateme
 }
 
 func (r *RuleEngine) warnAction(rule models.Rule, statementDto MigrationFileDto) StatementResult {
-	fmt.Println("Warning:", rule.Name, "triggered by file:", statementDto.File)
 	return StatementResult{
 		Type: models.RuleTypeWarn,
 		Rule: rule,
@@ -141,7 +140,6 @@ func (r *RuleEngine) warnAction(rule models.Rule, statementDto MigrationFileDto)
 }
 
 func (r *RuleEngine) advisoryAction(rule models.Rule, statementDto MigrationFileDto) StatementResult {
-	fmt.Println("Advisory:", rule.Name, "triggered by file:", statementDto.File)
 	return StatementResult{
 		Type: models.RuleTypeAdvisory,
 		Rule: rule,
@@ -150,7 +148,6 @@ func (r *RuleEngine) advisoryAction(rule models.Rule, statementDto MigrationFile
 }
 
 func (r *RuleEngine) deprecatedAction(rule models.Rule, statementDto MigrationFileDto) StatementResult {
-	fmt.Println("Deprecated:", rule.Name, "triggered by file:", statementDto.File)
 	return StatementResult{
 		Type: models.RuleTypeDeprecated,
 		Rule: rule,

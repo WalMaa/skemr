@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"fmt"
 	"log/slog"
 
 	pgquery "github.com/pganalyze/pg_query_go/v6"
@@ -37,7 +36,7 @@ const (
 )
 
 func parseStatement(stmt *pgquery.RawStmt) (StatementAction, error) {
-	slog.Info("Parsing", "statement", stmt.String())
+	slog.Debug("Parsing", "statement", stmt.String())
 	node := stmt.GetStmt()
 	// Check for a DROP DATABASE statement
 	if node.GetDropdbStmt() != nil {
@@ -73,12 +72,13 @@ func parseStatement(stmt *pgquery.RawStmt) (StatementAction, error) {
 		return parseCreateDatabaseStmt(createDbStmt)
 	}
 
-	// If the statement is not recognized, return an error
+	// If the statement is not recognized, return an undefined action
+	slog.Warn("Unsupported statement type", "statement", stmt.String())
 	return StatementAction{
 		Target:   "",
 		Action:   SqlActionUndefined,
 		Relation: "",
-	}, fmt.Errorf("unsupported SQL statement: %s", node.String())
+	}, nil
 }
 
 /*
@@ -175,7 +175,9 @@ func parseDrop(dropStmt *pgquery.DropStmt) (StatementAction, error) {
 
 	// If we are dropping a table
 	if dropStmt.RemoveType == pgquery.ObjectType_OBJECT_TABLE {
-		relName = dropStmt.GetObjects()[0].GetList().Items[0].GetString_().GetSval()
+		tableName := dropStmt.GetObjects()[0].GetList().Items[0].GetString_().GetSval()
+		relName = tableName
+		target = tableName
 		action = SqlActionDropTable
 	}
 

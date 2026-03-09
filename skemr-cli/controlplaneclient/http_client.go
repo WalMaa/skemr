@@ -41,7 +41,6 @@ func GetRules(ctx context.Context, projectId string, databaseId string, token st
 		slog.Error("Error getting rules", "statusCode", strconv.Itoa(resp.StatusCode))
 		return nil, fmt.Errorf("Error getting rules, status code: %d", resp.StatusCode)
 	}
-	slog.Info(strconv.Itoa(resp.StatusCode))
 
 	if resp.StatusCode != http.StatusOK {
 		slog.Error("Error getting rules", "statusCode", strconv.Itoa(resp.StatusCode))
