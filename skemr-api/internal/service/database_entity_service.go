@@ -28,12 +28,12 @@ func (s *DatabaseEntityService) GetDatabaseEntityByID(c context.Context, project
 		return models.DatabaseEntity{}, err
 	}
 
-	database, err := CheckDatabaseExists(c, s.db, project.ID, databaseId)
+	_, err = CheckDatabaseExists(c, s.db, project.ID, databaseId)
 	if err != nil {
 		return models.DatabaseEntity{}, err
 	}
 
-	entity, err := s.db.GetDatabaseEntity(c, database.ID)
+	entity, err := s.db.GetDatabaseEntity(c, entityId)
 
 	return mapper.ToDomainDatabaseEntity(entity), err
 }

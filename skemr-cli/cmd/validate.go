@@ -41,14 +41,17 @@ var validateCmd = &cobra.Command{
 	Short: "Validate SQL statements",
 	Long:  `Validate SQL statements for correctness and compliance with Skemr rules.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		c := cmd.Context()
 
 		slog.Debug("Validate command executed", "project_id", projectId, "database_id", databaseId, "migration_files_dir", migrationFilesDir)
-		cmd.Context()
 		ruleEngine := rulengn.NewRuleEngine()
 
 		// Get rules
-		rules, err := controlplaneclient.GetRules(cmd.Context(), projectId, databaseId, token)
+		rules, err := controlplaneclient.GetRules(c, projectId, databaseId, token)
 		slog.Debug("Fetched rules from control plane", "ruleCount", len(rules))
+		// Fetch all database entities. This is used to match columns to right parents (tables)
+		entities, err := controlplaneclient.GetDatabaseEntities(c, projectId, databaseId, token)
+		slog.Debug("Fetched database entities from control plane", "entityCount", len(entities))
 
 		if err != nil {
 			slog.Error("Error while fetching rules from control plane", "err", err)
@@ -64,7 +67,7 @@ var validateCmd = &cobra.Command{
 		for i, path := range filePaths {
 			dtos[i] = rulengn.MigrationFileDto{File: path}
 		}
-		statementResults, err := ruleEngine.ProcessMigrationFiles(cmd.Context(), dtos, rules)
+		statementResults, err := ruleEngine.ProcessMigrationFiles(c, dtos, rules, entities)
 		if err != nil {
 			err = fmt.Errorf("error while validating migrations")
 			slog.Error("Error while validating migrations", "err", err)

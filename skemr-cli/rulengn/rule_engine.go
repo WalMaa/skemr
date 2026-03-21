@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"slices"
 	"sync"
 
 	"github.com/walmaa/skemr-cli/parser"
@@ -31,7 +32,7 @@ func NewRuleEngine() *RuleEngine {
 	return &RuleEngine{}
 }
 
-func (r *RuleEngine) ProcessMigrationFiles(c context.Context, statements []MigrationFileDto, rules []models.Rule) ([]StatementResult, error) {
+func (r *RuleEngine) ProcessMigrationFiles(c context.Context, statements []MigrationFileDto, rules []models.Rule, entities []models.DatabaseEntity) ([]StatementResult, error) {
 	results := make(chan StatementResult, len(statements))
 	var wg sync.WaitGroup
 	for _, statement := range statements {
@@ -40,7 +41,7 @@ func (r *RuleEngine) ProcessMigrationFiles(c context.Context, statements []Migra
 		go func() {
 			defer wg.Done()
 			slog.Debug("Processing migration file", "file", stmt.File)
-			stmtResults, err := r.CheckStatement(stmt, rules)
+			stmtResults, err := r.CheckStatement(stmt, rules, entities)
 			if err != nil {
 				slog.Error("Error checking statement", slog.String("statement", stmt.File), slog.String("error", err.Error()))
 				return
@@ -73,7 +74,7 @@ func (r *RuleEngine) ProcessMigrationFiles(c context.Context, statements []Migra
 }
 
 // CheckStatement checks if the given SQL statement matches any rules in the database for the specified project.
-func (r *RuleEngine) CheckStatement(migrationFileDto MigrationFileDto, rules []models.Rule) ([]StatementResult, error) {
+func (r *RuleEngine) CheckStatement(migrationFileDto MigrationFileDto, rules []models.Rule, entities []models.DatabaseEntity) ([]StatementResult, error) {
 	slog.Debug("Checking migration file", "file", migrationFileDto.File)
 
 	file, err := os.ReadFile(migrationFileDto.File)
@@ -93,7 +94,29 @@ func (r *RuleEngine) CheckStatement(migrationFileDto MigrationFileDto, rules []m
 	for _, rule := range rules {
 		slog.Debug("Evaluating rule against migration file", slog.String("rule_name", rule.Name), slog.String("migration_file", migrationFileDto.File))
 		for _, action := range statementActions {
+			// If the database entity is a column, it is not enough to match the name of the column in the rule with the name of the column in the statement action,
+			// we also need to check if the columns are in the same table. This is because there could be multiple columns with the same name in different tables,
+			// and we don't want to trigger a rule violation if the column in the statement action is not the same as the column in the rule.
+			if rule.DataBaseEntity.Type == models.DatabaseEntityTypeColumn {
+				// Get the parent database entity (table) for the column in the rule
+				i := slices.IndexFunc(entities, func(entity models.DatabaseEntity) bool {
+					return entity.ID == *rule.DataBaseEntity.ParentId
+				})
 
+				if i == -1 {
+					slog.Warn("Parent database entity not found for rule", slog.String("rule_name", rule.Name), slog.String("parent_id", rule.DataBaseEntity.ParentId.String()))
+					continue
+				}
+
+				parentEntity := entities[i]
+				slog.Debug("Found parent database entity for rule", slog.String("rule_name", rule.Name), slog.String("parent_entity_name", parentEntity.Name))
+
+				// Check if the parent entity name matches the table name in the statement action
+				if parentEntity.Name != action.Relation {
+					slog.Debug("Parent entity name does not match action table, skipping rule evaluation for this action", slog.String("rule_name", rule.Name), slog.String("parent_entity_name", parentEntity.Name), slog.String("action_table", action.Relation))
+					continue
+				}
+			}
 			if rule.DataBaseEntity.Name == action.Target {
 				slog.Debug("Rule target matches migrationFileDto target", slog.String("rule_database_entity", rule.DataBaseEntity.Name), slog.String("statement_target", action.Target))
 				switch rule.RuleType {

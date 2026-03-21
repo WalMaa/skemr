@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"log/slog"
@@ -20,7 +21,6 @@ import (
 	"github.com/walmaa/skemr-api/internal/tasks"
 	"github.com/walmaa/skemr-api/internal/validation"
 	"github.com/walmaa/skemr-api/internal/worker"
-	"golang.org/x/net/context"
 )
 
 // runSchema sets up the database schema.
