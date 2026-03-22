@@ -37,9 +37,7 @@ func (r *RuleEngine) ProcessMigrationFiles(c context.Context, statements []Migra
 	var wg sync.WaitGroup
 	for _, statement := range statements {
 		stmt := statement
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			slog.Debug("Processing migration file", "file", stmt.File)
 			stmtResults, err := r.CheckStatement(stmt, rules, entities)
 			if err != nil {
@@ -56,7 +54,7 @@ func (r *RuleEngine) ProcessMigrationFiles(c context.Context, statements []Migra
 					return
 				}
 			}
-		}()
+		})
 
 	}
 

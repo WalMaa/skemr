@@ -362,6 +362,50 @@ func (q *Queries) GetDatabaseEntityByProjectIdAndId(ctx context.Context, arg Get
 	return i, err
 }
 
+const updateDatabaseEntity = `-- name: UpdateDatabaseEntity :one
+UPDATE database_entities
+SET name = COALESCE($1, name),
+    attributes = COALESCE($2, attributes),
+    fingerprint = COALESCE($3, fingerprint),
+    parent_id = COALESCE($4, parent_id)
+WHERE id = $5
+RETURNING id, fingerprint, project_id, database_id, status, deleted_at, first_seen_at, entity_type, parent_id, name, attributes, created_at
+`
+
+type UpdateDatabaseEntityParams struct {
+	Name        pgtype.Text `json:"name"`
+	Attributes  []byte      `json:"attributes"`
+	Fingerprint pgtype.Text `json:"fingerprint"`
+	ParentID    *uuid.UUID  `json:"parent_id"`
+	ID          uuid.UUID   `json:"id"`
+}
+
+func (q *Queries) UpdateDatabaseEntity(ctx context.Context, arg UpdateDatabaseEntityParams) (DatabaseEntity, error) {
+	row := q.db.QueryRow(ctx, updateDatabaseEntity,
+		arg.Name,
+		arg.Attributes,
+		arg.Fingerprint,
+		arg.ParentID,
+		arg.ID,
+	)
+	var i DatabaseEntity
+	err := row.Scan(
+		&i.ID,
+		&i.Fingerprint,
+		&i.ProjectID,
+		&i.DatabaseID,
+		&i.Status,
+		&i.DeletedAt,
+		&i.FirstSeenAt,
+		&i.EntityType,
+		&i.ParentID,
+		&i.Name,
+		&i.Attributes,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const updateDatabaseEntityAsDeleted = `-- name: UpdateDatabaseEntityAsDeleted :exec
 UPDATE database_entities
 SET status     = 'deleted',

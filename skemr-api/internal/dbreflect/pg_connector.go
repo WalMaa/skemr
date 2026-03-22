@@ -15,7 +15,6 @@ type PostgresConnector struct {
 	models.Database
 }
 
-// language=SQL
 const tableDefQuery = `
 WITH rels AS (
     SELECT
@@ -90,6 +89,18 @@ FROM coldefs c
               ON pk.relid = c.relid
 GROUP BY c.table_schema, c.table_name, c.relid, pk.pk_shape;`
 
+const schemaRefQuery = `
+SELECT string_agg(c.relname, ',' ORDER BY c.relname) AS schema_fingerprint,
+       n.nspname AS schema_name
+FROM pg_namespace n
+         JOIN pg_class c
+              ON n.oid = c.relnamespace
+WHERE n.nspname NOT IN ('pg_catalog', 'information_schema')
+  AND n.nspname NOT LIKE 'pg_%'
+  AND c.relkind IN ('r', 'p')
+GROUP BY n.nspname;
+`
+
 type TableRef struct {
 	Schema      string // The parent Schema
 	Name        string // The name of the table itself
@@ -106,11 +117,16 @@ type ColumnRef struct {
 	OrdinalPosition int
 }
 
+type SchemaRef struct {
+	Name        string
+	Fingerprint string
+}
+
 type DatabaseConnector interface {
 	Connect(ctx context.Context) (*pgx.Conn, error)
 	Disconnect(ctx context.Context, conn *pgx.Conn) error
 	TestConnection(ctx context.Context) error
-	GetSchemas(ctx context.Context, conn *pgx.Conn) ([]string, error)
+	GetSchemas(ctx context.Context, conn *pgx.Conn) ([]SchemaRef, error)
 	GetTablesInSchema(ctx context.Context, conn *pgx.Conn, schema string) ([]TableRef, error)
 	ListColumnsInTable(ctx context.Context, conn *pgx.Conn, tableRef TableRef) ([]ColumnRef, error)
 	getConnectionString() (string, error)
@@ -160,26 +176,22 @@ func (dc *PostgresConnector) GetTablesInSchema(ctx context.Context, conn *pgx.Co
 	return tables, rows.Err()
 }
 
-func (dc *PostgresConnector) GetSchemas(ctx context.Context, conn *pgx.Conn) ([]string, error) {
-	rows, err := conn.Query(ctx, "SELECT schema_name"+
-		" FROM information_schema.schemata"+
-		" WHERE schema_name NOT IN ('pg_catalog', 'information_schema')"+
-		" AND schema_name NOT LIKE 'pg_toast%'"+
-		" AND schema_name NOT LIKE 'pg_temp%';")
+func (dc *PostgresConnector) GetSchemas(ctx context.Context, conn *pgx.Conn) ([]SchemaRef, error) {
+	rows, err := conn.Query(ctx, schemaRefQuery)
 	if err != nil {
 		slog.Error("Error querying schemas", "err", err)
 		return nil, err
 	}
 
 	defer rows.Close()
-	var schemas []string
+	var schemas []SchemaRef
 	for rows.Next() {
-		var schema string
-		if err := rows.Scan(&schema); err != nil {
+		var schemaRef SchemaRef
+		if err := rows.Scan(&schemaRef.Fingerprint, &schemaRef.Name); err != nil {
 			slog.Error("Error scanning schema name", "err", err)
 			return nil, err
 		}
-		schemas = append(schemas, schema)
+		schemas = append(schemas, schemaRef)
 	}
 	return schemas, rows.Err()
 }

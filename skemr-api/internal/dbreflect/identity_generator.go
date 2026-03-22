@@ -15,7 +15,14 @@ func GenerateColumnFingerprint(columnRef ColumnRef, tableId uuid.UUID) string {
 
 // GenerateTableFingerprint generates a unique identifier for a table based on its properties.
 // The principle is to create a stable identifier that remains consistent across table renames and db instance changes (backup restores).
-// The format is table:{schema_id}:{column_shape}:{primary_key}
-func GenerateTableFingerprint(tableRef TableRef, schemaId uuid.UUID) string {
-	return fmt.Sprintf("table:%s:%s:%s", schemaId.String(), tableRef.ColumnShape, tableRef.PrimaryKey)
+// The format is table:{column_shape}:{primary_key}
+func GenerateTableFingerprint(tableRef TableRef) string {
+	return fmt.Sprintf("table:%s:%s", tableRef.ColumnShape, tableRef.PrimaryKey)
+}
+
+// GenerateSchemaFingerprint generates a unique identifier for a schema based on its properties.
+// The principle is to create a stable identifier that remains consistent across schema renames and db instance changes (backup restores).
+// The format is schema:{database_id}:{schema_fingerprint}
+func GenerateSchemaFingerprint(schemaRef SchemaRef, databaseId uuid.UUID) string {
+	return fmt.Sprintf("schema:%s:%s", databaseId.String(), schemaRef.Fingerprint)
 }

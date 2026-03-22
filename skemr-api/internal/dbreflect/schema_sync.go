@@ -106,14 +106,14 @@ func (s *SchemaSyncService) SyncSchema(c context.Context, database models.Databa
 	// Create a map of current entity ids to easily check which entities are still present in the new schema after the sync.
 	currentEntityIds := make([]uuid.UUID, 0, len(savedEntities))
 
-	// Get all schemas in the database
-	schemas, err := connector.GetSchemas(c, conn)
+	// Get all schemaRefs in the database
+	schemaRefs, err := connector.GetSchemas(c, conn)
 	if err != nil {
-		return fmt.Errorf("error getting schemas: %w", err)
+		return fmt.Errorf("error getting schemaRefs: %w", err)
 	}
 
 	// For each schema, get tables and columns
-	for _, schema := range schemas {
+	for _, schema := range schemaRefs {
 		schema, err := s.updateSchema(c, schema, database)
 		if err != nil {
 			return err
@@ -169,11 +169,11 @@ func (s *SchemaSyncService) SyncSchema(c context.Context, database models.Databa
 // updateSchema checks if a schema with the given name exists for the database.
 // If it does not exist, it creates a new schema entity.
 // If it does exist, it currently does nothing but can be extended to update schema attributes if needed.
-func (s *SchemaSyncService) updateSchema(c context.Context, schemaName string, database models.Database) (sqlc.DatabaseEntity, error) {
+func (s *SchemaSyncService) updateSchema(c context.Context, schemaRef SchemaRef, database models.Database) (sqlc.DatabaseEntity, error) {
 	args := sqlc.GetDatabaseEntityByDatabaseIdAndTypeAndParentAndNameParams{
 		DatabaseID: database.ID,
 		EntityType: sqlc.DatabaseEntityTypeSchema,
-		Name:       schemaName,
+		Name:       schemaRef.Name,
 	}
 	schema, err := s.db.GetDatabaseEntityByDatabaseIdAndTypeAndParentAndName(c, args)
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
@@ -181,13 +181,52 @@ func (s *SchemaSyncService) updateSchema(c context.Context, schemaName string, d
 		return sqlc.DatabaseEntity{}, err
 	}
 
-	// If that schema does not exist yet, save it
 	if errors.Is(err, pgx.ErrNoRows) {
+
+		// If that schema does not exist by name, check by fingerprint to see if it is the same schema with an updated name.
+
+		fingerprint := GenerateSchemaFingerprint(schemaRef, database.ID)
+
+		schema, err = s.db.GetDatabaseEntityByFingerprint(c, sqlc.GetDatabaseEntityByFingerprintParams{
+			DatabaseID: database.ID,
+			Fingerprint: pgtype.Text{
+				String: fingerprint,
+				Valid:  true,
+			},
+		})
+
+		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+			slog.Error("error getting schema by fingerprint", "error", err.Error())
+			return sqlc.DatabaseEntity{}, err
+		}
+
+		// If found by fingerprint, update the name to the new name.
+		if !errors.Is(err, pgx.ErrNoRows) {
+			slog.Debug("Schema found by fingerprint, updating name", "oldName", schema.Name, "newName", schemaRef.Name)
+
+			schema, err = s.db.UpdateDatabaseEntityName(c, sqlc.UpdateDatabaseEntityNameParams{
+				ID:   schema.ID,
+				Name: schemaRef.Name,
+			})
+			if err != nil {
+				slog.Error("error updating schema name", "error", err.Error())
+				return sqlc.DatabaseEntity{}, err
+			}
+			slog.Info("Schema renamed", "oldName", schema.Name, "newName", schemaRef.Name)
+			schema.Name = schemaRef.Name
+			return schema, nil
+		}
+
+		// If that schema does not exist yet, save it
 		args := sqlc.CreateDatabaseEntityParams{
 			ProjectID:  database.ProjectID,
 			EntityType: sqlc.DatabaseEntityTypeSchema,
 			DatabaseID: database.ID,
-			Name:       schemaName,
+			Name:       schemaRef.Name,
+			Fingerprint: pgtype.Text{
+				String: fingerprint,
+				Valid:  true,
+			},
 		}
 		schema, err := s.db.CreateDatabaseEntity(c, args)
 		if err != nil {
@@ -235,7 +274,7 @@ func (s *SchemaSyncService) UpdateTable(c context.Context, tableRef TableRef, da
 	if errors.Is(err, pgx.ErrNoRows) {
 		// If that schema does not exist by name, check by fingerprint to see if it is the same table with an updated name.
 
-		fingerprint := GenerateTableFingerprint(tableRef, schemaId)
+		fingerprint := GenerateTableFingerprint(tableRef)
 
 		table, err = s.db.GetDatabaseEntityByFingerprint(c, sqlc.GetDatabaseEntityByFingerprintParams{
 			DatabaseID: database.ID,
@@ -250,13 +289,15 @@ func (s *SchemaSyncService) UpdateTable(c context.Context, tableRef TableRef, da
 			return sqlc.DatabaseEntity{}, err
 		}
 
-		// If found by fingerprint, update the name to the new name.
+		// If found by fingerprint, update name and parent schema to the new name and schema.
+		// Name is updated in case of renames, and parent schema is updated in case the table was moved to a different schema.
 		if !errors.Is(err, pgx.ErrNoRows) {
 			slog.Debug("Table found by fingerprint, updating name", "oldName", table.Name, "newName", tableRef.Name)
 
-			table, err = s.db.UpdateDatabaseEntityName(c, sqlc.UpdateDatabaseEntityNameParams{
-				ID:   table.ID,
-				Name: tableRef.Name,
+			table, err = s.db.UpdateDatabaseEntity(c, sqlc.UpdateDatabaseEntityParams{
+				ID:       table.ID,
+				Name:     pgtype.Text{String: tableRef.Name, Valid: true},
+				ParentID: &schemaId,
 			})
 			if err != nil {
 				slog.Error("error updating table name", "error", err.Error())
@@ -274,7 +315,7 @@ func (s *SchemaSyncService) UpdateTable(c context.Context, tableRef TableRef, da
 			DatabaseID: database.ID,
 			Name:       tableRef.Name,
 			Fingerprint: pgtype.Text{
-				String: GenerateTableFingerprint(tableRef, schemaId),
+				String: GenerateTableFingerprint(tableRef),
 				Valid:  true,
 			},
 		}

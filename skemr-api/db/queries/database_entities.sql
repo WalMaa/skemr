@@ -69,3 +69,12 @@ SET name = @name
 WHERE id = @id
 RETURNING *;
 
+-- name: UpdateDatabaseEntity :one
+UPDATE database_entities
+SET name = COALESCE(sqlc.narg(name), name),
+    attributes = COALESCE(sqlc.narg(attributes), attributes),
+    fingerprint = COALESCE(sqlc.narg(fingerprint), fingerprint),
+    parent_id = COALESCE(sqlc.narg(parent_id), parent_id)
+WHERE id = @id
+RETURNING *;
+
