@@ -16,7 +16,7 @@ type PostgresConnector struct {
 }
 
 const tableDefQuery = `
-WITH rels AS (
+WITH rels AS ( --- Get all user-defined tables and their OIDs
     SELECT
         t.table_schema,
         t.table_name,
@@ -30,7 +30,7 @@ WITH rels AS (
     WHERE t.table_type IN ('BASE TABLE', 'FOREIGN')
       AND t.table_schema = $1
 ),
-     coldefs AS (
+     coldefs AS ( -- Get column definitions for each table, including data type, nullability, identity, generated status, and default expressions
          SELECT
              r.table_schema,
              r.table_name,
@@ -38,13 +38,13 @@ WITH rels AS (
              a.attnum,
              lower(format_type(a.atttypid, a.atttypmod)) AS data_type,
              a.attnotnull,
-             a.attidentity,
-             a.attgenerated,
-             pg_get_expr(ad.adbin, ad.adrelid) AS default_expr
+             a.attidentity::text, --- Convert identity column info to text for easier processing
+             a.attgenerated::text, --- Convert generated column info to text for easier processing
+             pg_get_expr(ad.adbin, ad.adrelid) AS default_expr --- convert expression to text
          FROM rels r
                   JOIN pg_attribute a
                        ON a.attrelid = r.relid
-                           AND a.attnum > 0
+                           AND a.attnum > 0 --- Only user-defined columns (exclude system columns)
                            AND NOT a.attisdropped
                   LEFT JOIN pg_attrdef ad
                             ON ad.adrelid = a.attrelid
@@ -68,17 +68,16 @@ SELECT
     string_agg(
             concat_ws(
                     ':',
-                    c.attnum,
-                    c.data_type,
-                    CASE WHEN c.attnotnull THEN 'NO' ELSE 'YES' END,
-                    CASE
+                    c.data_type, --- include column data type
+                    CASE WHEN c.attnotnull THEN 'NO' ELSE 'YES' END, --- include nullability
+                    CASE --- determine default type: 'none' if no default, 'sequence' if it's a nextval() default, 'volatile_time' if it's a time-based default, 'generated' if it's a generated column, otherwise just 'default'
                         WHEN c.attgenerated <> '' THEN 'generated'
                         WHEN c.default_expr IS NULL THEN 'none'
                         WHEN c.default_expr ~* '^nextval\(' THEN 'sequence'
                         WHEN c.default_expr ~* '^(now|current_timestamp|transaction_timestamp)\(' THEN 'volatile_time'
                         ELSE 'default'
                         END,
-                    COALESCE(NULLIF(c.attidentity, ''), 'none'),
+                    COALESCE(NULLIF(c.attidentity, ''), 'none'), --- if an identity column, mark as 'identity', otherwise 'none'
                     COALESCE(NULLIF(c.attgenerated, ''), 'none')
             ),
             ';' ORDER BY c.attnum
@@ -99,6 +98,13 @@ WHERE n.nspname NOT IN ('pg_catalog', 'information_schema')
   AND n.nspname NOT LIKE 'pg_%'
   AND c.relkind IN ('r', 'p')
 GROUP BY n.nspname;
+`
+
+const columnRefQuery = `
+SELECT column_name, data_type, column_default, is_nullable, is_updatable, ordinal_position
+FROM information_schema.columns
+WHERE table_schema = $1 AND table_name = $2
+ORDER BY ordinal_position;
 `
 
 type TableRef struct {
@@ -139,7 +145,7 @@ func NewPostgresConnector(db models.Database) DatabaseConnector {
 }
 
 func (dc *PostgresConnector) ListColumnsInTable(ctx context.Context, conn *pgx.Conn, tableRef TableRef) ([]ColumnRef, error) {
-	rows, err := conn.Query(ctx, "SELECT column_name, data_type, column_default, is_nullable, is_updatable, ordinal_position FROM information_schema.columns WHERE table_schema=$1 AND table_name=$2", tableRef.Schema, tableRef.Name)
+	rows, err := conn.Query(ctx, columnRefQuery, tableRef.Schema, tableRef.Name)
 	if err != nil {
 		slog.Error("Error querying columns", "schema", tableRef.Schema, "table", tableRef.Name, "err", err)
 		return nil, err

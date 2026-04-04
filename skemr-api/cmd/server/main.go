@@ -105,7 +105,7 @@ func main() {
 		seedTestData(conn)
 	}
 
-	worker.StartTaskWorkers(queries)
+	worker.StartTaskWorkers(queries, cfg)
 
 	// Initialize services
 	services := &routers.Services{

@@ -1,18 +1,20 @@
 package worker
 
 import (
+	"fmt"
 	"log"
 	"log/slog"
 
 	"github.com/hibiken/asynq"
+	"github.com/walmaa/skemr-api/config"
 	"github.com/walmaa/skemr-api/db/sqlc"
 	"github.com/walmaa/skemr-api/internal/dbreflect"
 	"github.com/walmaa/skemr-api/internal/tasks"
 )
 
-func StartTaskWorkers(db sqlc.Querier) {
+func StartTaskWorkers(db sqlc.Querier, cfg *config.Config) {
 
-	srv := asynq.NewServer(asynq.RedisClientOpt{Addr: "localhost:6379"}, asynq.Config{
+	srv := asynq.NewServer(asynq.RedisClientOpt{Addr: fmt.Sprintf("%s:%d", cfg.Redis.Host, cfg.Redis.Port)}, asynq.Config{
 		Concurrency: 10,
 	})
 	syncService := dbreflect.NewSchemaSyncService(db, dbreflect.NewPostgresConnector)
