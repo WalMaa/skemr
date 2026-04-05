@@ -14,9 +14,16 @@ import (
 
 func StartTaskWorkers(db sqlc.Querier, cfg *config.Config) {
 
-	srv := asynq.NewServer(asynq.RedisClientOpt{Addr: fmt.Sprintf("%s:%d", cfg.Redis.Host, cfg.Redis.Port)}, asynq.Config{
-		Concurrency: 10,
-	})
+	srv := asynq.NewServer(asynq.RedisClientOpt{
+		Addr:      fmt.Sprintf("%s:%d", cfg.Redis.Host, cfg.Redis.Port),
+		Password:  cfg.Redis.Password,
+		DB:        cfg.Redis.DB,
+		TLSConfig: nil,
+	},
+		asynq.Config{
+			Concurrency: 10,
+		},
+	)
 	syncService := dbreflect.NewSchemaSyncService(db, dbreflect.NewPostgresConnector)
 
 	mux := asynq.NewServeMux()
