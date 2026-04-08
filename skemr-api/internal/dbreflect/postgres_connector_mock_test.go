@@ -35,9 +35,9 @@ func (m *MockPostgresConnector) TestConnection(c context.Context) error {
 	return args.Error(0)
 }
 
-func (m *MockPostgresConnector) GetSchemas(c context.Context, conn *pgx.Conn) ([]string, error) {
+func (m *MockPostgresConnector) GetSchemas(c context.Context, conn *pgx.Conn) ([]SchemaRef, error) {
 	args := m.Called()
-	return args.Get(0).([]string), args.Error(1)
+	return args.Get(0).([]SchemaRef), args.Error(1)
 }
 
 func (m *MockPostgresConnector) GetTablesInSchema(c context.Context, conn *pgx.Conn, schema string) ([]TableRef, error) {
@@ -48,4 +48,9 @@ func (m *MockPostgresConnector) GetTablesInSchema(c context.Context, conn *pgx.C
 func (m *MockPostgresConnector) ListColumnsInTable(c context.Context, conn *pgx.Conn, table TableRef) ([]ColumnRef, error) {
 	args := m.Called(table)
 	return args.Get(0).([]ColumnRef), args.Error(1)
+}
+
+func (m *MockPostgresConnector) getConnectionString() (string, error) {
+	args := m.Called()
+	return args.String(0), args.Error(1)
 }

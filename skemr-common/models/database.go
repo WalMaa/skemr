@@ -14,6 +14,7 @@ type Database struct {
 	Password                 *string      `json:"password"`
 	Host                     *string      `json:"host"`
 	Port                     int32        `json:"port"`
+	SslMode                  string       `json:"sslMode"`
 	DatabaseType             DatabaseType `json:"databaseType"`
 	FailedConnectionAttempts int32        `json:"failedConnectionAttempts"`
 	LastSyncedAt             *time.Time   `json:"lastSyncedAt"`

@@ -66,7 +66,7 @@ func TestGetConnectionStringWithoutCreds(t *testing.T) {
 	dbConn := NewPostgresConnector(*dbModel)
 	connStr, err := dbConn.getConnectionString()
 	require.NoError(t, err)
-	expected := "postgresql://localhost:5432/testDb"
+	expected := "postgresql://localhost:5432/testDb?sslmode=prefer"
 	require.Equal(t, expected, connStr)
 }
 
@@ -89,7 +89,7 @@ func TestGetConnectionStringWithoutUsername(t *testing.T) {
 	dbConn := NewPostgresConnector(*dbModel)
 	connStr, err := dbConn.getConnectionString()
 	require.NoError(t, err)
-	expected := "postgresql://user:password@localhost:5432/postgres"
+	expected := "postgresql://user:password@localhost:5432/postgres?sslmode=prefer"
 	require.Equal(t, expected, connStr)
 }
 
@@ -110,7 +110,7 @@ func TestGetConnectionStringWithoutPass(t *testing.T) {
 	dbConn := NewPostgresConnector(*dbModel)
 	connStr, err := dbConn.getConnectionString()
 	require.NoError(t, err)
-	expected := "postgresql://localhost:5432/postgres"
+	expected := "postgresql://localhost:5432/postgres?sslmode=prefer"
 	require.Equal(t, expected, connStr)
 }
 
@@ -133,6 +133,56 @@ func TestGetConnectionStringWithCreds(t *testing.T) {
 	dbConn := NewPostgresConnector(*dbModel)
 	connStr, err := dbConn.getConnectionString()
 	require.NoError(t, err)
-	expected := "postgresql://user:password@localhost:5432/postgres"
+	expected := "postgresql://user:password@localhost:5432/postgres?sslmode=prefer"
+	require.Equal(t, expected, connStr)
+}
+
+func TestGetConnectionWithSslMode(t *testing.T) {
+	host := "localhost"
+	username := "user"
+	password := "password"
+	dbName := "postgres"
+	sslMode := "require"
+	dbModel := &models.Database{
+		ID:           uuid.New(),
+		DisplayName:  "Test Database",
+		Host:         &host,
+		Username:     &username,
+		Password:     &password,
+		DatabaseType: models.Postgres,
+		DbName:       &dbName,
+		Port:         5432,
+		SslMode:      sslMode,
+		ProjectID:    uuid.New(),
+	}
+	dbConn := NewPostgresConnector(*dbModel)
+	connStr, err := dbConn.getConnectionString()
+	require.NoError(t, err)
+	expected := "postgresql://user:password@localhost:5432/postgres?sslmode=require"
+	require.Equal(t, expected, connStr)
+}
+
+func TestGetConnectionWithVerifyFullSslMode(t *testing.T) {
+	host := "localhost"
+	username := "user"
+	password := "password"
+	dbName := "postgres"
+	sslMode := "verify-full"
+	dbModel := &models.Database{
+		ID:           uuid.New(),
+		DisplayName:  "Test Database",
+		Host:         &host,
+		Username:     &username,
+		Password:     &password,
+		DatabaseType: models.Postgres,
+		DbName:       &dbName,
+		Port:         5432,
+		SslMode:      sslMode,
+		ProjectID:    uuid.New(),
+	}
+	dbConn := NewPostgresConnector(*dbModel)
+	connStr, err := dbConn.getConnectionString()
+	require.NoError(t, err)
+	expected := "postgresql://user:password@localhost:5432/postgres?sslmode=verify-full"
 	require.Equal(t, expected, connStr)
 }

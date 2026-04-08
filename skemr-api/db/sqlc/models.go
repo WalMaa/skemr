@@ -281,6 +281,7 @@ type Database struct {
 	Password                 pgtype.Text        `json:"password"`
 	Host                     pgtype.Text        `json:"host"`
 	Port                     pgtype.Int4        `json:"port"`
+	SslMode                  string             `json:"ssl_mode"`
 	DatabaseType             NullDatabaseType   `json:"database_type"`
 	ProjectID                uuid.UUID          `json:"project_id"`
 	LastSyncedAt             pgtype.Timestamptz `json:"last_synced_at"`

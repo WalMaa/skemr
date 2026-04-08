@@ -16,7 +16,7 @@ const createDatabase = `-- name: CreateDatabase :one
 INSERT INTO databases
 (project_id, display_name, db_name, username, password, host, port, database_type)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-RETURNING id, display_name, db_name, username, password, host, port, database_type, project_id, last_synced_at, last_sync_error, failed_connection_attempts, created_at, updated_at
+RETURNING id, display_name, db_name, username, password, host, port, ssl_mode, database_type, project_id, last_synced_at, last_sync_error, failed_connection_attempts, created_at, updated_at
 `
 
 type CreateDatabaseParams struct {
@@ -50,6 +50,7 @@ func (q *Queries) CreateDatabase(ctx context.Context, arg CreateDatabaseParams) 
 		&i.Password,
 		&i.Host,
 		&i.Port,
+		&i.SslMode,
 		&i.DatabaseType,
 		&i.ProjectID,
 		&i.LastSyncedAt,
@@ -73,7 +74,7 @@ func (q *Queries) DeleteDatabase(ctx context.Context, id uuid.UUID) error {
 }
 
 const getDatabase = `-- name: GetDatabase :one
-SELECT id, display_name, db_name, username, password, host, port, database_type, project_id, last_synced_at, last_sync_error, failed_connection_attempts, created_at, updated_at
+SELECT id, display_name, db_name, username, password, host, port, ssl_mode, database_type, project_id, last_synced_at, last_sync_error, failed_connection_attempts, created_at, updated_at
 FROM databases
 WHERE id = $1
 LIMIT 1
@@ -90,6 +91,7 @@ func (q *Queries) GetDatabase(ctx context.Context, id uuid.UUID) (Database, erro
 		&i.Password,
 		&i.Host,
 		&i.Port,
+		&i.SslMode,
 		&i.DatabaseType,
 		&i.ProjectID,
 		&i.LastSyncedAt,
@@ -102,7 +104,7 @@ func (q *Queries) GetDatabase(ctx context.Context, id uuid.UUID) (Database, erro
 }
 
 const getDatabaseByIDAndProjectID = `-- name: GetDatabaseByIDAndProjectID :one
-SELECT id, display_name, db_name, username, password, host, port, database_type, project_id, last_synced_at, last_sync_error, failed_connection_attempts, created_at, updated_at
+SELECT id, display_name, db_name, username, password, host, port, ssl_mode, database_type, project_id, last_synced_at, last_sync_error, failed_connection_attempts, created_at, updated_at
 FROM databases
 WHERE id = $1
   AND project_id = $2
@@ -125,6 +127,7 @@ func (q *Queries) GetDatabaseByIDAndProjectID(ctx context.Context, arg GetDataba
 		&i.Password,
 		&i.Host,
 		&i.Port,
+		&i.SslMode,
 		&i.DatabaseType,
 		&i.ProjectID,
 		&i.LastSyncedAt,
@@ -137,7 +140,7 @@ func (q *Queries) GetDatabaseByIDAndProjectID(ctx context.Context, arg GetDataba
 }
 
 const getDatabaseByIdAndProject = `-- name: GetDatabaseByIdAndProject :one
-SELECT id, display_name, db_name, username, password, host, port, database_type, project_id, last_synced_at, last_sync_error, failed_connection_attempts, created_at, updated_at
+SELECT id, display_name, db_name, username, password, host, port, ssl_mode, database_type, project_id, last_synced_at, last_sync_error, failed_connection_attempts, created_at, updated_at
 FROM databases
 WHERE id = $1
   AND project_id = $2
@@ -160,6 +163,7 @@ func (q *Queries) GetDatabaseByIdAndProject(ctx context.Context, arg GetDatabase
 		&i.Password,
 		&i.Host,
 		&i.Port,
+		&i.SslMode,
 		&i.DatabaseType,
 		&i.ProjectID,
 		&i.LastSyncedAt,
@@ -172,7 +176,7 @@ func (q *Queries) GetDatabaseByIdAndProject(ctx context.Context, arg GetDatabase
 }
 
 const getDatabaseByNameAndProject = `-- name: GetDatabaseByNameAndProject :one
-SELECT id, display_name, db_name, username, password, host, port, database_type, project_id, last_synced_at, last_sync_error, failed_connection_attempts, created_at, updated_at
+SELECT id, display_name, db_name, username, password, host, port, ssl_mode, database_type, project_id, last_synced_at, last_sync_error, failed_connection_attempts, created_at, updated_at
 FROM databases
 WHERE display_name = $1
   AND project_id = $2
@@ -195,6 +199,7 @@ func (q *Queries) GetDatabaseByNameAndProject(ctx context.Context, arg GetDataba
 		&i.Password,
 		&i.Host,
 		&i.Port,
+		&i.SslMode,
 		&i.DatabaseType,
 		&i.ProjectID,
 		&i.LastSyncedAt,
@@ -207,7 +212,7 @@ func (q *Queries) GetDatabaseByNameAndProject(ctx context.Context, arg GetDataba
 }
 
 const listDatabasesByProject = `-- name: ListDatabasesByProject :many
-SELECT id, display_name, db_name, username, password, host, port, database_type, project_id, last_synced_at, last_sync_error, failed_connection_attempts, created_at, updated_at
+SELECT id, display_name, db_name, username, password, host, port, ssl_mode, database_type, project_id, last_synced_at, last_sync_error, failed_connection_attempts, created_at, updated_at
 FROM databases
 WHERE project_id = $1
 `
@@ -229,6 +234,7 @@ func (q *Queries) ListDatabasesByProject(ctx context.Context, projectID uuid.UUI
 			&i.Password,
 			&i.Host,
 			&i.Port,
+			&i.SslMode,
 			&i.DatabaseType,
 			&i.ProjectID,
 			&i.LastSyncedAt,
@@ -255,9 +261,10 @@ SET display_name  = COALESCE($1, display_name),
     password      = COALESCE($4, password),
     host          = COALESCE($5, host),
     port          = COALESCE($6, port),
-    database_type = COALESCE($7, database_type)
-WHERE id = $8
-RETURNING id, display_name, db_name, username, password, host, port, database_type, project_id, last_synced_at, last_sync_error, failed_connection_attempts, created_at, updated_at
+    database_type = COALESCE($7, database_type),
+    ssl_mode      = COALESCE($8, ssl_mode)
+WHERE id = $9
+RETURNING id, display_name, db_name, username, password, host, port, ssl_mode, database_type, project_id, last_synced_at, last_sync_error, failed_connection_attempts, created_at, updated_at
 `
 
 type UpdateDatabaseParams struct {
@@ -268,6 +275,7 @@ type UpdateDatabaseParams struct {
 	Host         pgtype.Text      `json:"host"`
 	Port         pgtype.Int4      `json:"port"`
 	DatabaseType NullDatabaseType `json:"database_type"`
+	SslMode      pgtype.Text      `json:"ssl_mode"`
 	DatabaseID   uuid.UUID        `json:"database_id"`
 }
 
@@ -280,6 +288,7 @@ func (q *Queries) UpdateDatabase(ctx context.Context, arg UpdateDatabaseParams) 
 		arg.Host,
 		arg.Port,
 		arg.DatabaseType,
+		arg.SslMode,
 		arg.DatabaseID,
 	)
 	var i Database
@@ -291,6 +300,7 @@ func (q *Queries) UpdateDatabase(ctx context.Context, arg UpdateDatabaseParams) 
 		&i.Password,
 		&i.Host,
 		&i.Port,
+		&i.SslMode,
 		&i.DatabaseType,
 		&i.ProjectID,
 		&i.LastSyncedAt,
@@ -308,7 +318,7 @@ SET last_sync_error            = $1,
     failed_connection_attempts = failed_connection_attempts + 1,
     last_synced_at             = $2
 WHERE id = $3
-RETURNING id, display_name, db_name, username, password, host, port, database_type, project_id, last_synced_at, last_sync_error, failed_connection_attempts, created_at, updated_at
+RETURNING id, display_name, db_name, username, password, host, port, ssl_mode, database_type, project_id, last_synced_at, last_sync_error, failed_connection_attempts, created_at, updated_at
 `
 
 type UpdateDatabaseSyncFailParams struct {
@@ -328,6 +338,7 @@ func (q *Queries) UpdateDatabaseSyncFail(ctx context.Context, arg UpdateDatabase
 		&i.Password,
 		&i.Host,
 		&i.Port,
+		&i.SslMode,
 		&i.DatabaseType,
 		&i.ProjectID,
 		&i.LastSyncedAt,
@@ -345,7 +356,7 @@ SET last_synced_at             = $1,
     last_sync_error            = NULL,
     failed_connection_attempts = 0
 WHERE id = $2
-RETURNING id, display_name, db_name, username, password, host, port, database_type, project_id, last_synced_at, last_sync_error, failed_connection_attempts, created_at, updated_at
+RETURNING id, display_name, db_name, username, password, host, port, ssl_mode, database_type, project_id, last_synced_at, last_sync_error, failed_connection_attempts, created_at, updated_at
 `
 
 type UpdateDatabaseSyncedAtParams struct {
@@ -364,6 +375,7 @@ func (q *Queries) UpdateDatabaseSyncedAt(ctx context.Context, arg UpdateDatabase
 		&i.Password,
 		&i.Host,
 		&i.Port,
+		&i.SslMode,
 		&i.DatabaseType,
 		&i.ProjectID,
 		&i.LastSyncedAt,

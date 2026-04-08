@@ -1,4 +1,26 @@
 services:
+  app:
+    build:
+        context: .
+        dockerfile: Dockerfile.api
+    ports:
+      - "8080:8080"
+    environment:
+      APP_ENV: prod
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: pass
+      DB_NAME: postgres
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ""
+      REDIS_DB: 0
+      SMTP_HOST: smtp4dev
+      SMTP_PORT: 25
+      SMTP_USER: ""
+      SMTP_PASSWORD: ""
+      SMTP_FROM: ""
   postgres:
     image: "postgres:latest"
     ports:
@@ -29,38 +51,6 @@ services:
       - RI_REDIS_HOST=redis
       - RI_REDIS_PORT=6379
       - RI_REDIS_ALIAS=local-redis
-  gitlab:
-    image: "gitlab/gitlab-ce:latest"
-    container_name: gitlab
-    ports:
-      - "80:80"
-      - "443:443"
-      - "2222:22"
-    environment:
-        GITLAB_OMNIBUS_CONFIG: |
-          external_url 'http://gitlab'
-          gitlab_rails['initial_root_password'] = 'password'
-          gitlab_rails['allow_local_requests_from_web_hooks_and_services'] = true
-          gitlab_rails['allow_local_requests_from_system_hooks'] = true
-    volumes:
-      - "./gitlab/config/gitlab:/etc/gitlab"
-      - "./gitlab/logs/gitlab:/var/log/gitlab"
-      - "./gitlab/data/gitlab:/var/opt/gitlab"
-    extra_hosts:
-      - host.docker.internal:host-gateway
-    networks:
-      - ci
-  gitlab-runner:
-    image: gitlab/gitlab-runner:latest
-    depends_on:
-      - gitlab
-    volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock"
-      - "./gitlab-runner/config:/etc/gitlab-runner"
-    extra_hosts:
-      - host.docker.internal:host-gateway
-    networks:
-      - ci
   smtp4dev:
     image: rnwood/smtp4dev:latest
     container_name: skemr-smtp4dev
@@ -69,9 +59,6 @@ services:
       - "5025:25"
     environment:
       - ServerOptions__HostName=smtp4dev
-
-volumes:
-  mailpit-data:
 
 networks:
   ci:

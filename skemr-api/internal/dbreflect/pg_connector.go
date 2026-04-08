@@ -251,6 +251,10 @@ func (dc *PostgresConnector) TestConnection(ctx context.Context) error {
 func (dc *PostgresConnector) getConnectionString() (string, error) {
 	host := dc.Database.Host
 	port := dc.Database.Port
+	sslMode := dc.Database.SslMode
+	if sslMode == "" {
+		sslMode = "prefer"
+	}
 	if host == nil || port == 0 || dc.DbName == nil {
 		return "", errors.New("Missing database connection parameters")
 	}
@@ -264,7 +268,7 @@ func (dc *PostgresConnector) getConnectionString() (string, error) {
 
 	switch dc.Database.DatabaseType {
 	case "postgres":
-		return "postgresql://" + credentials + *host + ":" + strconv.Itoa(int(port)) + "/" + *dc.Database.DbName, nil
+		return "postgresql://" + credentials + *host + ":" + strconv.Itoa(int(port)) + "/" + *dc.Database.DbName + "?sslmode=" + sslMode, nil
 	}
 	return "", errors.New("DB not supported")
 }

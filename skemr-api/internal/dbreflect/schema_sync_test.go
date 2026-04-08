@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/walmaa/skemr-api/db/sqlc"
@@ -44,7 +45,7 @@ func TestSchemaSync(t *testing.T) {
 
 	mockDB := mocks.NewMockQuerier(t)
 
-	mockDB.On("GetDatabaseEntityByDatabaseIdAndTypeAndName", mock.Anything, mock.Anything).Return(sqlc.DatabaseEntity{
+	mockDB.On("GetDatabaseEntityByDatabaseIdAndTypeAndParentAndName", mock.Anything, mock.Anything).Return(sqlc.DatabaseEntity{
 		ID:         uuid.New(),
 		Name:       "testSchemaName",
 		DatabaseID: uuid.UUID{},
@@ -77,16 +78,25 @@ func TestUpdateSchemaCreatesNew(t *testing.T) {
 		ProjectID: uuid.New(),
 	}
 
+	schemaRef := SchemaRef{
+		Name: schemaName,
+	}
+
 	mockDB := mocks.NewMockQuerier(t)
-	mockDB.On("GetDatabaseEntityByDatabaseIdAndTypeAndName", mock.Anything, mock.Anything).Return(sqlc.DatabaseEntity{}, pgx.ErrNoRows)
+	mockDB.On("GetDatabaseEntityByDatabaseIdAndTypeAndParentAndName", mock.Anything, mock.Anything).Return(sqlc.DatabaseEntity{}, pgx.ErrNoRows)
+	mockDB.On("GetDatabaseEntityByFingerprint", mock.Anything, mock.Anything).Return(sqlc.DatabaseEntity{}, pgx.ErrNoRows)
 	mockDB.On("CreateDatabaseEntity", mock.Anything, mock.Anything).Return(sqlc.DatabaseEntity{
 		ID:         uuid.New(),
 		Name:       schemaName,
 		DatabaseID: dataBaseId,
+		Fingerprint: pgtype.Text{
+			String: "fingerprint",
+			Valid:  true,
+		},
 	}, nil)
 
 	syncService := NewSchemaSyncService(mockDB, func(_ models.Database) DatabaseConnector { return mockConnector })
-	schema, err := syncService.updateSchema(c, schemaName, database)
+	schema, err := syncService.updateSchema(c, schemaRef, database)
 
 	require.NoError(t, err)
 	require.Equal(t, schema.Name, schemaName)
@@ -105,15 +115,19 @@ func TestUpdateSchemaUpdatesExisting(t *testing.T) {
 		ProjectID: uuid.New(),
 	}
 
+	schemaRef := SchemaRef{
+		Name: schemaName,
+	}
+
 	mockDB := mocks.NewMockQuerier(t)
-	mockDB.On("GetDatabaseEntityByDatabaseIdAndTypeAndName", mock.Anything, mock.Anything).Return(sqlc.DatabaseEntity{
+	mockDB.On("GetDatabaseEntityByDatabaseIdAndTypeAndParentAndName", mock.Anything, mock.Anything).Return(sqlc.DatabaseEntity{
 		ID:         uuid.New(),
 		Name:       schemaName,
 		DatabaseID: dataBaseId,
 	}, nil)
 
 	syncService := NewSchemaSyncService(mockDB, func(_ models.Database) DatabaseConnector { return mockConnector })
-	schema, err := syncService.updateSchema(c, schemaName, database)
+	schema, err := syncService.updateSchema(c, schemaRef, database)
 
 	require.NoError(t, err)
 	require.Equal(t, schema.Name, schemaName)
@@ -129,32 +143,34 @@ func TestMarkEntityAsDeletedWhenEntityNotAppearingInSync(t *testing.T) {
 
 	mockConnector := new(MockPostgresConnector)
 
+	oldEntity1 := sqlc.DatabaseEntity{
+		ID:         entityId,
+		Name:       "testSchemaName",
+		DatabaseID: databaseId,
+	}
+	oldEntity2 := sqlc.DatabaseEntity{
+		ID:         entityId2,
+		Name:       "testSchemaName2",
+		DatabaseID: databaseId,
+	}
+
 	oldEntities := []sqlc.DatabaseEntity{
-		{
-			ID:         entityId,
-			Name:       "testSchemaName",
-			DatabaseID: databaseId,
-		},
-		{
-			ID:         entityId2,
-			Name:       "testSchemaName2",
-			DatabaseID: databaseId,
-		},
+		oldEntity1,
+		oldEntity2,
 	}
 
 	mockDB := mocks.NewMockQuerier(t)
 	mockDB.On("GetDatabaseEntitiesByDatabaseId", mock.Anything, mock.Anything).Return(oldEntities, nil)
-	mockDB.On("UpdateDatabaseEntityAsDeleted", mock.Anything, mock.Anything).Return(nil)
-	mockDB.On("GetDatabaseEntityByDatabaseIdAndTypeAndName", c, sqlc.GetDatabaseEntityByDatabaseIdAndTypeAndNameParams{
-		DatabaseID: databaseId,
-		EntityType: "schema",
-		Name:       "testSchemaName",
-	}).Return(oldEntities[0], nil)
+	mockDB.On("UpdateDatabaseEntityAsDeleted", mock.Anything, entityId2).Return(nil).Once()
+	mockDB.On("GetDatabaseEntityByDatabaseIdAndTypeAndParentAndName", mock.Anything, mock.Anything).Return(oldEntity1, nil)
 
-	mockDB.On("GetDatabaseEntityByDatabaseIdAndTypeAndName", mock.Anything, mock.Anything).Return(sqlc.DatabaseEntity{}, pgx.ErrNoRows)
 	mockConnector.On("GetTablesInSchema", mock.Anything, mock.Anything, mock.Anything).Return([]TableRef{}, nil)
 	// Return only the first entity, simulating that the second one has been removed in the database and should be marked as deleted
-	mockConnector.On("GetSchemas", mock.Anything, mock.Anything).Return([]string{"testSchemaName"}, nil)
+	mockConnector.On("GetSchemas", mock.Anything, mock.Anything).Return([]SchemaRef{
+		{
+			Name: "testSchemaName",
+		},
+	}, nil)
 	mockConnector.On("Connect", mock.Anything).Return(nil, nil)
 	mockConnector.On("Disconnect", mock.Anything, mock.Anything).Return(nil)
 

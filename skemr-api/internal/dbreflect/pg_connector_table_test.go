@@ -37,7 +37,7 @@ func TestGetPostgresSchema(t *testing.T) {
 	schemas, err := dbConn.GetSchemas(ctx, conn)
 	require.NoError(t, err)
 	require.NotNil(t, schemas)
-	require.IsType(t, []string{}, schemas)
+	require.IsType(t, []SchemaRef{}, schemas)
 
 	err = conn.Close(ctx)
 	require.NoError(t, err)

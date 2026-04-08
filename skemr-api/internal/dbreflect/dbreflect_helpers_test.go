@@ -71,7 +71,7 @@ func newTestPGConn(t *testing.T) (ctx context.Context, dbConn *PostgresConnector
 		ProjectID:    uuid.New(),
 	}
 
-	tmp := NewPostgresConnector(dbModel)
+	tmp := NewPostgresConnector(dbModel).(*PostgresConnector)
 	c, err := tmp.Connect(ctx)
 	require.NoError(t, err)
 	require.NotNil(t, c)

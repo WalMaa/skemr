@@ -31,4 +31,4 @@ vendor/   # only ignore if you don't want to vendor dependencies
 # Docker gitlab
 gitlab/
 
-.env*
+*.env

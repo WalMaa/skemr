@@ -35,5 +35,8 @@ COPY --from=builder /app/skemr-api/skemr-api /usr/local/bin/skemr-api
 
 EXPOSE 8080
 
+HEALTHCHECK  --interval=1m --timeout=3s --start-period=3s \
+  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:8080/health
+
 # Run the application
 CMD ["skemr-api"]

@@ -88,6 +88,7 @@ CREATE TABLE databases
     password                   TEXT,
     host                       TEXT,
     port                       INTEGER,
+    ssl_mode                   TEXT        NOT NULL DEFAULT 'prefer',
     database_type              database_type        DEFAULT 'postgres',
     project_id                 uuid        NOT NULL REFERENCES projects (id) ON DELETE CASCADE,
     last_synced_at             TIMESTAMPTZ,

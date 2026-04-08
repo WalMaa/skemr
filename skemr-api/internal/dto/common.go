@@ -15,6 +15,7 @@ type DatabaseCreationDto struct {
 	Password     *string      `json:"password"`
 	Host         *string      `json:"host"`
 	Port         int32        `json:"port"`
+	SslMode      *string      `json:"sslMode"`
 	DatabaseType DatabaseType `json:"databaseType" validate:"required,oneof=postgres"`
 }
 
@@ -25,6 +26,7 @@ type DatabaseUpdateDto struct {
 	Password     *string       `json:"password"`
 	Host         *string       `json:"host"`
 	Port         *int32        `json:"port"`
+	SslMode      *string       `json:"sslMode"`
 	DatabaseType *DatabaseType `json:"databaseType"`
 }
 

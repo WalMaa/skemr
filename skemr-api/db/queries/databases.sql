@@ -39,7 +39,8 @@ SET display_name  = COALESCE(sqlc.narg(display_name), display_name),
     password      = COALESCE(sqlc.narg(password), password),
     host          = COALESCE(sqlc.narg(host), host),
     port          = COALESCE(sqlc.narg(port), port),
-    database_type = COALESCE(sqlc.narg(database_type), database_type)
+    database_type = COALESCE(sqlc.narg(database_type), database_type),
+    ssl_mode      = COALESCE(sqlc.narg(ssl_mode), ssl_mode)
 WHERE id = @database_id
 RETURNING *;
 

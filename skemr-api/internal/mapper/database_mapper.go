@@ -16,6 +16,7 @@ func ToDomainDatabase(e sqlc.Database) models.Database {
 		Password:                 &e.Password.String,
 		Host:                     &e.Host.String,
 		Port:                     e.Port.Int32,
+		SslMode:                  e.SslMode,
 		DatabaseType:             models.DatabaseType(e.DatabaseType.DatabaseType),
 		ProjectID:                e.ProjectID,
 		FailedConnectionAttempts: e.FailedConnectionAttempts,
@@ -41,6 +42,7 @@ func ToUpdateDatabaseParams(databaseId uuid.UUID, dto dto.DatabaseUpdateDto) sql
 		Password:    Text(dto.Password),
 		Host:        Text(dto.Host),
 		Port:        Int4(dto.Port),
+		SslMode:     Text(dto.SslMode),
 	}
 }
 
