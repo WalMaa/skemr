@@ -32,6 +32,7 @@ type Querier interface {
 	GetDatabaseEntityByDatabaseIdAndTypeAndParentAndName(ctx context.Context, arg GetDatabaseEntityByDatabaseIdAndTypeAndParentAndNameParams) (DatabaseEntity, error)
 	GetDatabaseEntityByFingerprint(ctx context.Context, arg GetDatabaseEntityByFingerprintParams) (DatabaseEntity, error)
 	GetDatabaseEntityByProjectIdAndId(ctx context.Context, arg GetDatabaseEntityByProjectIdAndIdParams) (DatabaseEntity, error)
+	GetHashByPrefixAndProjectID(ctx context.Context, arg GetHashByPrefixAndProjectIDParams) (string, error)
 	GetProject(ctx context.Context, id uuid.UUID) (Project, error)
 	GetProjectAccessTokens(ctx context.Context, projectID uuid.UUID) ([]ProjectAccessToken, error)
 	GetProjectBySecretPrefix(ctx context.Context, prefix string) (Project, error)

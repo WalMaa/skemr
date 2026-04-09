@@ -96,9 +96,10 @@ func main() {
 	projectService := service.NewProjectService(queries)
 	databaseService := service.NewDatabaseService(queries, taskClient)
 	webhookService := service.NewWebhookService(queries)
-	projectSecretsService := service.NewProjectSecretsService(queries)
+	projectSecretsService := service.NewAccessTokenService(queries)
 	ruleService := service.NewRuleService(queries)
 	databaseEntityService := service.NewDatabaseEntityService(queries)
+	integrationService := service.NewIntegrationService(ruleService)
 
 	if cfg.App.Env == "dev" {
 		runSchema(conn)
@@ -110,11 +111,12 @@ func main() {
 	// Initialize services
 	services := &routers.Services{
 		ProjectService:        projectService,
-		ProjectSecretsService: projectSecretsService,
+		AccessTokenService:    projectSecretsService,
 		DatabaseService:       databaseService,
 		WebhookService:        webhookService,
 		RuleService:           ruleService,
 		DatabaseEntityService: databaseEntityService,
+		IntegrationService:    integrationService,
 	}
 
 	// Initialize router

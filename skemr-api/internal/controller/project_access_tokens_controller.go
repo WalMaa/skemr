@@ -14,10 +14,10 @@ import (
 )
 
 type ProjectSecretsController struct {
-	Service *service.ProjectSecretsService
+	Service *service.AccessTokenService
 }
 
-func NewProjectSecretsController(s *service.ProjectSecretsService) *ProjectSecretsController {
+func NewProjectSecretsController(s *service.AccessTokenService) *ProjectSecretsController {
 	return &ProjectSecretsController{Service: s}
 }
 

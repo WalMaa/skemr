@@ -18,6 +18,13 @@ JOIN projects p ON p.id = pat.project_id
 WHERE pat.prefix = @prefix
 LIMIT 1;
 
+-- name: GetHashByPrefixAndProjectID :one
+SELECT hash
+FROM project_access_tokens
+WHERE prefix = @prefix
+  AND project_id = @project_id
+LIMIT 1;
+
 -- name: CreateProjectSecretKey :one
 INSERT INTO project_access_tokens (project_id, name, prefix, hash, expires_at)
 VALUES (@project_id, @name, @prefix, @hash, @expires_at)

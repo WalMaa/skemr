@@ -18,8 +18,9 @@ type Services struct {
 	DatabaseService       *service.DatabaseService
 	RuleService           *service.RuleService
 	WebhookService        *service.WebhookService
-	ProjectSecretsService *service.ProjectSecretsService
+	AccessTokenService    *service.AccessTokenService
 	DatabaseEntityService *service.DatabaseEntityService
+	IntegrationService    *service.IntegrationService
 }
 
 func InitRouter(services *Services) http.Handler {
@@ -53,7 +54,14 @@ func InitRouter(services *Services) http.Handler {
 	webhookController := controller.NewWebhookController(services.WebhookService)
 	webhookController.RegisterRoutes(r)
 
-	// Protected routes
+	// API token protected routes (for CLI and integrations)
+	r.Route("/api/v1/projects/{projectId}/databases/{databaseId}/integrations", func(r chi.Router) {
+		r.Use(middleware.AccessTokenMiddleware(services.AccessTokenService))
+		integrationController := controller.NewIntegrationController(services.IntegrationService)
+		integrationController.RegisterRoutes(r)
+	})
+
+	// JWT Protected (frontend) routes
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Use(middleware.AuthMiddleware)
 		projectController := controller.NewProjectController(services.ProjectService)
@@ -65,7 +73,7 @@ func InitRouter(services *Services) http.Handler {
 		r.Route("/projects/{projectId}", func(r chi.Router) {
 			r.Use(middleware.ProjectIDMiddleware)
 			databaseController := controller.NewDatabaseController(services.DatabaseService)
-			projectSecretsController := controller.NewProjectSecretsController(services.ProjectSecretsService)
+			projectSecretsController := controller.NewProjectSecretsController(services.AccessTokenService)
 			ruleController := controller.NewRuleController(services.RuleService)
 			databaseEntityController := controller.NewDatabaseEntityController(services.DatabaseEntityService)
 			databaseController.RegisterRoutes(r)

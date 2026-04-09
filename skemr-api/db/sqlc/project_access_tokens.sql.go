@@ -69,6 +69,26 @@ func (q *Queries) DeleteProjectAccessToken(ctx context.Context, arg DeleteProjec
 	return err
 }
 
+const getHashByPrefixAndProjectID = `-- name: GetHashByPrefixAndProjectID :one
+SELECT hash
+FROM project_access_tokens
+WHERE prefix = $1
+  AND project_id = $2
+LIMIT 1
+`
+
+type GetHashByPrefixAndProjectIDParams struct {
+	Prefix    string    `json:"prefix"`
+	ProjectID uuid.UUID `json:"project_id"`
+}
+
+func (q *Queries) GetHashByPrefixAndProjectID(ctx context.Context, arg GetHashByPrefixAndProjectIDParams) (string, error) {
+	row := q.db.QueryRow(ctx, getHashByPrefixAndProjectID, arg.Prefix, arg.ProjectID)
+	var hash string
+	err := row.Scan(&hash)
+	return hash, err
+}
+
 const getProjectAccessTokens = `-- name: GetProjectAccessTokens :many
 SELECT id, project_id, name, prefix, hash, last_used, expires_at, created_at, updated_at
 FROM project_access_tokens

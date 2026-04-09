@@ -2,12 +2,15 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/walmaa/skemr-api/db/sqlc"
 	"github.com/walmaa/skemr-api/internal/dto"
@@ -17,15 +20,18 @@ import (
 	"github.com/walmaa/skemr-common/models"
 )
 
-type ProjectSecretsService struct {
+type AccessTokenService struct {
 	db sqlc.Querier
 }
 
-func NewProjectSecretsService(q sqlc.Querier) *ProjectSecretsService {
-	return &ProjectSecretsService{db: q}
+const prefixLength = 9
+const secretLength = 32
+
+func NewAccessTokenService(q sqlc.Querier) *AccessTokenService {
+	return &AccessTokenService{db: q}
 }
 
-func (s *ProjectSecretsService) CreateToken(c context.Context, projectId uuid.UUID, dto dto.SecretCreationDto) (string, error) {
+func (s *AccessTokenService) CreateToken(c context.Context, projectId uuid.UUID, dto dto.SecretCreationDto) (string, error) {
 	slog.Info("Creating a secret", "projectId", projectId, "name", dto.Name)
 
 	project, err := CheckProjectExists(c, s.db, projectId)
@@ -35,7 +41,7 @@ func (s *ProjectSecretsService) CreateToken(c context.Context, projectId uuid.UU
 		return "", err
 	}
 
-	tokenToShow, prefix, secret, err := tokens.GenerateToken(9, 32)
+	tokenToShow, prefix, secret, err := tokens.GenerateToken(prefixLength, secretLength)
 
 	if err != nil {
 		slog.Error("Unable to generate token", err)
@@ -90,7 +96,7 @@ func (s *ProjectSecretsService) CreateToken(c context.Context, projectId uuid.UU
 	return tokenToShow, nil
 }
 
-func (s *ProjectSecretsService) GetTokens(c context.Context, projectId uuid.UUID) ([]models.ProjectAccessToken, error) {
+func (s *AccessTokenService) GetTokens(c context.Context, projectId uuid.UUID) ([]models.ProjectAccessToken, error) {
 	slog.Info("Getting tokens", "projectId", projectId)
 	project, err := CheckProjectExists(c, s.db, projectId)
 
@@ -109,7 +115,7 @@ func (s *ProjectSecretsService) GetTokens(c context.Context, projectId uuid.UUID
 
 }
 
-func (s *ProjectSecretsService) DeleteToken(c context.Context, projectId uuid.UUID, secretId uuid.UUID) error {
+func (s *AccessTokenService) DeleteToken(c context.Context, projectId uuid.UUID, secretId uuid.UUID) error {
 	slog.Info("Deleting token", "projectId", projectId, "secretId", secretId)
 
 	project, err := CheckProjectExists(c, s.db, projectId)
@@ -130,4 +136,41 @@ func (s *ProjectSecretsService) DeleteToken(c context.Context, projectId uuid.UU
 
 	return nil
 
+}
+
+func (s *AccessTokenService) ValidateToken(c context.Context, projectId uuid.UUID, token string) (bool, error) {
+	slog.Info("Validating token")
+
+	// Extract the prefix to find the token in the database
+
+	if len(token) < prefixLength {
+		slog.Error("Token is too short to be valid")
+		return false, nil
+	}
+
+	prefix := strings.Split(token, ".")[0]
+
+	hash, err := s.db.GetHashByPrefixAndProjectID(c, sqlc.GetHashByPrefixAndProjectIDParams{
+		Prefix:    prefix,
+		ProjectID: projectId,
+	})
+
+	if errors.Is(err, pgx.ErrNoRows) {
+		slog.Info("No token found with the given prefix")
+		return false, nil
+	}
+
+	if err != nil {
+		slog.Error("Unable to get token hash from database", err)
+		return false, err
+	}
+
+	ok, err := tokens.VerifySecret(token, hash)
+
+	if err != nil {
+		slog.Error("Error verifying token", err)
+		return false, err
+	}
+
+	return ok, nil
 }
