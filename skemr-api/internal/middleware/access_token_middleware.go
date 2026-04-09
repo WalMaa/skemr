@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/walmaa/skemr-api/internal/errormsg"
 	"github.com/walmaa/skemr-api/internal/service"
+	"github.com/walmaa/skemr-common/models"
 )
 
 func AccessTokenMiddleware(service *service.AccessTokenService) func(next http.Handler) http.Handler {
@@ -17,7 +18,7 @@ func AccessTokenMiddleware(service *service.AccessTokenService) func(next http.H
 			projectIdParam := chi.URLParam(r, "projectId")
 
 			if projectIdParam == "" {
-				errormsg.WriteErrorResponse(w, r, &errormsg.ErrorResponse{
+				errormsg.WriteErrorResponse(w, r, &models.ErrorResponse{
 					Message: "projectIdParam is required",
 					Errors:  nil,
 					Status:  http.StatusBadRequest,
@@ -28,7 +29,7 @@ func AccessTokenMiddleware(service *service.AccessTokenService) func(next http.H
 			projectId, err := uuid.Parse(projectIdParam)
 
 			if err != nil {
-				errormsg.WriteErrorResponse(w, r, &errormsg.ErrorResponse{
+				errormsg.WriteErrorResponse(w, r, &models.ErrorResponse{
 					Message: "Invalid projectId format",
 					Errors:  nil,
 					Status:  http.StatusBadRequest,
@@ -38,7 +39,7 @@ func AccessTokenMiddleware(service *service.AccessTokenService) func(next http.H
 
 			tokenHeaderValue := r.Header.Get("Authorization")
 			if tokenHeaderValue == "" {
-				errormsg.WriteErrorResponse(w, r, &errormsg.ErrorResponse{
+				errormsg.WriteErrorResponse(w, r, &models.ErrorResponse{
 					Message: "Authorization header is required",
 					Errors:  nil,
 					Status:  http.StatusBadRequest,
@@ -50,7 +51,7 @@ func AccessTokenMiddleware(service *service.AccessTokenService) func(next http.H
 			ok, err := authenticateToken(c, service, projectId, token)
 
 			if err != nil {
-				errormsg.WriteErrorResponse(w, r, &errormsg.ErrorResponse{
+				errormsg.WriteErrorResponse(w, r, &models.ErrorResponse{
 					Message: "Error validating token",
 					Status:  http.StatusInternalServerError,
 				})
@@ -58,7 +59,7 @@ func AccessTokenMiddleware(service *service.AccessTokenService) func(next http.H
 			}
 
 			if !ok {
-				errormsg.WriteErrorResponse(w, r, &errormsg.ErrorResponse{
+				errormsg.WriteErrorResponse(w, r, &models.ErrorResponse{
 					Message: "Invalid token",
 					Status:  http.StatusUnauthorized,
 				})

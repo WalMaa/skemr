@@ -6,7 +6,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
+	"github.com/walmaa/skemr-api/internal/errormsg"
 	"github.com/walmaa/skemr-api/internal/service"
+	"github.com/walmaa/skemr-common/models"
 )
 
 type IntegrationController struct {
@@ -25,19 +27,34 @@ func (h *IntegrationController) RegisterRoutes(r chi.Router) {
 func (h *IntegrationController) listRulesByDatabase(w http.ResponseWriter, r *http.Request) {
 	databaseId, err := uuid.Parse(chi.URLParam(r, "databaseId"))
 	if err != nil {
-		http.Error(w, "Invalid ID format", http.StatusBadRequest)
+		errormsg.WriteErrorResponse(w, r, &models.ErrorResponse{
+			Message: "Invalid database ID format",
+			Status:  http.StatusBadRequest,
+			Errors:  nil,
+		},
+		)
 		return
 	}
 
 	projectId, err := uuid.Parse(chi.URLParam(r, "projectId"))
 	if err != nil {
-		http.Error(w, "Invalid project ID format", http.StatusBadRequest)
+		errormsg.WriteErrorResponse(w, r, &models.ErrorResponse{
+			Message: "Invalid project ID format",
+			Status:  http.StatusBadRequest,
+			Errors:  nil,
+		},
+		)
 		return
 	}
 
 	rules, err := h.IntegrationService.ListRulesByDatabase(r.Context(), projectId, databaseId)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		errormsg.WriteErrorResponse(w, r, &models.ErrorResponse{
+			Message: "Error fetching rules",
+			Status:  http.StatusInternalServerError,
+			Errors:  nil,
+		},
+		)
 		return
 	}
 	render.JSON(w, r, rules)

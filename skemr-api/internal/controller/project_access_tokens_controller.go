@@ -11,6 +11,7 @@ import (
 	"github.com/walmaa/skemr-api/internal/errormsg"
 	"github.com/walmaa/skemr-api/internal/service"
 	"github.com/walmaa/skemr-api/internal/validation"
+	"github.com/walmaa/skemr-common/models"
 )
 
 type ProjectSecretsController struct {
@@ -63,7 +64,7 @@ func (h *ProjectSecretsController) createToken(w http.ResponseWriter, r *http.Re
 }
 
 func (h *ProjectSecretsController) getSecret(w http.ResponseWriter, r *http.Request) {
-	errormsg.WriteErrorResponse(w, r, &errormsg.ErrorResponse{
+	errormsg.WriteErrorResponse(w, r, &models.ErrorResponse{
 		Message: "Not implemented",
 		Errors:  nil,
 		Status:  http.StatusBadRequest,

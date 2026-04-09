@@ -6,21 +6,12 @@ import (
 	"net/http"
 
 	"github.com/go-chi/render"
+	"github.com/walmaa/skemr-common/models"
 )
-
-type ErrorResponse struct {
-	Message string            `json:"message"`
-	Errors  map[string]string `json:"errors"`
-	Status  int               `json:"status"`
-}
-
-func (e *ErrorResponse) Error() string {
-	return e.Message
-}
 
 // WriteErrorResponse is a helper function to write an error response in a consistent format.
 func WriteErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
-	var errorResponse *ErrorResponse
+	var errorResponse *models.ErrorResponse
 
 	if errors.As(err, &errorResponse) {
 		render.Status(r, errorResponse.Status)
@@ -30,7 +21,7 @@ func WriteErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
 	slog.Warn("Unhandled error type, returning generic error response", "error", err)
 
 	render.Status(r, http.StatusInternalServerError)
-	render.JSON(w, r, ErrorResponse{
+	render.JSON(w, r, models.ErrorResponse{
 		Message: "Internal Server Error",
 		Status:  http.StatusInternalServerError,
 	},

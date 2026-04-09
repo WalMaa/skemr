@@ -68,7 +68,7 @@ func (s *AccessTokenService) CreateToken(c context.Context, projectId uuid.UUID,
 		if expiry.Before(time.Now()) {
 			slog.Error("Expiry time is in the past")
 			err = fmt.Errorf("expiry time is in the past")
-			return "", &errormsg.ErrorResponse{
+			return "", &models.ErrorResponse{
 				Message: errormsg.ErrExpiryTimeInPast,
 				Status:  http.StatusBadRequest,
 			}

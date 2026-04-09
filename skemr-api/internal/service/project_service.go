@@ -31,7 +31,7 @@ func CheckProjectExists(c context.Context, db sqlc.Querier, projectID uuid.UUID)
 	project, err := db.GetProject(c, projectID)
 	if err != nil {
 		slog.Error("Error getting project", "project_id", projectID, "err", err)
-		return models.Project{}, &errormsg.ErrorResponse{
+		return models.Project{}, &models.ErrorResponse{
 			Message: errormsg.ErrProjectNotFound,
 			Errors:  nil,
 			Status:  404,

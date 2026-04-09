@@ -11,6 +11,7 @@ import (
 	"github.com/walmaa/skemr-api/internal/errormsg"
 	"github.com/walmaa/skemr-api/internal/service"
 	"github.com/walmaa/skemr-api/internal/validation"
+	"github.com/walmaa/skemr-common/models"
 )
 
 type ProjectController struct {
@@ -61,7 +62,7 @@ func (h *ProjectController) CreateProject(w http.ResponseWriter, r *http.Request
 func (h *ProjectController) GetProject(w http.ResponseWriter, r *http.Request) {
 	projectID, err := uuid.Parse(chi.URLParam(r, "projectId"))
 	if err != nil {
-		errormsg.WriteErrorResponse(w, r, &errormsg.ErrorResponse{
+		errormsg.WriteErrorResponse(w, r, &models.ErrorResponse{
 			Message: errormsg.ErrInvalidIdFormat,
 			Status:  http.StatusBadRequest,
 		})
@@ -80,7 +81,7 @@ func (h *ProjectController) GetProject(w http.ResponseWriter, r *http.Request) {
 func (h *ProjectController) DeleteProject(w http.ResponseWriter, r *http.Request) {
 	projectID, err := uuid.Parse(chi.URLParam(r, "projectId"))
 	if err != nil {
-		errormsg.WriteErrorResponse(w, r, &errormsg.ErrorResponse{
+		errormsg.WriteErrorResponse(w, r, &models.ErrorResponse{
 			Message: errormsg.ErrInvalidIdFormat,
 			Status:  http.StatusBadRequest,
 		})

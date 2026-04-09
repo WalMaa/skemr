@@ -82,7 +82,7 @@ func parseStatement(stmt *pgquery.RawStmt) (StatementAction, error) {
 }
 
 /*
-ParseSql parses a migration files and returns a structured representation of the SQL.
+ParseSql parses a migration file and returns a structured representation of the SQL.
 */
 func ParseSql(sql string) ([]StatementAction, error) {
 	tree, err := pgquery.Parse(sql)
@@ -94,6 +94,7 @@ func ParseSql(sql string) ([]StatementAction, error) {
 	stmts := tree.Stmts
 
 	for _, stmt := range stmts {
+		stmt.String()
 		statementAction, err := parseStatement(stmt)
 		if err != nil {
 			slog.Error("Error parsing node", "error", err)

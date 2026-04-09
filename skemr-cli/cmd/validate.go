@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"slices"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -48,13 +49,18 @@ var validateCmd = &cobra.Command{
 
 		// Get rules
 		rules, err := controlplaneclient.GetRules(c, projectId, databaseId, token)
+
+		if err != nil {
+			slog.Error("Error fetching rules from control plane", "err", err)
+			os.Exit(1)
+		}
 		slog.Debug("Fetched rules from control plane", "ruleCount", len(rules))
+
 		// Fetch all database entities. This is used to match columns to right parents (tables)
 		entities, err := controlplaneclient.GetDatabaseEntities(c, projectId, databaseId, token)
 		slog.Debug("Fetched database entities from control plane", "entityCount", len(entities))
 
 		if err != nil {
-			slog.Error("Error while fetching rules from control plane", "err", err)
 			os.Exit(1)
 		}
 
@@ -97,6 +103,7 @@ var validateCmd = &cobra.Command{
 func collectFilePathsFromDir(filePaths *[]string, dirPath string) {
 	slog.Debug("Gathering filepaths in directory", slog.String("directory", dirPath))
 	cwd, err := os.Getwd()
+	fileExtensions := []string{".sql"}
 
 	if err != nil {
 		panic(err)
@@ -112,6 +119,11 @@ func collectFilePathsFromDir(filePaths *[]string, dirPath string) {
 	for _, entry := range dat {
 		// Recursively add files from subdirectories
 		if !entry.IsDir() {
+			ext := filepath.Ext(entry.Name())
+			if !slices.Contains(fileExtensions, ext) {
+				slog.Debug("Skipping file with unsupported extension", slog.String("file", entry.Name()), slog.String("extension", ext))
+				continue
+			}
 			slog.Debug("Adding file", slog.String("file", entry.Name()))
 			*filePaths = append(*filePaths, filepath.Join(path, entry.Name()))
 		} else {

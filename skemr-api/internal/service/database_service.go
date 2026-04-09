@@ -36,7 +36,7 @@ func CheckDatabaseExists(c context.Context, db sqlc.Querier, projectId uuid.UUID
 	})
 	if err != nil {
 		slog.Error("Error getting database", "database_id", dbId, "err", err)
-		return models.Database{}, &errormsg.ErrorResponse{
+		return models.Database{}, &models.ErrorResponse{
 			Message: errormsg.ErrDatabaseNotFound,
 			Errors:  nil,
 			Status:  http.StatusNotFound,
@@ -68,7 +68,7 @@ func (r *DatabaseService) CreateDatabase(c context.Context, projectId uuid.UUID,
 
 	if exists != (sqlc.Database{}) {
 		slog.Warn("Database already exists", "name", dto.DisplayName, "project_id", projectId)
-		return models.Database{}, &errormsg.ErrorResponse{
+		return models.Database{}, &models.ErrorResponse{
 			Message: errormsg.ErrDatabaseAlreadyExists,
 			Status:  http.StatusConflict,
 		}
