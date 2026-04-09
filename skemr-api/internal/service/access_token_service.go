@@ -149,6 +149,17 @@ func (s *AccessTokenService) ValidateToken(c context.Context, projectId uuid.UUI
 	}
 
 	prefix := strings.Split(token, ".")[0]
+	secretPart := strings.Split(token, ".")[1]
+
+	if prefix == "" {
+		slog.Error("Token does not contain a prefix")
+		return false, nil
+	}
+
+	if secretPart == "" {
+		slog.Error("Token does not contain a secret part")
+		return false, nil
+	}
 
 	hash, err := s.db.GetHashByPrefixAndProjectID(c, sqlc.GetHashByPrefixAndProjectIDParams{
 		Prefix:    prefix,
@@ -165,7 +176,7 @@ func (s *AccessTokenService) ValidateToken(c context.Context, projectId uuid.UUI
 		return false, err
 	}
 
-	ok, err := tokens.VerifySecret(token, hash)
+	ok, err := tokens.VerifySecret(secretPart, hash)
 
 	if err != nil {
 		slog.Error("Error verifying token", err)
