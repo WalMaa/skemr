@@ -2,6 +2,7 @@ package parser
 
 import (
 	"log/slog"
+	"strings"
 
 	pgquery "github.com/pganalyze/pg_query_go/v6"
 )
@@ -10,6 +11,7 @@ type StatementAction struct {
 	Target   string    // e.g., column name, table name, database name
 	Action   SqlAction // The type of action performed (e.g., CREATE, DROP, ALTER)
 	Relation string    // e.g., table name for column actions
+	Original string    // The original SQL statement for reference
 }
 
 type SqlAction string
@@ -35,49 +37,58 @@ const (
 	SqlActionUndefined SqlAction = "UNDEFINED"
 )
 
-func parseStatement(stmt *pgquery.RawStmt) (StatementAction, error) {
+func parseStatement(stmt *pgquery.RawStmt, original string) (StatementAction, error) {
 	slog.Debug("Parsing", "statement", stmt.String())
 	node := stmt.GetStmt()
+	var statementAction StatementAction
+	var err error
 	// Check for a DROP DATABASE statement
 	if node.GetDropdbStmt() != nil {
-		return parseDropDatabase(node)
+		statementAction, err = parseDropDatabase(node)
 	}
 
 	if dropTableStmt := node.GetDropStmt(); dropTableStmt != nil {
-		return parseDrop(dropTableStmt)
+		statementAction, err = parseDrop(dropTableStmt)
 	}
 
 	if alterTablestmt := node.GetAlterTableStmt(); alterTablestmt != nil {
-		return parseAlterTable(alterTablestmt)
+		statementAction, err = parseAlterTable(alterTablestmt)
 	}
 
 	//Check for Rename column or table
 	if renameStmt := node.GetRenameStmt(); renameStmt != nil {
-		return parseRenameStmt(renameStmt)
+		statementAction, err = parseRenameStmt(renameStmt)
 	}
 
 	if insertStmt := node.GetInsertStmt(); insertStmt != nil {
-		return parseInsertStmt(insertStmt)
+		statementAction, err = parseInsertStmt(insertStmt)
 	}
 
 	if createStmt := node.GetCreateStmt(); createStmt != nil {
-		// Handle CREATE TABLE or other create statements if needed
-		// For now, we will just return an undefined action
-		return StatementAction{
-			Action: SqlActionCreateTable,
-		}, nil
+		statementAction, err = parseCreateStmt(createStmt)
 	}
 
 	if createDbStmt := node.GetCreatedbStmt(); createDbStmt != nil {
-		return parseCreateDatabaseStmt(createDbStmt)
+		statementAction, err = parseCreateDatabaseStmt(createDbStmt)
+	}
+
+	if err != nil {
+		slog.Error("Error parsing statement", "error", err, "statement", stmt.String())
+		return StatementAction{}, err
+	}
+
+	if (statementAction != StatementAction{}) {
+		statementAction.Original = original
+		return statementAction, nil
 	}
 
 	// If the statement is not recognized, return an undefined action
-	slog.Warn("Unsupported statement type", "statement", stmt.String())
+	slog.Warn("Unsupported statement type", "statement", original)
 	return StatementAction{
 		Target:   "",
 		Action:   SqlActionUndefined,
 		Relation: "",
+		Original: original,
 	}, nil
 }
 
@@ -86,16 +97,16 @@ ParseSql parses a migration file and returns a structured representation of the 
 */
 func ParseSql(sql string) ([]StatementAction, error) {
 	tree, err := pgquery.Parse(sql)
-	result := make([]StatementAction, 0)
 	if err != nil {
 		slog.Error("Failed to parse SQL", "error", err, "sql", sql)
-
+		return nil, err
 	}
+	result := make([]StatementAction, 0)
 	stmts := tree.Stmts
 
 	for _, stmt := range stmts {
-		stmt.String()
-		statementAction, err := parseStatement(stmt)
+		original := getOriginalStatement(sql, stmt)
+		statementAction, err := parseStatement(stmt, original)
 		if err != nil {
 			slog.Error("Error parsing node", "error", err)
 		}
@@ -106,10 +117,39 @@ func ParseSql(sql string) ([]StatementAction, error) {
 
 }
 
+// getOriginalStatement extracts the original SQL statement from the full SQL string using the location and length provided by the parser.
+func getOriginalStatement(sql string, stmt *pgquery.RawStmt) string {
+	start := (int)(stmt.GetStmtLocation())
+	var end int
+
+	// if statement length is 0, it means it is a single SQL statemnt without a semicolon at the end.
+	// In this case, we can return the full SQL string as the original statement.
+	if stmt.GetStmtLen() == 0 {
+		end = len(sql)
+	} else {
+		end = start + (int)(stmt.GetStmtLen())
+	}
+
+	// Remove extra whitespace and newlines from the original statement for better readability in logs and results
+	return strings.Join(strings.Fields(sql[start:end]), " ")
+}
+
 func parseInsertStmt(insertStmt *pgquery.InsertStmt) (StatementAction, error) {
 	relName := insertStmt.Relation.Relname
 	target := ""
 	action := SqlActionInsertRow
+
+	return StatementAction{
+		Target:   target,
+		Action:   action,
+		Relation: relName,
+	}, nil
+}
+
+func parseCreateStmt(createStmt *pgquery.CreateStmt) (StatementAction, error) {
+	relName := createStmt.Relation.Relname
+	target := relName
+	action := SqlActionCreateTable
 
 	return StatementAction{
 		Target:   target,

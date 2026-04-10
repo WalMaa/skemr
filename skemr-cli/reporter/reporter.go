@@ -54,7 +54,10 @@ func severityLabel(ruleType models.RuleType, colorize bool) string {
 }
 
 // PrintSummary creates a summary of the validation results, counting how many statements triggered each rule type and how many errors occurred, and logs it.
-func PrintSummary(statementResults []rulengn.StatementResult) {
+func PrintSummary(statementResults []rulengn.StatementResult, rules []models.Rule) {
+
+	fmt.Fprintf(os.Stdout, "Number of rules checked: %d\n", len(rules))
+
 	fmt.Fprintf(os.Stdout, "\nValidation Summary:\n")
 
 	summary := ValidationSummary{}

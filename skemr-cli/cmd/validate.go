@@ -80,7 +80,7 @@ var validateCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		reporter.PrintSummary(statementResults)
+		reporter.PrintSummary(statementResults, rules)
 
 		// Check if any results are of type error and exit with non-zero code if so
 		hasErrors := false
