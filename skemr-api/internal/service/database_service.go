@@ -146,7 +146,7 @@ func (r *DatabaseService) ListDatabasesByProject(c context.Context, projectId uu
 	databases, err := r.db.ListDatabasesByProject(c, project.ID)
 
 	if err != nil {
-		slog.Error("Unable to get databases")
+		slog.Error("Unable to get databases", "project_id", projectId, "err", err)
 		return nil, err
 	}
 

@@ -3,6 +3,7 @@ package reporter
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"charm.land/lipgloss/v2"
 	"github.com/walmaa/skemr-cli/rulengn"
@@ -55,34 +56,65 @@ func severityLabel(ruleType models.RuleType, colorize bool) string {
 
 // PrintSummary creates a summary of the validation results, counting how many statements triggered each rule type and how many errors occurred, and logs it.
 func PrintSummary(statementResults []rulengn.StatementResult, rules []models.Rule) {
-
-	fmt.Fprintf(os.Stdout, "Number of rules checked: %d\n", len(rules))
-
-	fmt.Fprintf(os.Stdout, "\nValidation Summary:\n")
+	const dividerWidth = 72
+	fmt.Fprintf(os.Stdout, "%s\n", strings.Repeat("-", dividerWidth))
+	fmt.Fprintln(os.Stdout, "Validation Summary")
+	fmt.Fprintf(os.Stdout, "%s\n", strings.Repeat("-", dividerWidth))
 
 	summary := ValidationSummary{}
+	warnings := make([]rulengn.StatementResult, 0)
+	advisories := make([]rulengn.StatementResult, 0)
+	errors := make([]rulengn.StatementResult, 0)
+	deprecated := make([]rulengn.StatementResult, 0)
 
 	for _, res := range statementResults {
-		label := severityLabel(res.Type, true)
 		switch res.Type {
 		case models.RuleTypeDeprecated:
 			summary.DeprecatedCount++
-			fmt.Fprintf(os.Stdout, "%s: %s (File: %s)\n", label, res.Rule.Name, res.File)
+			deprecated = append(deprecated, res)
 		case models.RuleTypeWarn:
 			summary.WarningCount++
-			fmt.Fprintf(os.Stdout, "%s: %s (File: %s)\n", label, res.Rule.Name, res.File)
+			warnings = append(warnings, res)
 		case models.RuleTypeLocked:
 			summary.ErrorCount++
-			fmt.Fprintf(os.Stdout, "%s: rule \"%s\" violated (File: %s)\n", label, res.Rule.Name, res.File)
+			errors = append(errors, res)
 		case models.RuleTypeAdvisory:
 			summary.AdvisoryCount++
-			fmt.Fprintf(os.Stdout, "%s: %s (File: %s)\n", label, res.Rule.Name, res.File)
+			advisories = append(advisories, res)
 		}
 	}
 
-	fmt.Fprintf(os.Stdout, "Deprecated: %d\n", summary.DeprecatedCount)
-	fmt.Fprintf(os.Stdout, "Warnings: %d\n", summary.WarningCount)
-	fmt.Fprintf(os.Stdout, "Advisories: %d\n", summary.AdvisoryCount)
-	fmt.Fprintf(os.Stdout, "Errors: %d\n", summary.ErrorCount)
+	fmt.Fprintf(os.Stdout, "%-16s %d\n", "Rules checked: ", len(rules))
+	fmt.Fprintf(os.Stdout, "%-16s %d\n\n", "Findings: ", len(statementResults))
+
+	printSection("Warnings", warnings, false)
+	fmt.Fprintln(os.Stdout)
+	printSection("Advisories", advisories, false)
+	fmt.Fprintln(os.Stdout)
+	printSection("Errors", errors, true)
+
+	if len(deprecated) > 0 {
+		fmt.Fprintln(os.Stdout)
+		printSection("Deprecated", deprecated, false)
+	}
+
+	fmt.Fprintln(os.Stdout)
+	fmt.Fprintln(os.Stdout, "Totals")
+	fmt.Fprintf(os.Stdout, "  %-14s %d\n", "Deprecated:", summary.DeprecatedCount)
+	fmt.Fprintf(os.Stdout, "  %-14s %d\n", "Warnings:", summary.WarningCount)
+	fmt.Fprintf(os.Stdout, "  %-14s %d\n", "Advisories:", summary.AdvisoryCount)
+	fmt.Fprintf(os.Stdout, "  %-14s %d\n", "Errors:", summary.ErrorCount)
+
+}
+
+func printSection(title string, results []rulengn.StatementResult, isError bool) {
+	fmt.Fprintf(os.Stdout, "%-15s (%d)\n", title, len(results))
+	for _, res := range results {
+		message := res.Rule.Name
+		if isError {
+			message = fmt.Sprintf("rule \"%s\" violated", res.Rule.Name)
+		}
+		fmt.Fprintf(os.Stdout, "  -  %-30s File: %s\n", message, res.File)
+	}
 
 }
