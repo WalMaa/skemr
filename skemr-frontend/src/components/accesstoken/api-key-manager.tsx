@@ -34,8 +34,8 @@ import {
   useGetApiKeys,
 } from "@/api/api-keys";
 import { toast } from "sonner";
-import CopyButton from "./ui/copy-button";
 import { ApiKeyCreationDialog } from "./api-key-creation-dialog";
+import CopyButton from "@/components/ui/copy-button.tsx";
 
 interface ApiKeyManagerProps {
   projectId: string;

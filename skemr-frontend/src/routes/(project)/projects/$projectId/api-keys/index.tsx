@@ -1,5 +1,5 @@
-import { ApiKeyManager } from "@/components/api-key-manager";
 import { createFileRoute } from "@tanstack/react-router";
+import { ApiKeyManager } from "@/components/accesstoken/api-key-manager.tsx";
 
 export const Route = createFileRoute(
   "/(project)/projects/$projectId/api-keys/",

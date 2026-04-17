@@ -125,7 +125,7 @@ func (r *DatabaseService) GetDatabase(c context.Context, databaseId uuid.UUID) (
 	slog.Info("Getting database", "databaseId", databaseId)
 	database, err := r.db.GetDatabase(c, databaseId)
 	if err != nil {
-		slog.Error("Unable to get database")
+		slog.Error("Unable to get database", "databaseId", databaseId, "err", err)
 		return models.Database{}, err
 	}
 	return mapper.ToDomainDatabase(database), nil

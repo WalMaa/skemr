@@ -53,13 +53,13 @@ import type { Rule } from "@/types/types";
 import { DatabaseSchemaFlow } from "@/components/schema-visualizer/database-schema-visualizer";
 import type { DataBaseEntityWithRules } from "@/components/schema-visualizer/database-schema-visualizer";
 import DataBaseEntitySheet from "@/components/schema-visualizer/entity-sheet";
-import { DatabaseUpdateDialog } from "@/components/database-update-dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { formatRelative } from "date-fns";
 import { useMemo, useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { RuleCreationDialog } from "@/components/rule-creation-dialog";
+import { RuleCreationDialog } from "@/components/rules/rule-creation-dialog.tsx";
+import { DatabaseUpdateDialog } from "@/components/database/database-update-dialog.tsx";
 
 /**
  *

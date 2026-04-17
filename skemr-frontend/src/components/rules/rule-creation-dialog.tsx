@@ -31,8 +31,8 @@ import {
 import { useCreateRule } from "@/api/rule";
 import { useGetDatabaseEntities } from "@/api/database-entity";
 import { toast } from "sonner";
-import { EntityTreeSelector } from "@/components/entity-tree-selector";
 import { InfoIcon } from "@phosphor-icons/react/dist/ssr";
+import { EntityTreeSelector } from "@/components/rules/entity-tree-selector.tsx";
 
 const ruleSchema = z.object({
   name: z.string().min(1, "Rule name is required"),

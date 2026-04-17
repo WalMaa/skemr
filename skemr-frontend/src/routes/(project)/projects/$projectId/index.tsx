@@ -27,9 +27,9 @@ import {
 } from "@/components/ui/empty";
 import { Badge } from "@/components/ui/badge";
 import { DatabaseIcon, ShieldCheckIcon } from "@phosphor-icons/react";
-import { DatabaseCreationDialog } from "@/components/database-creation-dialog";
 import { format } from "date-fns";
 import { Spinner } from "@/components/ui/spinner";
+import { DatabaseCreationDialog } from "@/components/database/database-creation-dialog.tsx";
 
 export const Route = createFileRoute("/(project)/projects/$projectId/")({
   component: RouteComponent,

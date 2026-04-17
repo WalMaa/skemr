@@ -24,9 +24,9 @@ import {
   InputGroupButton,
   InputGroupInput,
 } from "@/components/ui/input-group";
-import { ApiKeyCreationDialog } from "@/components/api-key-creation-dialog";
 import { useCreateApiKey } from "@/api/api-keys";
 import { PlusIcon } from "@phosphor-icons/react";
+import { ApiKeyCreationDialog } from "@/components/accesstoken/api-key-creation-dialog.tsx";
 
 SyntaxHighlighter.registerLanguage("yaml", yaml);
 

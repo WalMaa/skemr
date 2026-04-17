@@ -2,9 +2,9 @@ import { useGetProjects } from "@/api/project";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription, EmptyContent } from "@/components/ui/empty";
-import { ProjectCreationDialog } from "@/components/project-creation-dialog";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { FolderOpen } from "@phosphor-icons/react";
+import { ProjectCreationDialog } from "@/components/project/project-creation-dialog.tsx";
 
 export const Route = createFileRoute("/(home)/")({
   component: Index,

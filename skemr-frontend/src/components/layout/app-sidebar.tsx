@@ -25,9 +25,9 @@ import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "./ui/collapsible";
-import { DatabaseCreationDialog } from "./database-creation-dialog";
-import { useSidebar } from "./ui/sidebar-context";
+} from "@/components/ui/collapsible";
+import { DatabaseCreationDialog } from "@/components/database/database-creation-dialog.tsx";
+import { useSidebar } from "@/components/ui/sidebar-context.tsx";
 
 export type Submenu = {
   href: string;
@@ -54,29 +54,29 @@ const useMenuItems = (projectId: string, databases?: Database[]): Group[] => {
     {
       menus: [
         {
-          href: `/projects/${projectId}/databases`,
+          href: `/projects/${ projectId }/databases`,
           label: "Databases",
           icon: DatabaseIcon,
           submenus: databases?.map((db) => ({
-            href: `/projects/${projectId}/databases/${db.id}`,
+            href: `/projects/${ projectId }/databases/${ db.id }`,
             label: db.displayName,
             icon: DatabaseIcon,
           })) as Submenu[],
         },
         {
-          href: `/projects/${projectId}/ci-cd`,
+          href: `/projects/${ projectId }/ci-cd`,
           label: "CI/CD Integration",
           icon: GearIcon,
           submenus: [],
         },
         {
-          href: `/projects/${projectId}/api-keys`,
+          href: `/projects/${ projectId }/api-keys`,
           label: "API Keys",
           icon: ShieldCheckIcon,
           submenus: [],
         },
         {
-          href: `/projects/${projectId}/settings`,
+          href: `/projects/${ projectId }/settings`,
           label: "Settings",
           icon: GearIcon,
           submenus: [],
@@ -87,13 +87,13 @@ const useMenuItems = (projectId: string, databases?: Database[]): Group[] => {
 };
 
 export function AppSidebar({
-  projectId,
-  databases,
-}: {
+                             projectId,
+                             databases,
+                           }: {
   projectId: string;
   databases?: Database[];
 }) {
-  const { setOpen } = useSidebar();
+  const {setOpen} = useSidebar();
   const groups = useMenuItems(projectId, databases);
   return (
     <Sidebar variant="inset" collapsible="icon">
@@ -103,30 +103,30 @@ export function AppSidebar({
             <Link to="/">Skemr</Link>
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            {groups.map(({ groupLabel, menus }, index) => (
-              <SidebarGroup key={groupLabel || index}>
-                {groupLabel && (
-                  <SidebarGroupLabel>{groupLabel}</SidebarGroupLabel>
-                )}
+            { groups.map(({groupLabel, menus}, index) => (
+              <SidebarGroup key={ groupLabel || index }>
+                { groupLabel && (
+                  <SidebarGroupLabel>{ groupLabel }</SidebarGroupLabel>
+                ) }
                 <SidebarGroupContent>
                   <SidebarMenu>
-                    {menus.map(
-                      ({ href, label, icon: Icon, active, submenus }) =>
+                    { menus.map(
+                      ({href, label, icon: Icon, active, submenus}) =>
                         submenus?.length === 0 ? (
-                          <SidebarMenuItem key={href}>
-                            {label === "Databases" ? (
+                          <SidebarMenuItem key={ href }>
+                            { label === "Databases" ? (
                               <Collapsible>
                                 <CollapsibleTrigger
-                                  onClick={() => setOpen(true)}
+                                  onClick={ () => setOpen(true) }
                                   render={
                                     <SidebarMenuButton
-                                      isActive={active}
-                                      tooltip={label}
+                                      isActive={ active }
+                                      tooltip={ label }
                                     >
-                                      {Icon && <Icon size={18} />}
-                                      <span>{label}</span>
+                                      { Icon && <Icon size={ 18 }/> }
+                                      <span>{ label }</span>
                                       <CaretDownIcon
-                                        className={`ml-auto transition-transform group-data-open/collapsible:rotate-180`}
+                                        className={ `ml-auto transition-transform group-data-open/collapsible:rotate-180` }
                                       />
                                     </SidebarMenuButton>
                                   }
@@ -134,10 +134,10 @@ export function AppSidebar({
                                 <CollapsibleContent>
                                   <SidebarMenuSub>
                                     <DatabaseCreationDialog
-                                      projectId={projectId}
+                                      projectId={ projectId }
                                       trigger={
                                         <SidebarMenuSubButton>
-                                          <PlusSquareIcon size={16} /> Add
+                                          <PlusSquareIcon size={ 16 }/> Add
                                           Database
                                         </SidebarMenuSubButton>
                                       }
@@ -147,31 +147,31 @@ export function AppSidebar({
                               </Collapsible>
                             ) : (
                               <SidebarMenuButton
-                                tooltip={label}
+                                tooltip={ label }
                                 render={
-                                  <Link to={href}>
-                                    {Icon && <Icon size={18} />}
-                                    <span>{label}</span>
+                                  <Link to={ href }>
+                                    { Icon && <Icon size={ 18 }/> }
+                                    <span>{ label }</span>
                                   </Link>
                                 }
-                                isActive={active}
+                                isActive={ active }
                               />
-                            )}
+                            ) }
                           </SidebarMenuItem>
                         ) : (
-                          <SidebarMenuItem key={`group-${label}`}>
+                          <SidebarMenuItem key={ `group-${ label }` }>
                             <Collapsible className="group/collapsible">
                               <CollapsibleTrigger
-                                onClick={() => setOpen(true)}
+                                onClick={ () => setOpen(true) }
                                 render={
                                   <SidebarMenuButton
-                                    isActive={active}
-                                    tooltip={label}
+                                    isActive={ active }
+                                    tooltip={ label }
                                   >
-                                    {Icon && <Icon size={18} />}
-                                    <span>{label}</span>
+                                    { Icon && <Icon size={ 18 }/> }
+                                    <span>{ label }</span>
                                     <CaretDownIcon
-                                      className={`ml-auto transition-transform group-data-open/collapsible:rotate-180`}
+                                      className={ `ml-auto transition-transform group-data-open/collapsible:rotate-180` }
                                     />
                                   </SidebarMenuButton>
                                 }
@@ -179,50 +179,50 @@ export function AppSidebar({
 
                               <CollapsibleContent>
                                 <SidebarMenuSub>
-                                  {submenus?.map(
+                                  { submenus?.map(
                                     ({
-                                      href,
-                                      label,
-                                      icon: SubIcon,
-                                      active,
-                                    }) => (
-                                      <SidebarMenuSubItem key={href}>
+                                       href,
+                                       label,
+                                       icon: SubIcon,
+                                       active,
+                                     }) => (
+                                      <SidebarMenuSubItem key={ href }>
                                         <SidebarMenuSubButton
                                           render={
-                                            <Link to={href}>
-                                              {SubIcon && <SubIcon size={18} />}
-                                              <span>{label}</span>
+                                            <Link to={ href }>
+                                              { SubIcon && <SubIcon size={ 18 }/> }
+                                              <span>{ label }</span>
                                             </Link>
                                           }
-                                          isActive={active}
+                                          isActive={ active }
                                         />
                                       </SidebarMenuSubItem>
                                     ),
-                                  )}
+                                  ) }
                                 </SidebarMenuSub>
 
-                                {label === "Databases" && (
+                                { label === "Databases" && (
                                   <SidebarMenuSub>
                                     <DatabaseCreationDialog
-                                      projectId={projectId}
+                                      projectId={ projectId }
                                       trigger={
                                         <SidebarMenuSubButton>
-                                          <PlusSquareIcon size={16} /> Add
+                                          <PlusSquareIcon size={ 16 }/> Add
                                           Database
                                         </SidebarMenuSubButton>
                                       }
                                     />
                                   </SidebarMenuSub>
-                                )}
+                                ) }
                               </CollapsibleContent>
                             </Collapsible>
                           </SidebarMenuItem>
                         ),
-                    )}
+                    ) }
                   </SidebarMenu>
                 </SidebarGroupContent>
               </SidebarGroup>
-            ))}
+            )) }
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>

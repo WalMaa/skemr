@@ -14,10 +14,10 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import { Field, FieldError, FieldLabel } from "./ui/field";
-import { Calendar } from "./ui/calendar";
 import { format } from "date-fns";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover.tsx";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field.tsx";
+import { Calendar } from "@/components/ui/calendar.tsx";
 
 interface ApiKeyCreationDialogProps {
   open?: boolean;

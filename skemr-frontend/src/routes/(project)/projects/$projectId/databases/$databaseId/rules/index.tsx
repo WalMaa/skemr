@@ -39,8 +39,8 @@ import {
 import { TrashIcon } from "@phosphor-icons/react";
 import type { Rule } from "@/types/types";
 import { toast } from "sonner";
-import { RuleCreationDialog } from "@/components/rule-creation-dialog";
 import { format } from "date-fns";
+import { RuleCreationDialog } from "@/components/rules/rule-creation-dialog";
 
 export const Route = createFileRoute(
   "/(project)/projects/$projectId/databases/$databaseId/rules/",
