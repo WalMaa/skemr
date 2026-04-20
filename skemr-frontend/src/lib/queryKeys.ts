@@ -45,10 +45,10 @@ export const databaseEntityQueryKeys = {
   lists: () => [...databaseEntityQueryKeys.all, "list"] as const,
 };
 
-export const apiKeyQueryKeys = {
-  all: ["apiKeys"] as const,
+export const accessTokenQueryKeys = {
+  all: ["accessTokens"] as const,
   list: (projectId: string) =>
-    [...apiKeyQueryKeys.all, "list", projectId] as const,
+    [...accessTokenQueryKeys.all, "list", projectId] as const,
   detail: (projectId: string, apiKeyId: string) =>
-    [...apiKeyQueryKeys.all, "detail", projectId, apiKeyId] as const,
+    [...accessTokenQueryKeys.all, "detail", projectId, apiKeyId] as const,
 };

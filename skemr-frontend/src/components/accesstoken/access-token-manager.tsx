@@ -29,25 +29,25 @@ import {
 } from "@/components/ui/empty";
 import { Spinner } from "@/components/ui/spinner";
 import {
-  useCreateApiKey,
-  useDeleteApiKey,
-  useGetApiKeys,
-} from "@/api/api-keys";
+  useCreateAccessToken,
+  useDeleteAccessToken,
+  useGetAccessTokens,
+} from "@/api/access-tokens.ts";
 import { toast } from "sonner";
-import { ApiKeyCreationDialog } from "./api-key-creation-dialog";
+import { AccessTokenCreationDialog } from "./access-token-creation-dialog.tsx";
 import CopyButton from "@/components/ui/copy-button.tsx";
 
-interface ApiKeyManagerProps {
+interface AccessTokenManagerProps {
   projectId: string;
 }
 
-export function ApiKeyManager({ projectId }: ApiKeyManagerProps) {
+export function AccessTokenManager({ projectId }: AccessTokenManagerProps) {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [createdToken, setCreatedToken] = useState<string | null>(null);
 
-  const { data: apiKeys, isPending } = useGetApiKeys(projectId);
-  const deleteApiKeyMutation = useDeleteApiKey();
-  const createApiKeyMutation = useCreateApiKey();
+  const { data: apiKeys, isPending } = useGetAccessTokens(projectId);
+  const deleteApiKeyMutation = useDeleteAccessToken();
+  const createApiKeyMutation = useCreateAccessToken();
 
   const handleCreateApiKey = async (name: string, expiresAt?: Date) => {
     toast.promise(
@@ -59,23 +59,23 @@ export function ApiKeyManager({ projectId }: ApiKeyManagerProps) {
         },
       }),
       {
-        loading: "Creating API key...",
+        loading: "Creating Access token...",
         success: (res) => {
           setCreatedToken(res.token);
-          return "API key created successfully!";
+          return "Access token created successfully!";
         },
         error: (res) =>
           "Error: " +
-          (res.data?.message ?? "Failed to create API key. Please try again."),
+          (res.data?.message ?? "Failed to create Access token. Please try again."),
       },
     );
   };
 
-  const handleDeleteApiKey = async (apiKeyId: string) => {
-    toast.promise(deleteApiKeyMutation.mutateAsync({ projectId, apiKeyId }), {
-      loading: "Deleting API key...",
-      success: "API key deleted successfully!",
-      error: "Failed to delete API key. Please try again.",
+  const handleDeleteAccessToken = async (accessTokenId: string) => {
+    toast.promise(deleteApiKeyMutation.mutateAsync({ projectId, accessTokenId: accessTokenId }), {
+      loading: "Deleting Access token...",
+      success: "Access token deleted successfully!",
+      error: "Failed to delete Access token. Please try again.",
     });
   };
 
@@ -83,12 +83,12 @@ export function ApiKeyManager({ projectId }: ApiKeyManagerProps) {
     <div className="container">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold">CI/CD API Keys</h1>
+          <h1 className="text-3xl font-bold">CI/CD access tokens</h1>
           <p className="text-muted-foreground">
-            Manage API keys for CI/CD container access to this project
+            Manage access tokens for CI/CD container access to this project
           </p>
         </div>
-        <ApiKeyCreationDialog
+        <AccessTokenCreationDialog
           open={isCreateDialogOpen}
           onOpenChange={setIsCreateDialogOpen}
           onCreate={handleCreateApiKey}
@@ -98,9 +98,9 @@ export function ApiKeyManager({ projectId }: ApiKeyManagerProps) {
       {createdToken && (
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>API Key Created Successfully!</CardTitle>
+            <CardTitle>Access token Created Successfully!</CardTitle>
             <CardDescription>
-              Please copy your new API key now. For security reasons, this is
+              Please copy your new access token now. For security reasons, this is
               the only time it will be displayed.
             </CardDescription>
           </CardHeader>
@@ -109,7 +109,7 @@ export function ApiKeyManager({ projectId }: ApiKeyManagerProps) {
               <pre className="text-sm font-mono break-all">
                 {createdToken
                   ? createdToken
-                  : "Error: API key token not available. Please check if the key was created successfully."}
+                  : "Error: Access token token not available. Please check if the key was created successfully."}
               </pre>
               <CopyButton text={createdToken || ""} />{" "}
             </div>
@@ -125,16 +125,16 @@ export function ApiKeyManager({ projectId }: ApiKeyManagerProps) {
         ) : apiKeys?.length === 0 ? (
           <Empty>
             <EmptyHeader>
-              <EmptyTitle>No CI/CD API keys found</EmptyTitle>
+              <EmptyTitle>No CI/CD Access tokens found</EmptyTitle>
               <EmptyDescription>
-                Create your first API key to allow CI/CD containers to access
+                Create your first access token to allow CI/CD containers to access
                 this project's resources.
               </EmptyDescription>
             </EmptyHeader>
             <EmptyContent>
               <Button onClick={() => setIsCreateDialogOpen(true)}>
                 <PlusIcon className="mr-2 h-4 w-4" />
-                Create Your First CI/CD API Key
+                Create Your First CI/CD access token
               </Button>
             </EmptyContent>
           </Empty>
@@ -166,16 +166,16 @@ export function ApiKeyManager({ projectId }: ApiKeyManagerProps) {
                       ></AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Delete API Key</AlertDialogTitle>
+                          <AlertDialogTitle>Delete access token</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Are you sure you want to delete this API key? This
+                            Are you sure you want to delete this Access token? This
                             action cannot be undone.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
                           <AlertDialogAction
-                            onClick={() => handleDeleteApiKey(apiKey.id)}
+                            onClick={() => handleDeleteAccessToken(apiKey.id)}
                           >
                             Delete
                           </AlertDialogAction>

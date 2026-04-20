@@ -15,7 +15,7 @@ import { Route as projectProjectsProjectIdRouteRouteImport } from './routes/(pro
 import { Route as projectProjectsProjectIdIndexRouteImport } from './routes/(project)/projects/$projectId/index'
 import { Route as projectProjectsProjectIdSettingsIndexRouteImport } from './routes/(project)/projects/$projectId/settings/index'
 import { Route as projectProjectsProjectIdCiCdIndexRouteImport } from './routes/(project)/projects/$projectId/ci-cd/index'
-import { Route as projectProjectsProjectIdApiKeysIndexRouteImport } from './routes/(project)/projects/$projectId/api-keys/index'
+import { Route as projectProjectsProjectIdAccessTokensIndexRouteImport } from './routes/(project)/projects/$projectId/access-tokens/index'
 import { Route as projectProjectsProjectIdDatabasesDatabaseIdIndexRouteImport } from './routes/(project)/projects/$projectId/databases/$databaseId/index'
 import { Route as projectProjectsProjectIdDatabasesDatabaseIdRulesIndexRouteImport } from './routes/(project)/projects/$projectId/databases/$databaseId/rules/index'
 
@@ -52,10 +52,10 @@ const projectProjectsProjectIdCiCdIndexRoute =
     path: '/ci-cd/',
     getParentRoute: () => projectProjectsProjectIdRouteRoute,
   } as any)
-const projectProjectsProjectIdApiKeysIndexRoute =
-  projectProjectsProjectIdApiKeysIndexRouteImport.update({
-    id: '/api-keys/',
-    path: '/api-keys/',
+const projectProjectsProjectIdAccessTokensIndexRoute =
+  projectProjectsProjectIdAccessTokensIndexRouteImport.update({
+    id: '/access-tokens/',
+    path: '/access-tokens/',
     getParentRoute: () => projectProjectsProjectIdRouteRoute,
   } as any)
 const projectProjectsProjectIdDatabasesDatabaseIdIndexRoute =
@@ -75,7 +75,7 @@ export interface FileRoutesByFullPath {
   '/': typeof homeIndexRoute
   '/projects/$projectId': typeof projectProjectsProjectIdRouteRouteWithChildren
   '/projects/$projectId/': typeof projectProjectsProjectIdIndexRoute
-  '/projects/$projectId/api-keys/': typeof projectProjectsProjectIdApiKeysIndexRoute
+  '/projects/$projectId/access-tokens/': typeof projectProjectsProjectIdAccessTokensIndexRoute
   '/projects/$projectId/ci-cd/': typeof projectProjectsProjectIdCiCdIndexRoute
   '/projects/$projectId/settings/': typeof projectProjectsProjectIdSettingsIndexRoute
   '/projects/$projectId/databases/$databaseId/': typeof projectProjectsProjectIdDatabasesDatabaseIdIndexRoute
@@ -84,7 +84,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof homeIndexRoute
   '/projects/$projectId': typeof projectProjectsProjectIdIndexRoute
-  '/projects/$projectId/api-keys': typeof projectProjectsProjectIdApiKeysIndexRoute
+  '/projects/$projectId/access-tokens': typeof projectProjectsProjectIdAccessTokensIndexRoute
   '/projects/$projectId/ci-cd': typeof projectProjectsProjectIdCiCdIndexRoute
   '/projects/$projectId/settings': typeof projectProjectsProjectIdSettingsIndexRoute
   '/projects/$projectId/databases/$databaseId': typeof projectProjectsProjectIdDatabasesDatabaseIdIndexRoute
@@ -96,7 +96,7 @@ export interface FileRoutesById {
   '/(home)/': typeof homeIndexRoute
   '/(project)/projects/$projectId': typeof projectProjectsProjectIdRouteRouteWithChildren
   '/(project)/projects/$projectId/': typeof projectProjectsProjectIdIndexRoute
-  '/(project)/projects/$projectId/api-keys/': typeof projectProjectsProjectIdApiKeysIndexRoute
+  '/(project)/projects/$projectId/access-tokens/': typeof projectProjectsProjectIdAccessTokensIndexRoute
   '/(project)/projects/$projectId/ci-cd/': typeof projectProjectsProjectIdCiCdIndexRoute
   '/(project)/projects/$projectId/settings/': typeof projectProjectsProjectIdSettingsIndexRoute
   '/(project)/projects/$projectId/databases/$databaseId/': typeof projectProjectsProjectIdDatabasesDatabaseIdIndexRoute
@@ -108,7 +108,7 @@ export interface FileRouteTypes {
     | '/'
     | '/projects/$projectId'
     | '/projects/$projectId/'
-    | '/projects/$projectId/api-keys/'
+    | '/projects/$projectId/access-tokens/'
     | '/projects/$projectId/ci-cd/'
     | '/projects/$projectId/settings/'
     | '/projects/$projectId/databases/$databaseId/'
@@ -117,7 +117,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/projects/$projectId'
-    | '/projects/$projectId/api-keys'
+    | '/projects/$projectId/access-tokens'
     | '/projects/$projectId/ci-cd'
     | '/projects/$projectId/settings'
     | '/projects/$projectId/databases/$databaseId'
@@ -128,7 +128,7 @@ export interface FileRouteTypes {
     | '/(home)/'
     | '/(project)/projects/$projectId'
     | '/(project)/projects/$projectId/'
-    | '/(project)/projects/$projectId/api-keys/'
+    | '/(project)/projects/$projectId/access-tokens/'
     | '/(project)/projects/$projectId/ci-cd/'
     | '/(project)/projects/$projectId/settings/'
     | '/(project)/projects/$projectId/databases/$databaseId/'
@@ -184,11 +184,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof projectProjectsProjectIdCiCdIndexRouteImport
       parentRoute: typeof projectProjectsProjectIdRouteRoute
     }
-    '/(project)/projects/$projectId/api-keys/': {
-      id: '/(project)/projects/$projectId/api-keys/'
-      path: '/api-keys'
-      fullPath: '/projects/$projectId/api-keys/'
-      preLoaderRoute: typeof projectProjectsProjectIdApiKeysIndexRouteImport
+    '/(project)/projects/$projectId/access-tokens/': {
+      id: '/(project)/projects/$projectId/access-tokens/'
+      path: '/access-tokens'
+      fullPath: '/projects/$projectId/access-tokens/'
+      preLoaderRoute: typeof projectProjectsProjectIdAccessTokensIndexRouteImport
       parentRoute: typeof projectProjectsProjectIdRouteRoute
     }
     '/(project)/projects/$projectId/databases/$databaseId/': {
@@ -222,7 +222,7 @@ const homeRouteRouteWithChildren = homeRouteRoute._addFileChildren(
 
 interface projectProjectsProjectIdRouteRouteChildren {
   projectProjectsProjectIdIndexRoute: typeof projectProjectsProjectIdIndexRoute
-  projectProjectsProjectIdApiKeysIndexRoute: typeof projectProjectsProjectIdApiKeysIndexRoute
+  projectProjectsProjectIdAccessTokensIndexRoute: typeof projectProjectsProjectIdAccessTokensIndexRoute
   projectProjectsProjectIdCiCdIndexRoute: typeof projectProjectsProjectIdCiCdIndexRoute
   projectProjectsProjectIdSettingsIndexRoute: typeof projectProjectsProjectIdSettingsIndexRoute
   projectProjectsProjectIdDatabasesDatabaseIdIndexRoute: typeof projectProjectsProjectIdDatabasesDatabaseIdIndexRoute
@@ -232,8 +232,8 @@ interface projectProjectsProjectIdRouteRouteChildren {
 const projectProjectsProjectIdRouteRouteChildren: projectProjectsProjectIdRouteRouteChildren =
   {
     projectProjectsProjectIdIndexRoute: projectProjectsProjectIdIndexRoute,
-    projectProjectsProjectIdApiKeysIndexRoute:
-      projectProjectsProjectIdApiKeysIndexRoute,
+    projectProjectsProjectIdAccessTokensIndexRoute:
+      projectProjectsProjectIdAccessTokensIndexRoute,
     projectProjectsProjectIdCiCdIndexRoute:
       projectProjectsProjectIdCiCdIndexRoute,
     projectProjectsProjectIdSettingsIndexRoute:

@@ -24,9 +24,9 @@ import {
   InputGroupButton,
   InputGroupInput,
 } from "@/components/ui/input-group";
-import { useCreateApiKey } from "@/api/api-keys";
+import { useCreateAccessToken } from "@/api/access-tokens.ts";
 import { PlusIcon } from "@phosphor-icons/react";
-import { ApiKeyCreationDialog } from "@/components/accesstoken/api-key-creation-dialog.tsx";
+import { AccessTokenCreationDialog } from "@/components/accesstoken/access-token-creation-dialog.tsx";
 
 SyntaxHighlighter.registerLanguage("yaml", yaml);
 
@@ -47,7 +47,7 @@ const vcs = [
 ];
   
 function RouteComponent() {
-  const createApiKeyMutation = useCreateApiKey();
+  const createApiKeyMutation = useCreateAccessToken();
   const [selected, setSelected] = useState("Gitlab CI");
   const [selectedDatabase, setSelectedDatabase] = useState<string | null>(null);
   const [migrationFilesDir, setMigrationFilesDir] = useState<string | null>(
@@ -92,14 +92,14 @@ function RouteComponent() {
         },
       }),
       {
-        loading: "Creating API key...",
+        loading: "Creating Access token...",
         success: (res) => {
           setToken(res.token);
-          return "API key created successfully!";
+          return "Access token created successfully!";
         },
         error: (res) =>
           "Error: " +
-          (res.data?.message ?? "Failed to create API key. Please try again."),
+          (res.data?.message ?? "Failed to create Access token. Please try again."),
       },
     );
     setIsCreateDialogOpen(false);
@@ -182,7 +182,7 @@ function RouteComponent() {
               onChange={(e) => setToken(e.target.value || null)}
             />
             <InputGroupAddon align="inline-end">
-              <ApiKeyCreationDialog
+              <AccessTokenCreationDialog
                 open={isCreateDialogOpen}
                 onOpenChange={setIsCreateDialogOpen}
                 onCreate={handleCreateApiKey}

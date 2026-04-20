@@ -89,7 +89,7 @@ export interface DatabaseEntity {
 
 export type DatabaseEntityType = "database" | "schema" | "table" | "column";
 
-export interface ApiKey {
+export interface AccessToken {
   id: string;
   name: string;
   lastUsedAt: string | null;
@@ -98,7 +98,7 @@ export interface ApiKey {
   updatedAt: string;
 }
 
-export type ApiKeyCreationDto = {
+export type AccessTokenCreationDto = {
   name: string;
   expiresAt: string | null;
 };

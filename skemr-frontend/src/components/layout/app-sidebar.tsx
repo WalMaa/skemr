@@ -70,8 +70,8 @@ const useMenuItems = (projectId: string, databases?: Database[]): Group[] => {
           submenus: [],
         },
         {
-          href: `/projects/${ projectId }/api-keys`,
-          label: "API Keys",
+          href: `/projects/${ projectId }/access-tokens`,
+          label: "Access tokens",
           icon: ShieldCheckIcon,
           submenus: [],
         },

@@ -19,29 +19,29 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Field, FieldError, FieldLabel } from "@/components/ui/field.tsx";
 import { Calendar } from "@/components/ui/calendar.tsx";
 
-interface ApiKeyCreationDialogProps {
+interface AccessTokenCreationDialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   onCreate: (name: string, expiresAt?: Date) => void;
   trigger?: React.ReactElement;
 }
 
-interface ApiKeyCreationFormData {
+interface AccessTokenCreationFormData {
   name: string;
   expiresAt?: Date;
 }
 
-const apiKeyCreationSchema = z.object({
+const accessTokenCreationSchema = z.object({
   name: z.string().min(2, "Key name must be at least 2 characters"),
   expiresAt: z.date().optional(),
 });
 
-export function ApiKeyCreationDialog({
+export function AccessTokenCreationDialog({
   open,
   onOpenChange,
   onCreate,
   trigger,
-}: ApiKeyCreationDialogProps) {
+}: AccessTokenCreationDialogProps) {
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const {
     register,
@@ -49,8 +49,8 @@ export function ApiKeyCreationDialog({
     control,
     reset,
     formState: { errors },
-  } = useForm<ApiKeyCreationFormData>({
-    resolver: zodResolver(apiKeyCreationSchema),
+  } = useForm<AccessTokenCreationFormData>({
+    resolver: zodResolver(accessTokenCreationSchema),
     mode: "onBlur",
     defaultValues: {
       name: "",
@@ -58,7 +58,7 @@ export function ApiKeyCreationDialog({
     },
   });
 
-  const handleCreate = (data: ApiKeyCreationFormData) => {
+  const handleCreate = (data: AccessTokenCreationFormData) => {
     onCreate(data.name, data.expiresAt);
 
     onOpenChange?.(false);
@@ -73,16 +73,16 @@ export function ApiKeyCreationDialog({
           trigger || (
             <Button>
               <PlusIcon className="mr-2 h-4 w-4" />
-              Create CI/CD API Key
+              Create CI/CD access token
             </Button>
           )
         }
       ></DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create New CI/CD API Key</DialogTitle>
+          <DialogTitle>Create New CI/CD access token</DialogTitle>
           <DialogDescription>
-            Create a new API key for CI/CD containers to access this
+            Create a new access token for CI/CD containers to access this
             project&apos;s resources.
           </DialogDescription>
         </DialogHeader>
@@ -93,7 +93,7 @@ export function ApiKeyCreationDialog({
               <Input
                 id="key-name"
                 {...register("name")}
-                placeholder="Enter API key name (e.g., GitLab CI, GitHub Actions)"
+                placeholder="Enter access token name (e.g., GitLab CI, GitHub Actions)"
               />
               {errors.name && <FieldError>{errors.name.message}</FieldError>}
             </div>
