@@ -132,15 +132,6 @@ function RouteComponent() {
                       <TableCell>{db.username}</TableCell>
                       <TableCell>
                         <div className="flex gap-2 items-center">
-                          <Link
-                            to="/projects/$projectId/databases/$databaseId"
-                            params={{ projectId, databaseId: db.id }}
-                            className="text-sm"
-                          >
-                            <Button size="sm" variant="ghost">
-                              Open
-                            </Button>
-                          </Link>
                           <Button
                             size="sm"
                             variant="outline"

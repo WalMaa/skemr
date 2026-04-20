@@ -18,7 +18,7 @@ export function ProjectHeader() {
   const { data: database } = useGetDatabase(projectId || "", databaseId || "");
 
   return (
-    <header className="flex h-16 z-100 shrink-0 sticky top-0 bg-background items-center gap-4 border-b px-4">
+    <header className="flex h-16 z-20 shrink-0 sticky top-0 bg-background items-center gap-4 border-b px-4">
       <SidebarTrigger/>
       <Breadcrumb>
         <BreadcrumbList>
