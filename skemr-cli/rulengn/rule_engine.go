@@ -122,13 +122,13 @@ func (r *RuleEngine) CheckStatement(migrationFileDto MigrationFileDto, rules []m
 					violation := r.lockAction(rule, action, migrationFileDto)
 					statementResults = append(statementResults, violation)
 				case models.RuleTypeWarn:
-					warning := r.warnAction(rule, migrationFileDto)
+					warning := r.warnAction(rule, action, migrationFileDto)
 					statementResults = append(statementResults, warning)
 				case models.RuleTypeAdvisory:
-					advisory := r.advisoryAction(rule, migrationFileDto)
+					advisory := r.advisoryAction(rule, action, migrationFileDto)
 					statementResults = append(statementResults, advisory)
 				case models.RuleTypeDeprecated:
-					warning := r.deprecatedAction(rule, migrationFileDto)
+					warning := r.deprecatedAction(rule, action, migrationFileDto)
 					statementResults = append(statementResults, warning)
 				default:
 					slog.Warn("Unknown rule type", slog.String("rule_type", string(rule.RuleType)))
@@ -145,33 +145,37 @@ func (r *RuleEngine) CheckStatement(migrationFileDto MigrationFileDto, rules []m
 func (r *RuleEngine) lockAction(rule models.Rule, statementAction parser.StatementAction, statementDto MigrationFileDto) StatementResult {
 	err := fmt.Errorf("Lock rule violated: rule %q violated by action %q on target %q", rule.Name, statementAction.Action, statementAction.Target)
 	return StatementResult{
-		Type:  models.RuleTypeLocked,
-		Rule:  rule,
-		File:  statementDto.File,
-		Error: err,
+		Type:      models.RuleTypeLocked,
+		Statement: statementAction.Original,
+		Rule:      rule,
+		File:      statementDto.File,
+		Error:     err,
 	}
 }
 
-func (r *RuleEngine) warnAction(rule models.Rule, statementDto MigrationFileDto) StatementResult {
+func (r *RuleEngine) warnAction(rule models.Rule, statementAction parser.StatementAction, statementDto MigrationFileDto) StatementResult {
 	return StatementResult{
-		Type: models.RuleTypeWarn,
-		Rule: rule,
-		File: statementDto.File,
+		Type:      models.RuleTypeWarn,
+		Statement: statementAction.Original,
+		Rule:      rule,
+		File:      statementDto.File,
 	}
 }
 
-func (r *RuleEngine) advisoryAction(rule models.Rule, statementDto MigrationFileDto) StatementResult {
+func (r *RuleEngine) advisoryAction(rule models.Rule, statementAction parser.StatementAction, statementDto MigrationFileDto) StatementResult {
 	return StatementResult{
-		Type: models.RuleTypeAdvisory,
-		Rule: rule,
-		File: statementDto.File,
+		Type:      models.RuleTypeAdvisory,
+		Statement: statementAction.Original,
+		Rule:      rule,
+		File:      statementDto.File,
 	}
 }
 
-func (r *RuleEngine) deprecatedAction(rule models.Rule, statementDto MigrationFileDto) StatementResult {
+func (r *RuleEngine) deprecatedAction(rule models.Rule, statementAction parser.StatementAction, statementDto MigrationFileDto) StatementResult {
 	return StatementResult{
-		Type: models.RuleTypeDeprecated,
-		Rule: rule,
-		File: statementDto.File,
+		Type:      models.RuleTypeDeprecated,
+		Statement: statementAction.Original,
+		Rule:      rule,
+		File:      statementDto.File,
 	}
 }

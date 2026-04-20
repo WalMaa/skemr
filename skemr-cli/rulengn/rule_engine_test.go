@@ -17,9 +17,9 @@ var entities = []models.DatabaseEntity{
 		Type: models.DatabaseEntityTypeTable,
 	},
 	{
-		ID:       uuid.New(),
-		Name:     "age",
-		Type:     models.DatabaseEntityTypeColumn,
+		ID:   uuid.New(),
+		Name: "age",
+		Type: models.DatabaseEntityTypeColumn,
 	},
 	{
 		ID:   uuid.New(),
@@ -27,9 +27,9 @@ var entities = []models.DatabaseEntity{
 		Type: models.DatabaseEntityTypeTable,
 	},
 	{
-		ID:       uuid.New(),
-		Name:     "age",
-		Type:     models.DatabaseEntityTypeColumn,
+		ID:   uuid.New(),
+		Name: "age",
+		Type: models.DatabaseEntityTypeColumn,
 	},
 }
 
@@ -195,6 +195,38 @@ func TestLockedTableRuleViolationOnColumnAdd(t *testing.T) {
 	assert.Equal(t, migrationFile, result[0].File)
 }
 
+func TestLockedColumnRuleViolationWithQualifiedTable(t *testing.T) {
+	ruleEngine := NewRuleEngine()
+	// Create a temporary migration file
+	tmpFile, err := os.CreateTemp(t.TempDir(), "migration-*.sql")
+	assert.NoError(t, err)
+	defer func() { _ = tmpFile.Close() }()
+	content := "ALTER TABLE public.users DROP COLUMN age;"
+	_, err = tmpFile.WriteString(content)
+	assert.NoError(t, err)
+	migrationFile := tmpFile.Name()
+
+	rules := []models.Rule{
+		{
+			ID:       uuid.New(),
+			Name:     "Drop Age Column Rule",
+			RuleType: models.RuleTypeLocked,
+			DataBaseEntity: models.DatabaseEntity{
+				Name: "age",
+			},
+		},
+	}
+
+	result, err := ruleEngine.CheckStatement(MigrationFileDto{File: migrationFile}, rules, entities)
+	assert.NoError(t, err)
+
+	assert.Equal(t, 1, len(result))
+	assert.Equal(t, models.RuleTypeLocked, result[0].Type)
+	assert.Equal(t, "Drop Age Column Rule", result[0].Rule.Name)
+	assert.Equal(t, migrationFile, result[0].File)
+
+}
+
 func TestAdvisoryRuleTrigger(t *testing.T) {
 	ruleEngine := NewRuleEngine()
 
@@ -227,7 +259,6 @@ func TestAdvisoryRuleTrigger(t *testing.T) {
 	assert.Equal(t, "Drop Age Column Rule", result[0].Rule.Name)
 	assert.Equal(t, migrationFile, result[0].File)
 }
-
 
 // If tables A and B have identical column names, and there is a rule that locks on column name on table A,
 // Then dropping the column on table B should not trigger the rule, but dropping the column on table A should trigger the rule.
@@ -274,9 +305,9 @@ func TestIdenticalColumnNameRule(t *testing.T) {
 
 	rules := []models.Rule{
 		{
-			ID:       uuid.New(),
-			Name:     "Locked Age Column on Users Table",
-			RuleType: models.RuleTypeLocked,
+			ID:             uuid.New(),
+			Name:           "Locked Age Column on Users Table",
+			RuleType:       models.RuleTypeLocked,
 			DataBaseEntity: tableAColumn,
 		},
 	}

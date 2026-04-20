@@ -114,7 +114,7 @@ func printSection(title string, results []rulengn.StatementResult, isError bool)
 		if isError {
 			message = fmt.Sprintf("rule \"%s\" violated", res.Rule.Name)
 		}
-		fmt.Fprintf(os.Stdout, "  -  %-30s File: %s\n", message, res.File)
+		fmt.Fprintf(os.Stdout, "  -  %-30s by statement \"%s\" in file: %s\n", message, res.Statement, res.File)
 	}
 
 }

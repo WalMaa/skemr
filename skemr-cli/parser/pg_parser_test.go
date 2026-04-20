@@ -63,6 +63,17 @@ func TestParseSqlRenameColumn(t *testing.T) {
 	assert.Equal(t, "rules", statementAction[0].Relation, "Expected relation 'rules'")
 }
 
+func TestParseDropQualifiedColumn(t *testing.T) {
+	sql := "ALTER TABLE public.rules DROP COLUMN name"
+	statementAction, err := ParseSql(sql)
+
+	assert.Nil(t, err)
+
+	assert.Equal(t, "name", statementAction[0].Target, "Expected target 'name'")
+	assert.Equal(t, SqlActionDropColumn, statementAction[0].Action, "Expected action 'DROP COLUMN'")
+	assert.Equal(t, "rules", statementAction[0].Relation, "Expected relation 'rules'")
+}
+
 func TestParseSqlModifyDataType(t *testing.T) {
 	sql := "ALTER TABLE rules ALTER COLUMN name TYPE VARCHAR(255)"
 	statementAction, err := ParseSql(sql)
