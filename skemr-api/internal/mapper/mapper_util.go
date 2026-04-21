@@ -10,6 +10,15 @@ import (
 	"github.com/walmaa/skemr-api/internal/dto"
 )
 
+func ToBytes(v interface{}) []byte {
+	b, err := json.Marshal(v)
+	if err != nil {
+		slog.Error("Unable to marshal JSON", err)
+		return nil
+	}
+	return b
+}
+
 func Text(v *string) pgtype.Text {
 	if v == nil {
 		return pgtype.Text{

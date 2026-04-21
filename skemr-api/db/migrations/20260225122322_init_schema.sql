@@ -120,7 +120,7 @@ CREATE TABLE tables
 CREATE TABLE database_entities
 (
     id            uuid PRIMARY KEY                DEFAULT gen_random_uuid(),
-    fingerprint   text,                                                   -- this is used to track the same entity across syncs even if it is renamed.
+    fingerprint   text                   NOT NULL,                        -- this is used to track the same entity across syncs even if it is renamed.
     project_id    uuid                   NOT NULL REFERENCES projects (id) ON DELETE CASCADE,
     database_id   uuid                   NOT NULL REFERENCES databases (id) ON DELETE CASCADE,
     status        database_entity_status NOT NULL DEFAULT 'active',
@@ -131,7 +131,7 @@ CREATE TABLE database_entities
 
     -- generic identity at this node
     name          text                   NOT NULL,                        -- e.g. "public", "users", "email", "my_view"
-    attributes    jsonb,                                                  -- Store any additional metadata about the entity here
+    attributes    jsonb                  NOT NULL DEFAULT '{}'::jsonb,    -- Store any additional metadata about the entity here
 
     created_at    TIMESTAMPTZ            NOT NULL DEFAULT NOW(),
 
@@ -143,9 +143,11 @@ CREATE TABLE database_entities
 CREATE TABLE rules
 (
     id                 UUID PRIMARY KEY     DEFAULT gen_random_uuid(),
-    name               TEXT        NOT NULL, -- User defined for rule
+    name               TEXT        NOT NULL,                     -- Defined by user
     type               rule_type   NOT NULL,
+    attributes         jsonb       NOT NULL DEFAULT '{}'::jsonb, -- Metadata about the rule, removal_date for deprecated types for example
     database_entity_id uuid        NOT NULL REFERENCES database_entities (id) ON DELETE CASCADE,
     database_id        uuid        NOT NULL REFERENCES databases (id) ON DELETE CASCADE,
-    created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT unique_rule_name_per_database UNIQUE (name, database_id)
 );

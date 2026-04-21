@@ -188,11 +188,8 @@ func (s *SchemaSyncService) updateSchema(c context.Context, schemaRef SchemaRef,
 		fingerprint := GenerateSchemaFingerprint(schemaRef, database.ID)
 
 		schema, err = s.db.GetDatabaseEntityByFingerprint(c, sqlc.GetDatabaseEntityByFingerprintParams{
-			DatabaseID: database.ID,
-			Fingerprint: pgtype.Text{
-				String: fingerprint,
-				Valid:  true,
-			},
+			DatabaseID:  database.ID,
+			Fingerprint: fingerprint,
 		})
 
 		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
@@ -219,14 +216,11 @@ func (s *SchemaSyncService) updateSchema(c context.Context, schemaRef SchemaRef,
 
 		// If that schema does not exist yet, save it
 		args := sqlc.CreateDatabaseEntityParams{
-			ProjectID:  database.ProjectID,
-			EntityType: sqlc.DatabaseEntityTypeSchema,
-			DatabaseID: database.ID,
-			Name:       schemaRef.Name,
-			Fingerprint: pgtype.Text{
-				String: fingerprint,
-				Valid:  true,
-			},
+			ProjectID:   database.ProjectID,
+			EntityType:  sqlc.DatabaseEntityTypeSchema,
+			DatabaseID:  database.ID,
+			Name:        schemaRef.Name,
+			Fingerprint: fingerprint,
 		}
 		schema, err := s.db.CreateDatabaseEntity(c, args)
 		if err != nil {
@@ -277,11 +271,8 @@ func (s *SchemaSyncService) UpdateTable(c context.Context, tableRef TableRef, da
 		fingerprint := GenerateTableFingerprint(tableRef)
 
 		table, err = s.db.GetDatabaseEntityByFingerprint(c, sqlc.GetDatabaseEntityByFingerprintParams{
-			DatabaseID: database.ID,
-			Fingerprint: pgtype.Text{
-				String: fingerprint,
-				Valid:  true,
-			},
+			DatabaseID:  database.ID,
+			Fingerprint: fingerprint,
 		})
 
 		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
@@ -309,19 +300,16 @@ func (s *SchemaSyncService) UpdateTable(c context.Context, tableRef TableRef, da
 		}
 
 		args := sqlc.CreateDatabaseEntityParams{
-			ProjectID:  database.ProjectID,
-			EntityType: sqlc.DatabaseEntityTypeTable,
-			ParentID:   &schemaId,
-			DatabaseID: database.ID,
-			Name:       tableRef.Name,
-			Fingerprint: pgtype.Text{
-				String: GenerateTableFingerprint(tableRef),
-				Valid:  true,
-			},
+			ProjectID:   database.ProjectID,
+			EntityType:  sqlc.DatabaseEntityTypeTable,
+			ParentID:    &schemaId,
+			DatabaseID:  database.ID,
+			Name:        tableRef.Name,
+			Fingerprint: fingerprint,
 		}
 		table, err := s.db.CreateDatabaseEntity(c, args)
 		if err != nil {
-			slog.Error("error creating schema", "error", err)
+			slog.Error("error creating table", "error", err)
 			return sqlc.DatabaseEntity{}, err
 		}
 		slog.Info("Table created", "schema", table.Name)
@@ -366,11 +354,8 @@ func (s *SchemaSyncService) SyncColumn(c context.Context, columnRef ColumnRef, d
 		fingerprint := GenerateColumnFingerprint(columnRef, tableId)
 
 		column, err = s.db.GetDatabaseEntityByFingerprint(c, sqlc.GetDatabaseEntityByFingerprintParams{
-			DatabaseID: database.ID,
-			Fingerprint: pgtype.Text{
-				String: fingerprint,
-				Valid:  true,
-			},
+			DatabaseID:  database.ID,
+			Fingerprint: fingerprint,
 		})
 
 		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
@@ -397,20 +382,17 @@ func (s *SchemaSyncService) SyncColumn(c context.Context, columnRef ColumnRef, d
 
 		// If that column does not exist yet, save it
 		args := sqlc.CreateDatabaseEntityParams{
-			ProjectID:  database.ProjectID,
-			EntityType: sqlc.DatabaseEntityTypeColumn,
-			ParentID:   &tableId,
-			DatabaseID: database.ID,
-			Name:       columnRef.Name,
-			Attributes: attributesJson,
-			Fingerprint: pgtype.Text{
-				String: GenerateColumnFingerprint(columnRef, tableId),
-				Valid:  true,
-			},
+			ProjectID:   database.ProjectID,
+			EntityType:  sqlc.DatabaseEntityTypeColumn,
+			ParentID:    &tableId,
+			DatabaseID:  database.ID,
+			Name:        columnRef.Name,
+			Attributes:  attributesJson,
+			Fingerprint: fingerprint,
 		}
 		column, err := s.db.CreateDatabaseEntity(c, args)
 		if err != nil {
-			slog.Error("error creating schema", "error", err)
+			slog.Error("error creating column", "error", err)
 			return sqlc.DatabaseEntity{}, err
 		}
 		slog.Info("Column created", "name", column.Name)

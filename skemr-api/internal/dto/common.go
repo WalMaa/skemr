@@ -2,6 +2,7 @@ package dto
 
 import (
 	"github.com/google/uuid"
+	"github.com/walmaa/skemr-common/models"
 )
 
 type ProjectCreationDto struct {
@@ -39,6 +40,7 @@ const (
 type RuleCreationDto struct {
 	Name             string
 	RuleType         RuleType
+	Attributes       models.RuleAttributes `json:"attributes" validate:"omitempty,json"`
 	DataBaseEntityId uuid.UUID
 }
 

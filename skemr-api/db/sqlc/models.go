@@ -6,6 +6,7 @@ package sqlc
 
 import (
 	"database/sql/driver"
+	"encoding/json"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -293,7 +294,7 @@ type Database struct {
 
 type DatabaseEntity struct {
 	ID          uuid.UUID            `json:"id"`
-	Fingerprint pgtype.Text          `json:"fingerprint"`
+	Fingerprint string               `json:"fingerprint"`
 	ProjectID   uuid.UUID            `json:"project_id"`
 	DatabaseID  uuid.UUID            `json:"database_id"`
 	Status      DatabaseEntityStatus `json:"status"`
@@ -302,7 +303,7 @@ type DatabaseEntity struct {
 	EntityType  DatabaseEntityType   `json:"entity_type"`
 	ParentID    *uuid.UUID           `json:"parent_id"`
 	Name        string               `json:"name"`
-	Attributes  []byte               `json:"attributes"`
+	Attributes  json.RawMessage      `json:"attributes"`
 	CreatedAt   pgtype.Timestamptz   `json:"created_at"`
 }
 
@@ -347,6 +348,7 @@ type Rule struct {
 	ID               uuid.UUID          `json:"id"`
 	Name             string             `json:"name"`
 	Type             RuleType           `json:"type"`
+	Attributes       json.RawMessage    `json:"attributes"`
 	DatabaseEntityID uuid.UUID          `json:"database_entity_id"`
 	DatabaseID       uuid.UUID          `json:"database_id"`
 	CreatedAt        pgtype.Timestamptz `json:"created_at"`

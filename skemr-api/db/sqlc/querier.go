@@ -39,6 +39,7 @@ type Querier interface {
 	GetProjectSecretKeyByID(ctx context.Context, arg GetProjectSecretKeyByIDParams) (GetProjectSecretKeyByIDRow, error)
 	GetProjects(ctx context.Context) ([]Project, error)
 	GetRule(ctx context.Context, arg GetRuleParams) (Rule, error)
+	GetRuleByDatabaseAndName(ctx context.Context, arg GetRuleByDatabaseAndNameParams) (Rule, error)
 	GetRuleWithEntity(ctx context.Context, arg GetRuleWithEntityParams) (GetRuleWithEntityRow, error)
 	GetRulesWithEntities(ctx context.Context, databaseID uuid.UUID) ([]GetRulesWithEntitiesRow, error)
 	ListDatabasesByProject(ctx context.Context, projectID uuid.UUID) ([]Database, error)

@@ -1,13 +1,14 @@
 package controller
 
 import (
-	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
 	"github.com/walmaa/skemr-api/internal/dto"
+	"github.com/walmaa/skemr-api/internal/errormsg"
 	"github.com/walmaa/skemr-api/internal/service"
 )
 
@@ -84,17 +85,20 @@ func (h *RuleController) createRule(w http.ResponseWriter, r *http.Request) {
 	}
 	projectID, ok := r.Context().Value("projectId").(uuid.UUID)
 	if !ok {
-		http.Error(w, "projectId not found in context", http.StatusBadRequest)
+		err = fmt.Errorf("projectId not found in context")
+		errormsg.WriteErrorResponse(w, r, err)
 		return
 	}
 	var body dto.RuleCreationDto
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+
+	if err := render.Decode(r, &body); err != nil {
+		errormsg.WriteErrorResponse(w, r, err)
 		return
 	}
 	rule, err := h.Service.CreateRule(r.Context(), projectID, databaseId, body)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+
+		errormsg.WriteErrorResponse(w, r, err)
 		return
 	}
 

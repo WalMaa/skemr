@@ -2,11 +2,15 @@ package service
 
 import (
 	"context"
+	"errors"
 	"log/slog"
+	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/walmaa/skemr-api/db/sqlc"
 	"github.com/walmaa/skemr-api/internal/dto"
+	"github.com/walmaa/skemr-api/internal/errormsg"
 	"github.com/walmaa/skemr-api/internal/mapper"
 	"github.com/walmaa/skemr-common/models"
 )
@@ -62,6 +66,25 @@ func (r *RuleService) CreateRule(c context.Context, projectID uuid.UUID, databas
 	if err != nil {
 		slog.Error("Error fetching database", err)
 		return models.Rule{}, err
+	}
+
+	// Check if a rule with the same name already exists
+	exists, err := r.db.GetRuleByDatabaseAndName(c, sqlc.GetRuleByDatabaseAndNameParams{
+		DatabaseID: databaseId,
+		Name:       dto.Name,
+	})
+
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		slog.Error("Error checking for existing rule", "name", dto.Name, "err", err)
+		return models.Rule{}, err
+	}
+
+	if exists.ID != uuid.Nil {
+		slog.Warn("Rule with the same name already exists", "name", dto.Name)
+		return models.Rule{}, &models.ErrorResponse{
+			Message: errormsg.ErrRuleWithSameName,
+			Status:  http.StatusConflict,
+		}
 	}
 
 	rule, err := r.db.CreateRule(c, mapper.ToSqlcCreateRule(databaseId, dto))

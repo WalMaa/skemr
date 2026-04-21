@@ -13,16 +13,17 @@ import (
 
 const createRule = `-- name: CreateRule :one
 INSERT INTO rules
-    (name, type, database_entity_id, database_id)
-VALUES ($1, $2, $3, $4)
-RETURNING id, name, type, database_entity_id, database_id, created_at
+    (name, type, database_entity_id, database_id, attributes)
+VALUES ($1, $2, $3, $4, COALESCE($5, '{}'::jsonb))
+RETURNING id, name, type, attributes, database_entity_id, database_id, created_at
 `
 
 type CreateRuleParams struct {
-	Name             string    `json:"name"`
-	Type             RuleType  `json:"type"`
-	DatabaseEntityID uuid.UUID `json:"database_entity_id"`
-	DatabaseID       uuid.UUID `json:"database_id"`
+	Name             string      `json:"name"`
+	Type             RuleType    `json:"type"`
+	DatabaseEntityID uuid.UUID   `json:"database_entity_id"`
+	DatabaseID       uuid.UUID   `json:"database_id"`
+	Attributes       interface{} `json:"attributes"`
 }
 
 func (q *Queries) CreateRule(ctx context.Context, arg CreateRuleParams) (Rule, error) {
@@ -31,12 +32,14 @@ func (q *Queries) CreateRule(ctx context.Context, arg CreateRuleParams) (Rule, e
 		arg.Type,
 		arg.DatabaseEntityID,
 		arg.DatabaseID,
+		arg.Attributes,
 	)
 	var i Rule
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
 		&i.Type,
+		&i.Attributes,
 		&i.DatabaseEntityID,
 		&i.DatabaseID,
 		&i.CreatedAt,
@@ -61,7 +64,7 @@ func (q *Queries) DeleteRule(ctx context.Context, arg DeleteRuleParams) error {
 }
 
 const getRule = `-- name: GetRule :one
-SELECT id, name, type, database_entity_id, database_id, created_at
+SELECT id, name, type, attributes, database_entity_id, database_id, created_at
 FROM rules
 WHERE database_id = $1 AND id = $2
 LIMIT 1
@@ -79,6 +82,34 @@ func (q *Queries) GetRule(ctx context.Context, arg GetRuleParams) (Rule, error) 
 		&i.ID,
 		&i.Name,
 		&i.Type,
+		&i.Attributes,
+		&i.DatabaseEntityID,
+		&i.DatabaseID,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getRuleByDatabaseAndName = `-- name: GetRuleByDatabaseAndName :one
+SELECT id, name, type, attributes, database_entity_id, database_id, created_at
+FROM rules
+WHERE database_id = $1 AND name = $2
+LIMIT 1
+`
+
+type GetRuleByDatabaseAndNameParams struct {
+	DatabaseID uuid.UUID `json:"database_id"`
+	Name       string    `json:"name"`
+}
+
+func (q *Queries) GetRuleByDatabaseAndName(ctx context.Context, arg GetRuleByDatabaseAndNameParams) (Rule, error) {
+	row := q.db.QueryRow(ctx, getRuleByDatabaseAndName, arg.DatabaseID, arg.Name)
+	var i Rule
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Type,
+		&i.Attributes,
 		&i.DatabaseEntityID,
 		&i.DatabaseID,
 		&i.CreatedAt,
@@ -88,7 +119,7 @@ func (q *Queries) GetRule(ctx context.Context, arg GetRuleParams) (Rule, error) 
 
 const getRuleWithEntity = `-- name: GetRuleWithEntity :one
 SELECT
-    r.id, r.name, r.type, r.database_entity_id, r.database_id, r.created_at,
+    r.id, r.name, r.type, r.attributes, r.database_entity_id, r.database_id, r.created_at,
     de.id, de.fingerprint, de.project_id, de.database_id, de.status, de.deleted_at, de.first_seen_at, de.entity_type, de.parent_id, de.name, de.attributes, de.created_at
 FROM rules r
 JOIN database_entities de ON r.database_entity_id = de.id
@@ -113,6 +144,7 @@ func (q *Queries) GetRuleWithEntity(ctx context.Context, arg GetRuleWithEntityPa
 		&i.Rule.ID,
 		&i.Rule.Name,
 		&i.Rule.Type,
+		&i.Rule.Attributes,
 		&i.Rule.DatabaseEntityID,
 		&i.Rule.DatabaseID,
 		&i.Rule.CreatedAt,
@@ -134,7 +166,7 @@ func (q *Queries) GetRuleWithEntity(ctx context.Context, arg GetRuleWithEntityPa
 
 const getRulesWithEntities = `-- name: GetRulesWithEntities :many
 SELECT
-    r.id, r.name, r.type, r.database_entity_id, r.database_id, r.created_at,
+    r.id, r.name, r.type, r.attributes, r.database_entity_id, r.database_id, r.created_at,
     de.id, de.fingerprint, de.project_id, de.database_id, de.status, de.deleted_at, de.first_seen_at, de.entity_type, de.parent_id, de.name, de.attributes, de.created_at
 FROM rules r
 JOIN database_entities de ON r.database_entity_id = de.id
@@ -159,6 +191,7 @@ func (q *Queries) GetRulesWithEntities(ctx context.Context, databaseID uuid.UUID
 			&i.Rule.ID,
 			&i.Rule.Name,
 			&i.Rule.Type,
+			&i.Rule.Attributes,
 			&i.Rule.DatabaseEntityID,
 			&i.Rule.DatabaseID,
 			&i.Rule.CreatedAt,
@@ -186,7 +219,7 @@ func (q *Queries) GetRulesWithEntities(ctx context.Context, databaseID uuid.UUID
 }
 
 const listRulesByCriteria = `-- name: ListRulesByCriteria :many
-SELECT id, name, type, database_entity_id, database_id, created_at
+SELECT id, name, type, attributes, database_entity_id, database_id, created_at
 FROM rules
 WHERE database_id = $1
   AND (database_entity_id = $2 OR $2 IS NULL)
@@ -210,6 +243,7 @@ func (q *Queries) ListRulesByCriteria(ctx context.Context, arg ListRulesByCriter
 			&i.ID,
 			&i.Name,
 			&i.Type,
+			&i.Attributes,
 			&i.DatabaseEntityID,
 			&i.DatabaseID,
 			&i.CreatedAt,
@@ -225,7 +259,7 @@ func (q *Queries) ListRulesByCriteria(ctx context.Context, arg ListRulesByCriter
 }
 
 const listRulesByDatabaseId = `-- name: ListRulesByDatabaseId :many
-SELECT id, name, type, database_entity_id, database_id, created_at
+SELECT id, name, type, attributes, database_entity_id, database_id, created_at
 FROM rules
 WHERE database_id = $1
 `
@@ -243,6 +277,7 @@ func (q *Queries) ListRulesByDatabaseId(ctx context.Context, databaseID uuid.UUI
 			&i.ID,
 			&i.Name,
 			&i.Type,
+			&i.Attributes,
 			&i.DatabaseEntityID,
 			&i.DatabaseID,
 			&i.CreatedAt,
@@ -262,7 +297,7 @@ UPDATE rules
 SET name = $2,
     type = $3
 WHERE id = $1
-RETURNING id, name, type, database_entity_id, database_id, created_at
+RETURNING id, name, type, attributes, database_entity_id, database_id, created_at
 `
 
 type UpdateRuleParams struct {

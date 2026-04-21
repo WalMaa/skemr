@@ -4,6 +4,12 @@ FROM rules
 WHERE database_id = @database_id AND id = @rule_id
 LIMIT 1;
 
+-- name: GetRuleByDatabaseAndName :one
+SELECT *
+FROM rules
+WHERE database_id = @database_id AND name = @name
+LIMIT 1;
+
 -- name: GetRuleWithEntity :one
 SELECT
     sqlc.embed(r),
@@ -15,8 +21,8 @@ LIMIT 1;
 
 -- name: CreateRule :one
 INSERT INTO rules
-    (name, type, database_entity_id, database_id)
-VALUES (@name, @type, @database_entity_id, @database_id)
+    (name, type, database_entity_id, database_id, attributes)
+VALUES (@name, @type, @database_entity_id, @database_id, COALESCE(@attributes, '{}'::jsonb))
 RETURNING *;
 
 -- name: UpdateRule :exec

@@ -34,4 +34,5 @@ var (
 	ErrProjectNotFound       = "project not found"
 	ErrInvalidIdFormat       = "invalid id format"
 	ErrExpiryTimeInPast      = "expiry time is in the past"
+	ErrRuleWithSameName      = "rule with the same name already exists"
 )

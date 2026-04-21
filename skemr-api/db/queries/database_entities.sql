@@ -60,7 +60,7 @@ LIMIT 1;
 -- name: CreateDatabaseEntity :one
 INSERT INTO database_entities
 (project_id, database_id, entity_type, parent_id, name, attributes, fingerprint)
-VALUES (@project_id, @database_id, @entity_type, @parent_id, @name, @attributes, @fingerprint)
+VALUES (@project_id, @database_id, @entity_type, @parent_id, @name, COALESCE(@attributes, '{}'::jsonb), @fingerprint)
 RETURNING *;
 
 -- name: UpdateDatabaseEntityName :one

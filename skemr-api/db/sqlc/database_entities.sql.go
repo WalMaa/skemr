@@ -15,7 +15,7 @@ import (
 const createDatabaseEntity = `-- name: CreateDatabaseEntity :one
 INSERT INTO database_entities
 (project_id, database_id, entity_type, parent_id, name, attributes, fingerprint)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
+VALUES ($1, $2, $3, $4, $5, COALESCE($6, '{}'::jsonb), $7)
 RETURNING id, fingerprint, project_id, database_id, status, deleted_at, first_seen_at, entity_type, parent_id, name, attributes, created_at
 `
 
@@ -25,8 +25,8 @@ type CreateDatabaseEntityParams struct {
 	EntityType  DatabaseEntityType `json:"entity_type"`
 	ParentID    *uuid.UUID         `json:"parent_id"`
 	Name        string             `json:"name"`
-	Attributes  []byte             `json:"attributes"`
-	Fingerprint pgtype.Text        `json:"fingerprint"`
+	Attributes  interface{}        `json:"attributes"`
+	Fingerprint string             `json:"fingerprint"`
 }
 
 func (q *Queries) CreateDatabaseEntity(ctx context.Context, arg CreateDatabaseEntityParams) (DatabaseEntity, error) {
@@ -305,8 +305,8 @@ LIMIT 1
 `
 
 type GetDatabaseEntityByFingerprintParams struct {
-	DatabaseID  uuid.UUID   `json:"database_id"`
-	Fingerprint pgtype.Text `json:"fingerprint"`
+	DatabaseID  uuid.UUID `json:"database_id"`
+	Fingerprint string    `json:"fingerprint"`
 }
 
 func (q *Queries) GetDatabaseEntityByFingerprint(ctx context.Context, arg GetDatabaseEntityByFingerprintParams) (DatabaseEntity, error) {
