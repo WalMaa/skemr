@@ -56,6 +56,11 @@ export interface Rule {
   ruleType: DatabaseRuleType;
   createdAt: string;
   databaseEntity: DatabaseEntity;
+  attributes: RuleAttributes;
+}
+
+export interface RuleAttributes {
+  deprecatedRemovalDate: string | null;
 }
 
 export type RuleCreationDto = {

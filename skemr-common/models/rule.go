@@ -7,7 +7,7 @@ import (
 )
 
 type RuleAttributes struct {
-	RemovalDate *string `json:"removalDate" validate:"omitempty,date_format=2006-01-02T15:04:05Z07:00"`
+	DeprecatedRemovalDate *string `json:"deprecatedRemovalDate" validate:"omitempty,date_format=2006-01-02T15:04:05Z07:00"`
 }
 
 type Rule struct {

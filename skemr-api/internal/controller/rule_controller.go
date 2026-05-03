@@ -95,9 +95,10 @@ func (h *RuleController) createRule(w http.ResponseWriter, r *http.Request) {
 		errormsg.WriteErrorResponse(w, r, err)
 		return
 	}
-	rule, err := h.Service.CreateRule(r.Context(), projectID, databaseId, body)
-	if err != nil {
 
+	rule, err := h.Service.CreateRule(r.Context(), projectID, databaseId, body)
+
+	if err != nil {
 		errormsg.WriteErrorResponse(w, r, err)
 		return
 	}
