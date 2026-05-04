@@ -31,7 +31,7 @@ func ToMap(b []byte) map[string]interface{} {
 	var m map[string]interface{}
 	err := json.Unmarshal(b, &m)
 	if err != nil {
-		slog.Error("Unable to unmarshal JSON", err)
+		slog.Error("Unable to unmarshal JSON", "err", err)
 		return nil
 	}
 	return m

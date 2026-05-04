@@ -77,7 +77,7 @@ func (h *ProjectSecretsController) getSecrets(w http.ResponseWriter, r *http.Req
 
 	tokens, err := h.Service.GetTokens(c, projectId)
 	if err != nil {
-		slog.Error("Error getting tokens", err)
+		slog.Error("Error getting tokens", "err", err)
 		return
 	}
 
@@ -85,7 +85,7 @@ func (h *ProjectSecretsController) getSecrets(w http.ResponseWriter, r *http.Req
 	render.JSON(w, r, tokens)
 }
 
-func (h *ProjectSecretsController) updateSecret(w http.ResponseWriter, r *http.Request) {
+func (h *ProjectSecretsController) updateSecret(_ http.ResponseWriter, _ *http.Request) {
 	// TODO: Implement update logic
 }
 
@@ -101,7 +101,7 @@ func (h *ProjectSecretsController) deleteSecret(w http.ResponseWriter, r *http.R
 
 	err = h.Service.DeleteToken(c, projectId, secretId)
 	if err != nil {
-		slog.Error("Error deleting token", err)
+		slog.Error("Error deleting token", "err", err)
 		http.Error(w, "Error deleting token", http.StatusInternalServerError)
 		return
 	}

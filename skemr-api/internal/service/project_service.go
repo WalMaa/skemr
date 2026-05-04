@@ -67,7 +67,7 @@ func (r *ProjectService) GetProject(c context.Context, projectId uuid.UUID) (mod
 	project, err := r.db.GetProject(c, projectId)
 
 	if err != nil {
-		slog.Error("Error getting project", err)
+		slog.Error("Error getting project", "err", err)
 		return models.Project{}, err
 	}
 

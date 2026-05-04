@@ -31,7 +31,7 @@ func (r *RuleService) GetRule(c context.Context, projectID uuid.UUID, databaseID
 	database, err := CheckDatabaseExists(c, r.db, project.ID, databaseID)
 
 	if err != nil {
-		slog.Error("Error fetching database", err)
+		slog.Error("Error fetching database", "err", err)
 		return models.Rule{}, err
 	}
 
@@ -41,7 +41,7 @@ func (r *RuleService) GetRule(c context.Context, projectID uuid.UUID, databaseID
 	})
 
 	if err != nil {
-		slog.Error("Unable to fetch rule", "error", err)
+		slog.Error("Unable to fetch rule", "err", err)
 		return models.Rule{}, err
 	}
 
@@ -60,13 +60,13 @@ func (r *RuleService) CreateRule(c context.Context, projectID uuid.UUID, databas
 	_, err = CheckDatabaseExists(c, r.db, project.ID, databaseId)
 
 	if err != nil {
-		slog.Error("Error fetching database", err)
+		slog.Error("Error fetching database", "err", err)
 		return models.Rule{}, err
 	}
 
 	rule, err := r.db.CreateRule(c, mapper.ToSqlcCreateRule(databaseId, dto))
 	if err != nil {
-		slog.Error("Unable to create a Rule", err)
+		slog.Error("Unable to create a Rule", "err", err)
 		return models.Rule{}, err
 	}
 
@@ -85,11 +85,15 @@ func (r *RuleService) ListRulesByDatabase(c context.Context, projectID uuid.UUID
 	database, err := CheckDatabaseExists(c, r.db, project.ID, databaseID)
 
 	if err != nil {
-		slog.Error("Error fetching database", err)
+		slog.Error("Error fetching database", "err", err)
 		return []models.Rule{}, err
 	}
 
 	rules, err := r.db.GetRulesWithEntities(c, database.ID)
+	if err != nil {
+		slog.Error("Unable to get rules", "err", err)
+		return []models.Rule{}, err
+	}
 	return mapper.ToDomainRulesWithEntity(rules), nil
 
 }
@@ -100,14 +104,14 @@ func (r *RuleService) DeleteRule(c context.Context, projectID uuid.UUID, databas
 	project, err := CheckProjectExists(c, r.db, projectID)
 
 	if err != nil {
-		slog.Error("Error fetching project", err)
+		slog.Error("Error fetching project", "err", err)
 		return err
 	}
 
 	database, err := CheckDatabaseExists(c, r.db, project.ID, databaseID)
 
 	if err != nil {
-		slog.Error("Error fetching database", err)
+		slog.Error("Error fetching database", "err", err)
 		return err
 	}
 

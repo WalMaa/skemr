@@ -8,6 +8,12 @@ import (
 	"github.com/spf13/viper"
 )
 
+const (
+	defaultAppPort      = 8080
+	defaultDatabasePort = 5432
+	defaultRedisPort    = 6379
+)
+
 type Config struct {
 	App struct {
 		Env  string
@@ -39,23 +45,23 @@ func LoadConfig() (*Config, error) {
 	if env == "dev" {
 		if err := godotenv.Load(".env"); err != nil {
 			// Log the error but continue, as environment variables might still be set
-			slog.Error("Warning: Could not load .env file: %v", err)
+			slog.Error("Warning: Could not load .env file", "err", err)
 		}
 	}
 
 	// Set defaults first
 	viper.SetDefault("app.env", env)
-	viper.SetDefault("app.port", 8080)
+	viper.SetDefault("app.port", defaultAppPort)
 	// Database defaults
 	viper.SetDefault("database.host", "localhost")
-	viper.SetDefault("database.port", 5432)
+	viper.SetDefault("database.port", defaultDatabasePort)
 	viper.SetDefault("database.user", "postgres")
 	viper.SetDefault("database.password", "pass")
 	viper.SetDefault("database.name", "postgres")
 	viper.SetDefault("database.sslmode", "disable")
 	// Redis defaults
 	viper.SetDefault("redis.host", "localhost")
-	viper.SetDefault("redis.port", 6379)
+	viper.SetDefault("redis.port", defaultRedisPort)
 	viper.SetDefault("redis.password", "")
 	viper.SetDefault("redis.db", 0)
 
@@ -63,20 +69,44 @@ func LoadConfig() (*Config, error) {
 	viper.AutomaticEnv()
 
 	// Bind environment variables to viper keys
-	viper.BindEnv("app.env", "APP_ENV")
-	viper.BindEnv("app.port", "APP_PORT")
+	if err := viper.BindEnv("app.env", "APP_ENV"); err != nil {
+		return nil, err
+	}
+	if err := viper.BindEnv("app.port", "APP_PORT"); err != nil {
+		return nil, err
+	}
 	// Database env vars
-	viper.BindEnv("database.host", "DB_HOST")
-	viper.BindEnv("database.port", "DB_PORT")
-	viper.BindEnv("database.user", "DB_USER")
-	viper.BindEnv("database.password", "DB_PASSWORD")
-	viper.BindEnv("database.name", "DB_NAME")
-	viper.BindEnv("database.sslmode", "DB_SSLMODE")
+	if err := viper.BindEnv("database.host", "DB_HOST"); err != nil {
+		return nil, err
+	}
+	if err := viper.BindEnv("database.port", "DB_PORT"); err != nil {
+		return nil, err
+	}
+	if err := viper.BindEnv("database.user", "DB_USER"); err != nil {
+		return nil, err
+	}
+	if err := viper.BindEnv("database.password", "DB_PASSWORD"); err != nil {
+		return nil, err
+	}
+	if err := viper.BindEnv("database.name", "DB_NAME"); err != nil {
+		return nil, err
+	}
+	if err := viper.BindEnv("database.sslmode", "DB_SSLMODE"); err != nil {
+		return nil, err
+	}
 	// Redis env vars
-	viper.BindEnv("redis.host", "REDIS_HOST")
-	viper.BindEnv("redis.port", "REDIS_PORT")
-	viper.BindEnv("redis.password", "REDIS_PASSWORD")
-	viper.BindEnv("redis.db", "REDIS_DB")
+	if err := viper.BindEnv("redis.host", "REDIS_HOST"); err != nil {
+		return nil, err
+	}
+	if err := viper.BindEnv("redis.port", "REDIS_PORT"); err != nil {
+		return nil, err
+	}
+	if err := viper.BindEnv("redis.password", "REDIS_PASSWORD"); err != nil {
+		return nil, err
+	}
+	if err := viper.BindEnv("redis.db", "REDIS_DB"); err != nil {
+		return nil, err
+	}
 
 	var cfg Config
 

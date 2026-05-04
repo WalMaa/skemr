@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -37,14 +36,14 @@ func (s *AccessTokenService) CreateToken(c context.Context, projectId uuid.UUID,
 	project, err := CheckProjectExists(c, s.db, projectId)
 
 	if err != nil {
-		slog.Error("Unable to get project", err)
+		slog.Error("Unable to get project", "err", err)
 		return "", err
 	}
 
 	tokenToShow, prefix, secret, err := tokens.GenerateToken(prefixLength, secretLength)
 
 	if err != nil {
-		slog.Error("Unable to generate token", err)
+		slog.Error("Unable to generate token", "err", err)
 		return "", err
 	}
 
@@ -52,7 +51,7 @@ func (s *AccessTokenService) CreateToken(c context.Context, projectId uuid.UUID,
 	verifier, err := tokens.HashSecret(secret, tokens.DefaultParams)
 
 	if err != nil {
-		slog.Error("Unable to hash token", err)
+		slog.Error("Unable to hash token", "err", err)
 		return "", err
 	}
 	expires := pgtype.Timestamptz{
@@ -62,12 +61,11 @@ func (s *AccessTokenService) CreateToken(c context.Context, projectId uuid.UUID,
 	if dto.ExpiresAt != "" {
 		expiry, err := time.Parse(time.RFC3339, dto.ExpiresAt)
 		if err != nil {
-			slog.Error("Unable to parse expiry time", err)
+			slog.Error("Unable to parse expiry time", "err", err)
 			return "", err
 		}
 		if expiry.Before(time.Now()) {
 			slog.Error("Expiry time is in the past")
-			err = fmt.Errorf("expiry time is in the past")
 			return "", &models.ErrorResponse{
 				Message: errormsg.ErrExpiryTimeInPast,
 				Status:  http.StatusBadRequest,
@@ -89,7 +87,7 @@ func (s *AccessTokenService) CreateToken(c context.Context, projectId uuid.UUID,
 		ExpiresAt: expires,
 	})
 	if err != nil {
-		slog.Error("Error saving a project access token", err)
+		slog.Error("Error saving a project access token", "err", err)
 		return "", err
 	}
 
@@ -101,13 +99,13 @@ func (s *AccessTokenService) GetTokens(c context.Context, projectId uuid.UUID) (
 	project, err := CheckProjectExists(c, s.db, projectId)
 
 	if err != nil {
-		slog.Error("Unable to get project", err)
+		slog.Error("Unable to get project", "err", err)
 		return nil, err
 	}
 
 	accessTokens, err := s.db.GetProjectAccessTokens(c, project.ID)
 	if err != nil {
-		slog.Error("Unable to get tokens", err)
+		slog.Error("Unable to get tokens", "err", err)
 		return nil, err
 	}
 
@@ -121,7 +119,7 @@ func (s *AccessTokenService) DeleteToken(c context.Context, projectId uuid.UUID,
 	project, err := CheckProjectExists(c, s.db, projectId)
 
 	if err != nil {
-		slog.Error("Unable to get project")
+		slog.Error("Unable to get project", "err", err)
 		return err
 	}
 
@@ -130,7 +128,7 @@ func (s *AccessTokenService) DeleteToken(c context.Context, projectId uuid.UUID,
 		SecretID:  secretId,
 	})
 	if err != nil {
-		slog.Error("Unable to delete project access token", err)
+		slog.Error("Unable to delete project access token", "err", err)
 		return err
 	}
 
@@ -172,14 +170,14 @@ func (s *AccessTokenService) ValidateToken(c context.Context, projectId uuid.UUI
 	}
 
 	if err != nil {
-		slog.Error("Unable to get token hash from database", err)
+		slog.Error("Unable to get token hash from database", "err", err)
 		return false, err
 	}
 
 	ok, err := tokens.VerifySecret(secretPart, hash)
 
 	if err != nil {
-		slog.Error("Error verifying token", err)
+		slog.Error("Error verifying token", "err", err)
 		return false, err
 	}
 
