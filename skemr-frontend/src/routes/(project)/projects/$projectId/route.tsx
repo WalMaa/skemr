@@ -26,7 +26,7 @@ function RouteComponent() {
       <AppSidebar projectId={projectId} databases={databases} />
       <SidebarInset>
         <ProjectHeader />
-        <div className=" p-2 md:p-5 overflow-scroll">
+        <div className=" p-2 md:p-5 overflow-y-auto">
           <Outlet />
         </div>
       </SidebarInset>

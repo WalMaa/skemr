@@ -76,7 +76,7 @@ func (r *DatabaseService) CreateDatabase(c context.Context, projectId uuid.UUID,
 	database, err := r.db.CreateDatabase(c, mapper.ToCreateDatabaseParams(projectId, dto))
 
 	if err != nil {
-		slog.Error("Error creating database", err)
+		slog.Error("Error creating database", "err", err)
 		return models.Database{}, err
 	}
 
@@ -94,7 +94,7 @@ func (r *DatabaseService) createDatabaseSyncTask(databaseId uuid.UUID) {
 	}
 	_, err = r.taskClient.Enqueue(task)
 	if err != nil {
-		slog.Error("Error in task", err)
+		slog.Error("Error in task", "err", err)
 	}
 
 }
@@ -105,14 +105,14 @@ func (r *DatabaseService) EnqueueManualDatabaseSync(c context.Context, projectId
 	project, err := CheckProjectExists(c, r.db, projectId)
 
 	if err != nil {
-		slog.Error("Error fetching project")
+		slog.Error("Error fetching project", "err", err)
 		return err
 	}
 
 	database, err := CheckDatabaseExists(c, r.db, project.ID, databaseId)
 
 	if err != nil {
-		slog.Error("Error getting database")
+		slog.Error("Error getting database", "err", err)
 		return err
 	}
 
@@ -174,7 +174,7 @@ func (r *DatabaseService) UpdateDatabase(c context.Context, projectId uuid.UUID,
 	database, err := r.db.UpdateDatabase(c, mapper.ToUpdateDatabaseParams(databaseId, dto))
 
 	if err != nil {
-		slog.Error("Error updating database", err)
+		slog.Error("Error updating database", "err", err)
 		return models.Database{}, err
 	}
 
