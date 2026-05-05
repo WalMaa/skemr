@@ -31,6 +31,11 @@ var entities = []models.DatabaseEntity{
 		Name: "age",
 		Type: models.DatabaseEntityTypeColumn,
 	},
+	{
+		ID:   uuid.New(),
+		Name: "public",
+		Type: models.DatabaseEntityTypeNamespace,
+	},
 }
 
 func TestProcessStatementsReturnsResult(t *testing.T) {
@@ -261,7 +266,7 @@ func TestAdvisoryRuleTrigger(t *testing.T) {
 }
 
 // If tables A and B have identical column names, and there is a rule that locks on column name on table A,
-// Then dropping the column on table B should not trigger the rule, but dropping the column on table A should trigger the rule.
+// Then dropping the column on table B should not trigger the rule. However, dropping the column on table A should trigger the rule.
 func TestIdenticalColumnNameRule(t *testing.T) {
 	tableAId := uuid.New()
 	tableBId := uuid.New()
