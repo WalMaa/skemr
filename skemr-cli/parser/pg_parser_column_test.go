@@ -50,3 +50,23 @@ func TestParseSqlModifyColumnDataType(t *testing.T) {
 	assert.Equal(t, "rules", statementAction[0].Relation, "Expected relation 'rules'")
 
 }
+
+func TestParseSqlAddColumn(t *testing.T) {
+	sql := "ALTER TABLE rules ADD COLUMN description TEXT"
+	statementAction, err := ParseSql(sql)
+
+	assert.Nil(t, err)
+	assert.Equal(t, "description", statementAction[0].Target, "Expected target 'description'")
+	assert.Equal(t, SqlActionAddColumn, statementAction[0].Action, "Expected action 'ADD COLUMN'")
+	assert.Equal(t, "rules", statementAction[0].Relation, "Expected relation 'rules'")
+}
+
+func TestParseSqlAddColumnWithTimestamp(t *testing.T) {
+	sql := "ALTER TABLE orders ADD COLUMN updated_at TIMESTAMP;"
+	statementAction, err := ParseSql(sql)
+
+	assert.Nil(t, err)
+	assert.Equal(t, "updated_at", statementAction[0].Target, "Expected target 'updated_at'")
+	assert.Equal(t, SqlActionAddColumn, statementAction[0].Action, "Expected action 'ADD COLUMN'")
+	assert.Equal(t, "orders", statementAction[0].Relation, "Expected relation 'orders'")
+}

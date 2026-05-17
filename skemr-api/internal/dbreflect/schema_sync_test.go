@@ -6,7 +6,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/walmaa/skemr-api/db/sqlc"
@@ -86,17 +85,14 @@ func TestUpdateSchemaCreatesNew(t *testing.T) {
 	mockDB.On("GetDatabaseEntityByDatabaseIdAndTypeAndParentAndName", mock.Anything, mock.Anything).Return(sqlc.DatabaseEntity{}, pgx.ErrNoRows)
 	mockDB.On("GetDatabaseEntityByFingerprint", mock.Anything, mock.Anything).Return(sqlc.DatabaseEntity{}, pgx.ErrNoRows)
 	mockDB.On("CreateDatabaseEntity", mock.Anything, mock.Anything).Return(sqlc.DatabaseEntity{
-		ID:         uuid.New(),
-		Name:       schemaName,
-		DatabaseID: dataBaseId,
-		Fingerprint: pgtype.Text{
-			String: "fingerprint",
-			Valid:  true,
-		},
+		ID:          uuid.New(),
+		Name:        schemaName,
+		DatabaseID:  dataBaseId,
+		Fingerprint: "fingerprint",
 	}, nil)
 
 	syncService := NewSchemaSyncService(mockDB, func(_ models.Database) DatabaseConnector { return mockConnector })
-	schema, err := syncService.updateSchema(c, schemaRef, database)
+	schema, err := syncService.updateNamespace(c, schemaRef, database)
 
 	require.NoError(t, err)
 	require.Equal(t, schema.Name, schemaName)
@@ -127,7 +123,7 @@ func TestUpdateSchemaUpdatesExisting(t *testing.T) {
 	}, nil)
 
 	syncService := NewSchemaSyncService(mockDB, func(_ models.Database) DatabaseConnector { return mockConnector })
-	schema, err := syncService.updateSchema(c, schemaRef, database)
+	schema, err := syncService.updateNamespace(c, schemaRef, database)
 
 	require.NoError(t, err)
 	require.Equal(t, schema.Name, schemaName)

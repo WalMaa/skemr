@@ -20,9 +20,9 @@ func GenerateTableFingerprint(tableRef TableRef) string {
 	return fmt.Sprintf("table:%s:%s", tableRef.ColumnShape, tableRef.PrimaryKey)
 }
 
-// GenerateSchemaFingerprint generates a unique identifier for a schema based on its properties.
+// GenerateNamespaceFingerprint generates a unique identifier for a schema based on its properties.
 // The principle is to create a stable identifier that remains consistent across schema renames and db instance changes (backup restores).
 // The format is schema:{database_id}:{schema_fingerprint}
-func GenerateSchemaFingerprint(schemaRef SchemaRef, databaseId uuid.UUID) string {
-	return fmt.Sprintf("schema:%s:%s", databaseId.String(), schemaRef.Fingerprint)
+func GenerateNamespaceFingerprint(schemaRef SchemaRef) string {
+	return fmt.Sprintf("namespace:%s", schemaRef.Fingerprint)
 }

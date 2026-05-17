@@ -114,7 +114,7 @@ func (s *SchemaSyncService) SyncSchema(c context.Context, database models.Databa
 
 	// For each schema, get tables and columns
 	for _, schema := range schemaRefs {
-		schema, err := s.updateSchema(c, schema, database)
+		schema, err := s.updateNamespace(c, schema, database)
 		if err != nil {
 			return err
 		}
@@ -126,7 +126,7 @@ func (s *SchemaSyncService) SyncSchema(c context.Context, database models.Databa
 			return fmt.Errorf("error getting tables in schema %q: %w", schema.Name, err)
 		}
 		for _, tableRef := range tables {
-			table, err := s.UpdateTable(c, tableRef, database, schema.ID)
+			table, err := s.updateTable(c, tableRef, database, schema.ID)
 
 			if err != nil {
 				return fmt.Errorf("error updating tables: %w", err)
@@ -139,7 +139,7 @@ func (s *SchemaSyncService) SyncSchema(c context.Context, database models.Databa
 				return fmt.Errorf("error getting columns in table %q.%q: %w", schema.Name, tableRef.Name, err)
 			}
 			for _, column := range columns {
-				column, err := s.SyncColumn(c, column, database, table.ID)
+				column, err := s.updateColumn(c, column, database, table.ID)
 				if err != nil {
 					return fmt.Errorf("Error updating column: %w", err)
 				}
@@ -166,10 +166,10 @@ func (s *SchemaSyncService) SyncSchema(c context.Context, database models.Databa
 	return nil
 }
 
-// updateSchema checks if a schema with the given name exists for the database.
+// updateNamespace checks if a namespace (schema in postgres) with the given name exists for the database.
 // If it does not exist, it creates a new schema entity.
 // If it does exist, it currently does nothing but can be extended to update schema attributes if needed.
-func (s *SchemaSyncService) updateSchema(c context.Context, schemaRef SchemaRef, database models.Database) (sqlc.DatabaseEntity, error) {
+func (s *SchemaSyncService) updateNamespace(c context.Context, schemaRef SchemaRef, database models.Database) (sqlc.DatabaseEntity, error) {
 	args := sqlc.GetDatabaseEntityByDatabaseIdAndTypeAndParentAndNameParams{
 		DatabaseID: database.ID,
 		EntityType: sqlc.DatabaseEntityTypeSchema,
@@ -185,7 +185,7 @@ func (s *SchemaSyncService) updateSchema(c context.Context, schemaRef SchemaRef,
 
 		// If that schema does not exist by name, check by fingerprint to see if it is the same schema with an updated name.
 
-		fingerprint := GenerateSchemaFingerprint(schemaRef, database.ID)
+		fingerprint := GenerateNamespaceFingerprint(schemaRef)
 
 		schema, err = s.db.GetDatabaseEntityByFingerprint(c, sqlc.GetDatabaseEntityByFingerprintParams{
 			DatabaseID:  database.ID,
@@ -251,7 +251,7 @@ func (s *SchemaSyncService) markEntityAsDeleted(c context.Context, entityId uuid
 	return nil
 }
 
-func (s *SchemaSyncService) UpdateTable(c context.Context, tableRef TableRef, database models.Database, schemaId uuid.UUID) (sqlc.DatabaseEntity, error) {
+func (s *SchemaSyncService) updateTable(c context.Context, tableRef TableRef, database models.Database, schemaId uuid.UUID) (sqlc.DatabaseEntity, error) {
 	args := sqlc.GetDatabaseEntityByDatabaseIdAndTypeAndParentAndNameParams{
 		DatabaseID: database.ID,
 		ParentID:   &schemaId,
@@ -322,8 +322,8 @@ func (s *SchemaSyncService) UpdateTable(c context.Context, tableRef TableRef, da
 	return table, err
 }
 
-// SyncColumn syncs a database column to a database entity.
-func (s *SchemaSyncService) SyncColumn(c context.Context, columnRef ColumnRef, database models.Database, tableId uuid.UUID) (sqlc.DatabaseEntity, error) {
+// updateColumn syncs a database column to a database entity.
+func (s *SchemaSyncService) updateColumn(c context.Context, columnRef ColumnRef, database models.Database, tableId uuid.UUID) (sqlc.DatabaseEntity, error) {
 	args := sqlc.GetDatabaseEntityByDatabaseIdAndTypeAndParentAndNameParams{
 		DatabaseID: database.ID,
 		ParentID:   &tableId,

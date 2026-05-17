@@ -8,10 +8,11 @@ import (
 )
 
 type StatementAction struct {
-	Target   string    // e.g., column name, table name, database name
-	Action   SqlAction // The type of action performed (e.g., CREATE, DROP, ALTER)
-	Relation string    // e.g., table name for column actions
-	Original string    // The original SQL statement for reference
+	Target    string    // e.g., column name, table name, database name
+	Action    SqlAction // The type of action performed (e.g., CREATE, DROP, ALTER)
+	Relation  string    // e.g., table name for column actions
+	Namespace string    // Namespace for database and table level actions
+	Original  string    // The original SQL statement for reference
 }
 
 type SqlAction string
@@ -160,11 +161,13 @@ func parseCreateStmt(createStmt *pgquery.CreateStmt) (StatementAction, error) {
 	relName := createStmt.Relation.Relname
 	target := relName
 	action := SqlActionCreateTable
+	namespace := createStmt.Relation.Schemaname
 
 	return StatementAction{
-		Target:   target,
-		Action:   action,
-		Relation: relName,
+		Target:    target,
+		Action:    action,
+		Relation:  relName,
+		Namespace: namespace,
 	}, nil
 }
 
@@ -194,6 +197,7 @@ func parseRenameStmt(renameStmt *pgquery.RenameStmt) (StatementAction, error) {
 	relName := ""
 	target := ""
 	action := SqlActionUndefined
+	namespace := ""
 
 	switch renameStmt.GetRenameType() {
 	// If renaming a table
@@ -201,6 +205,7 @@ func parseRenameStmt(renameStmt *pgquery.RenameStmt) (StatementAction, error) {
 
 		action = SqlActionRenameTable
 		target = renameStmt.Relation.Relname
+		namespace = renameStmt.Relation.Schemaname
 	// If renaming a database
 	case pgquery.ObjectType_OBJECT_DATABASE:
 		action = SqlActionRenameDatabase
@@ -217,9 +222,10 @@ func parseRenameStmt(renameStmt *pgquery.RenameStmt) (StatementAction, error) {
 	}
 
 	return StatementAction{
-		Target:   target,
-		Action:   action,
-		Relation: relName,
+		Target:    target,
+		Action:    action,
+		Relation:  relName,
+		Namespace: namespace,
 	}, nil
 }
 
@@ -238,10 +244,21 @@ func parseDrop(dropStmt *pgquery.DropStmt) (StatementAction, error) {
 	relName := ""
 	target := ""
 	action := SqlActionUndefined
+	namespace := ""
 
 	// If we are dropping a table
 	if dropStmt.RemoveType == pgquery.ObjectType_OBJECT_TABLE {
-		tableName := dropStmt.GetObjects()[0].GetList().Items[0].GetString_().GetSval()
+		// if qualified name (namespace.table), the table name is the second item in the list
+		statementItems := dropStmt.GetObjects()[0].GetList().Items
+		tableName := ""
+
+		if len(statementItems) > 1 {
+			namespace = statementItems[0].GetString_().GetSval()
+			tableName = statementItems[1].GetString_().GetSval()
+		} else {
+			tableName = statementItems[0].GetString_().GetSval()
+		}
+
 		relName = tableName
 		target = tableName
 		action = SqlActionDropTable
@@ -255,9 +272,10 @@ func parseDrop(dropStmt *pgquery.DropStmt) (StatementAction, error) {
 	}
 
 	return StatementAction{
-		Target:   target,
-		Action:   action,
-		Relation: relName,
+		Target:    target,
+		Action:    action,
+		Relation:  relName,
+		Namespace: namespace,
 	}, nil
 }
 
