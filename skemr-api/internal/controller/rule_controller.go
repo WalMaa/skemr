@@ -10,6 +10,7 @@ import (
 	"github.com/walmaa/skemr-api/internal/dto"
 	"github.com/walmaa/skemr-api/internal/errormsg"
 	"github.com/walmaa/skemr-api/internal/service"
+	"github.com/walmaa/skemr-api/internal/validation"
 )
 
 type RuleController struct {
@@ -93,6 +94,14 @@ func (h *RuleController) createRule(w http.ResponseWriter, r *http.Request) {
 
 	if err := render.Decode(r, &body); err != nil {
 		errormsg.WriteErrorResponse(w, r, err)
+		return
+	}
+
+	err = validation.Validate.Struct(body)
+
+	if err != nil {
+		errorResponse := validation.CreateErrorResponse(err)
+		errormsg.WriteErrorResponse(w, r, &errorResponse)
 		return
 	}
 

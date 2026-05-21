@@ -362,6 +362,41 @@ func (q *Queries) GetDatabaseEntityByProjectIdAndId(ctx context.Context, arg Get
 	return i, err
 }
 
+const getDatabaseEntityByProjectIdDatabaseIdAndId = `-- name: GetDatabaseEntityByProjectIdDatabaseIdAndId :one
+SELECT id, fingerprint, project_id, database_id, status, deleted_at, first_seen_at, entity_type, parent_id, name, attributes, created_at
+FROM database_entities
+WHERE id = $1
+  AND project_id = $2
+  AND database_id = $3
+LIMIT 1
+`
+
+type GetDatabaseEntityByProjectIdDatabaseIdAndIdParams struct {
+	ID         uuid.UUID `json:"id"`
+	ProjectID  uuid.UUID `json:"project_id"`
+	DatabaseID uuid.UUID `json:"database_id"`
+}
+
+func (q *Queries) GetDatabaseEntityByProjectIdDatabaseIdAndId(ctx context.Context, arg GetDatabaseEntityByProjectIdDatabaseIdAndIdParams) (DatabaseEntity, error) {
+	row := q.db.QueryRow(ctx, getDatabaseEntityByProjectIdDatabaseIdAndId, arg.ID, arg.ProjectID, arg.DatabaseID)
+	var i DatabaseEntity
+	err := row.Scan(
+		&i.ID,
+		&i.Fingerprint,
+		&i.ProjectID,
+		&i.DatabaseID,
+		&i.Status,
+		&i.DeletedAt,
+		&i.FirstSeenAt,
+		&i.EntityType,
+		&i.ParentID,
+		&i.Name,
+		&i.Attributes,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const updateDatabaseEntity = `-- name: UpdateDatabaseEntity :one
 UPDATE database_entities
 SET name = COALESCE($1, name),

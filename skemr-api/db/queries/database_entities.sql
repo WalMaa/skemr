@@ -11,6 +11,14 @@ WHERE id = @id
   AND project_id = @project_id
 LIMIT 1;
 
+-- name: GetDatabaseEntityByProjectIdDatabaseIdAndId :one
+SELECT *
+FROM database_entities
+WHERE id = @id
+  AND project_id = @project_id
+  AND database_id = @database_id
+LIMIT 1;
+
 -- name: GetDatabaseEntitiesByProjectId :many
 SELECT *
 FROM database_entities

@@ -1397,6 +1397,72 @@ func (_c *MockQuerier_GetDatabaseEntityByProjectIdAndId_Call) RunAndReturn(run f
 	return _c
 }
 
+// GetDatabaseEntityByProjectIdDatabaseIdAndId provides a mock function for the type MockQuerier
+func (_mock *MockQuerier) GetDatabaseEntityByProjectIdDatabaseIdAndId(ctx context.Context, arg sqlc.GetDatabaseEntityByProjectIdDatabaseIdAndIdParams) (sqlc.DatabaseEntity, error) {
+	ret := _mock.Called(ctx, arg)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetDatabaseEntityByProjectIdDatabaseIdAndId")
+	}
+
+	var r0 sqlc.DatabaseEntity
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sqlc.GetDatabaseEntityByProjectIdDatabaseIdAndIdParams) (sqlc.DatabaseEntity, error)); ok {
+		return returnFunc(ctx, arg)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sqlc.GetDatabaseEntityByProjectIdDatabaseIdAndIdParams) sqlc.DatabaseEntity); ok {
+		r0 = returnFunc(ctx, arg)
+	} else {
+		r0 = ret.Get(0).(sqlc.DatabaseEntity)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, sqlc.GetDatabaseEntityByProjectIdDatabaseIdAndIdParams) error); ok {
+		r1 = returnFunc(ctx, arg)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockQuerier_GetDatabaseEntityByProjectIdDatabaseIdAndId_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetDatabaseEntityByProjectIdDatabaseIdAndId'
+type MockQuerier_GetDatabaseEntityByProjectIdDatabaseIdAndId_Call struct {
+	*mock.Call
+}
+
+// GetDatabaseEntityByProjectIdDatabaseIdAndId is a helper method to define mock.On call
+//   - ctx context.Context
+//   - arg sqlc.GetDatabaseEntityByProjectIdDatabaseIdAndIdParams
+func (_e *MockQuerier_Expecter) GetDatabaseEntityByProjectIdDatabaseIdAndId(ctx interface{}, arg interface{}) *MockQuerier_GetDatabaseEntityByProjectIdDatabaseIdAndId_Call {
+	return &MockQuerier_GetDatabaseEntityByProjectIdDatabaseIdAndId_Call{Call: _e.mock.On("GetDatabaseEntityByProjectIdDatabaseIdAndId", ctx, arg)}
+}
+
+func (_c *MockQuerier_GetDatabaseEntityByProjectIdDatabaseIdAndId_Call) Run(run func(ctx context.Context, arg sqlc.GetDatabaseEntityByProjectIdDatabaseIdAndIdParams)) *MockQuerier_GetDatabaseEntityByProjectIdDatabaseIdAndId_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sqlc.GetDatabaseEntityByProjectIdDatabaseIdAndIdParams
+		if args[1] != nil {
+			arg1 = args[1].(sqlc.GetDatabaseEntityByProjectIdDatabaseIdAndIdParams)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockQuerier_GetDatabaseEntityByProjectIdDatabaseIdAndId_Call) Return(databaseEntity sqlc.DatabaseEntity, err error) *MockQuerier_GetDatabaseEntityByProjectIdDatabaseIdAndId_Call {
+	_c.Call.Return(databaseEntity, err)
+	return _c
+}
+
+func (_c *MockQuerier_GetDatabaseEntityByProjectIdDatabaseIdAndId_Call) RunAndReturn(run func(ctx context.Context, arg sqlc.GetDatabaseEntityByProjectIdDatabaseIdAndIdParams) (sqlc.DatabaseEntity, error)) *MockQuerier_GetDatabaseEntityByProjectIdDatabaseIdAndId_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetHashByPrefixAndProjectID provides a mock function for the type MockQuerier
 func (_mock *MockQuerier) GetHashByPrefixAndProjectID(ctx context.Context, arg sqlc.GetHashByPrefixAndProjectIDParams) (string, error) {
 	ret := _mock.Called(ctx, arg)
@@ -1857,6 +1923,72 @@ func (_c *MockQuerier_GetRule_Call) RunAndReturn(run func(ctx context.Context, a
 	return _c
 }
 
+// GetRuleByDatabaseAndName provides a mock function for the type MockQuerier
+func (_mock *MockQuerier) GetRuleByDatabaseAndName(ctx context.Context, arg sqlc.GetRuleByDatabaseAndNameParams) (sqlc.Rule, error) {
+	ret := _mock.Called(ctx, arg)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetRuleByDatabaseAndName")
+	}
+
+	var r0 sqlc.Rule
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sqlc.GetRuleByDatabaseAndNameParams) (sqlc.Rule, error)); ok {
+		return returnFunc(ctx, arg)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sqlc.GetRuleByDatabaseAndNameParams) sqlc.Rule); ok {
+		r0 = returnFunc(ctx, arg)
+	} else {
+		r0 = ret.Get(0).(sqlc.Rule)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, sqlc.GetRuleByDatabaseAndNameParams) error); ok {
+		r1 = returnFunc(ctx, arg)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockQuerier_GetRuleByDatabaseAndName_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetRuleByDatabaseAndName'
+type MockQuerier_GetRuleByDatabaseAndName_Call struct {
+	*mock.Call
+}
+
+// GetRuleByDatabaseAndName is a helper method to define mock.On call
+//   - ctx context.Context
+//   - arg sqlc.GetRuleByDatabaseAndNameParams
+func (_e *MockQuerier_Expecter) GetRuleByDatabaseAndName(ctx interface{}, arg interface{}) *MockQuerier_GetRuleByDatabaseAndName_Call {
+	return &MockQuerier_GetRuleByDatabaseAndName_Call{Call: _e.mock.On("GetRuleByDatabaseAndName", ctx, arg)}
+}
+
+func (_c *MockQuerier_GetRuleByDatabaseAndName_Call) Run(run func(ctx context.Context, arg sqlc.GetRuleByDatabaseAndNameParams)) *MockQuerier_GetRuleByDatabaseAndName_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sqlc.GetRuleByDatabaseAndNameParams
+		if args[1] != nil {
+			arg1 = args[1].(sqlc.GetRuleByDatabaseAndNameParams)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockQuerier_GetRuleByDatabaseAndName_Call) Return(rule sqlc.Rule, err error) *MockQuerier_GetRuleByDatabaseAndName_Call {
+	_c.Call.Return(rule, err)
+	return _c
+}
+
+func (_c *MockQuerier_GetRuleByDatabaseAndName_Call) RunAndReturn(run func(ctx context.Context, arg sqlc.GetRuleByDatabaseAndNameParams) (sqlc.Rule, error)) *MockQuerier_GetRuleByDatabaseAndName_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetRuleWithEntity provides a mock function for the type MockQuerier
 func (_mock *MockQuerier) GetRuleWithEntity(ctx context.Context, arg sqlc.GetRuleWithEntityParams) (sqlc.GetRuleWithEntityRow, error) {
 	ret := _mock.Called(ctx, arg)
@@ -1924,8 +2056,8 @@ func (_c *MockQuerier_GetRuleWithEntity_Call) RunAndReturn(run func(ctx context.
 }
 
 // GetRulesWithEntities provides a mock function for the type MockQuerier
-func (_mock *MockQuerier) GetRulesWithEntities(ctx context.Context, databaseID uuid.UUID) ([]sqlc.GetRulesWithEntitiesRow, error) {
-	ret := _mock.Called(ctx, databaseID)
+func (_mock *MockQuerier) GetRulesWithEntities(ctx context.Context, arg sqlc.GetRulesWithEntitiesParams) ([]sqlc.GetRulesWithEntitiesRow, error) {
+	ret := _mock.Called(ctx, arg)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetRulesWithEntities")
@@ -1933,18 +2065,18 @@ func (_mock *MockQuerier) GetRulesWithEntities(ctx context.Context, databaseID u
 
 	var r0 []sqlc.GetRulesWithEntitiesRow
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) ([]sqlc.GetRulesWithEntitiesRow, error)); ok {
-		return returnFunc(ctx, databaseID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sqlc.GetRulesWithEntitiesParams) ([]sqlc.GetRulesWithEntitiesRow, error)); ok {
+		return returnFunc(ctx, arg)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) []sqlc.GetRulesWithEntitiesRow); ok {
-		r0 = returnFunc(ctx, databaseID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sqlc.GetRulesWithEntitiesParams) []sqlc.GetRulesWithEntitiesRow); ok {
+		r0 = returnFunc(ctx, arg)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]sqlc.GetRulesWithEntitiesRow)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
-		r1 = returnFunc(ctx, databaseID)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, sqlc.GetRulesWithEntitiesParams) error); ok {
+		r1 = returnFunc(ctx, arg)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -1958,20 +2090,20 @@ type MockQuerier_GetRulesWithEntities_Call struct {
 
 // GetRulesWithEntities is a helper method to define mock.On call
 //   - ctx context.Context
-//   - databaseID uuid.UUID
-func (_e *MockQuerier_Expecter) GetRulesWithEntities(ctx interface{}, databaseID interface{}) *MockQuerier_GetRulesWithEntities_Call {
-	return &MockQuerier_GetRulesWithEntities_Call{Call: _e.mock.On("GetRulesWithEntities", ctx, databaseID)}
+//   - arg sqlc.GetRulesWithEntitiesParams
+func (_e *MockQuerier_Expecter) GetRulesWithEntities(ctx interface{}, arg interface{}) *MockQuerier_GetRulesWithEntities_Call {
+	return &MockQuerier_GetRulesWithEntities_Call{Call: _e.mock.On("GetRulesWithEntities", ctx, arg)}
 }
 
-func (_c *MockQuerier_GetRulesWithEntities_Call) Run(run func(ctx context.Context, databaseID uuid.UUID)) *MockQuerier_GetRulesWithEntities_Call {
+func (_c *MockQuerier_GetRulesWithEntities_Call) Run(run func(ctx context.Context, arg sqlc.GetRulesWithEntitiesParams)) *MockQuerier_GetRulesWithEntities_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 uuid.UUID
+		var arg1 sqlc.GetRulesWithEntitiesParams
 		if args[1] != nil {
-			arg1 = args[1].(uuid.UUID)
+			arg1 = args[1].(sqlc.GetRulesWithEntitiesParams)
 		}
 		run(
 			arg0,
@@ -1986,7 +2118,7 @@ func (_c *MockQuerier_GetRulesWithEntities_Call) Return(getRulesWithEntitiesRows
 	return _c
 }
 
-func (_c *MockQuerier_GetRulesWithEntities_Call) RunAndReturn(run func(ctx context.Context, databaseID uuid.UUID) ([]sqlc.GetRulesWithEntitiesRow, error)) *MockQuerier_GetRulesWithEntities_Call {
+func (_c *MockQuerier_GetRulesWithEntities_Call) RunAndReturn(run func(ctx context.Context, arg sqlc.GetRulesWithEntitiesParams) ([]sqlc.GetRulesWithEntitiesRow, error)) *MockQuerier_GetRulesWithEntities_Call {
 	_c.Call.Return(run)
 	return _c
 }

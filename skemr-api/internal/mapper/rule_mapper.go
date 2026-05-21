@@ -21,6 +21,10 @@ func ToDomainRule(e sqlc.Rule) models.Rule {
 }
 
 func ToRuleAttributes(attributes []byte) models.RuleAttributes {
+	if attributes == nil {
+		return models.RuleAttributes{}
+	}
+
 	var ruleAttributes models.RuleAttributes
 	err := json.Unmarshal(attributes, &ruleAttributes)
 	if err != nil {

@@ -13,7 +13,7 @@ import (
 func ToBytes(v interface{}) []byte {
 	b, err := json.Marshal(v)
 	if err != nil {
-		slog.Error("Unable to marshal JSON", err)
+		slog.Error("Unable to marshal JSON", "err", err)
 		return nil
 	}
 	return b

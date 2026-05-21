@@ -96,7 +96,8 @@ CREATE TABLE databases
     failed_connection_attempts INTEGER     NOT NULL DEFAULT 0,
     created_at                 TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at                 TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT unique_database_name_per_project UNIQUE (display_name, project_id)
+    CONSTRAINT unique_database_name_per_project UNIQUE (display_name, project_id),
+    CONSTRAINT databases_id_project_id_unique UNIQUE (id, project_id)
 );
 
 CREATE TABLE migration_statements
@@ -121,13 +122,13 @@ CREATE TABLE database_entities
 (
     id            uuid PRIMARY KEY                DEFAULT gen_random_uuid(),
     fingerprint   text                   NOT NULL,                        -- this is used to track the same entity across syncs even if it is renamed.
-    project_id    uuid                   NOT NULL REFERENCES projects (id) ON DELETE CASCADE,
-    database_id   uuid                   NOT NULL REFERENCES databases (id) ON DELETE CASCADE,
+    project_id    uuid                   NOT NULL,
+    database_id   uuid                   NOT NULL,
     status        database_entity_status NOT NULL DEFAULT 'active',
     deleted_at    TIMESTAMPTZ            NULL,                            -- Set when status is 'deleted' to track when it was deleted
     first_seen_at TIMESTAMPTZ            NOT NULL DEFAULT NOW(),          -- Track when we first saw this entity
     entity_type   database_entity_type   NOT NULL,
-    parent_id     uuid                   NULL REFERENCES database_entities (id),
+    parent_id     uuid                   NULL,
 
     -- generic identity at this node
     name          text                   NOT NULL,                        -- e.g. "public", "users", "email", "my_view"
@@ -135,7 +136,20 @@ CREATE TABLE database_entities
 
     created_at    TIMESTAMPTZ            NOT NULL DEFAULT NOW(),
 
+    CONSTRAINT database_entities_parent_same_database_fkey
+        FOREIGN KEY (parent_id, database_id)
+        REFERENCES database_entities (id, database_id) ON DELETE CASCADE, -- Ensure parent_id references an entity in the same database
+
+    CONSTRAINT database_entities_database_project_fkey
+        FOREIGN KEY (database_id, project_id)
+            REFERENCES databases (id, project_id)
+            ON DELETE CASCADE, -- Ensure entities are only in the same project
+
+    CONSTRAINT database_entities_id_database_id_unique
+        UNIQUE (id, database_id), -- for rule composite fkey
+
     UNIQUE NULLS NOT DISTINCT (database_id, name, entity_type, parent_id) -- Ensure we do not map the same entity twice, use NULLS NOT DISTINCT so parentless are not duplicated
+
 );
 
 
@@ -146,8 +160,12 @@ CREATE TABLE rules
     name               TEXT        NOT NULL,                     -- Defined by user
     type               rule_type   NOT NULL,
     attributes         jsonb       NOT NULL DEFAULT '{}'::jsonb, -- Metadata about the rule, removal_date for deprecated types for example
-    database_entity_id uuid        NOT NULL REFERENCES database_entities (id) ON DELETE CASCADE,
+    database_entity_id uuid        NOT NULL REFERENCES database_entities (id),
     database_id        uuid        NOT NULL REFERENCES databases (id) ON DELETE CASCADE,
     created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT unique_rule_name_per_database UNIQUE (name, database_id)
+    CONSTRAINT unique_rule_name_per_database
+        UNIQUE (name, database_id),
+    CONSTRAINT rules_database_entity_database_fkey
+        FOREIGN KEY (database_entity_id, database_id)
+        REFERENCES database_entities (id, database_id) ON DELETE CASCADE --- ensure rules are only applied to entities in the same database
 );

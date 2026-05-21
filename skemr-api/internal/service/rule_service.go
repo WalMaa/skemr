@@ -16,31 +16,28 @@ import (
 )
 
 type RuleService struct {
-	db sqlc.Querier
+	ruleStore     RuleStore
+	scopeResolver ScopeResolver
 }
 
-func NewRuleService(q sqlc.Querier) *RuleService {
-	return &RuleService{db: q}
+type RuleStore interface {
+	GetRuleWithEntity(ctx context.Context, params sqlc.GetRuleWithEntityParams) (sqlc.GetRuleWithEntityRow, error)
+	GetRuleByDatabaseAndName(ctx context.Context, params sqlc.GetRuleByDatabaseAndNameParams) (sqlc.Rule, error)
+	CreateRule(ctx context.Context, dto sqlc.CreateRuleParams) (sqlc.Rule, error)
+	GetRulesWithEntities(ctx context.Context, row sqlc.GetRulesWithEntitiesParams) ([]sqlc.GetRulesWithEntitiesRow, error)
+	DeleteRule(ctx context.Context, params sqlc.DeleteRuleParams) error
+}
+
+func NewRuleService(ruleStore RuleStore, resolver ScopeResolver) *RuleService {
+	return &RuleService{ruleStore: ruleStore, scopeResolver: resolver}
 }
 
 func (r *RuleService) GetRule(c context.Context, projectID uuid.UUID, databaseID uuid.UUID, ruleID uuid.UUID) (models.Rule, error) {
-	slog.Info("Fetching rule", "ruleID", ruleID)
+	slog.Info("Fetching rule", "ruleID", ruleID, "databaseID", databaseID, "projectID", projectID)
 
-	project, err := CheckProjectExists(c, r.db, projectID)
-
-	if err != nil {
-		return models.Rule{}, err
-	}
-
-	database, err := CheckDatabaseExists(c, r.db, project.ID, databaseID)
-
-	if err != nil {
-		slog.Error("Error fetching database", "err", err)
-		return models.Rule{}, err
-	}
-
-	rule, err := r.db.GetRuleWithEntity(c, sqlc.GetRuleWithEntityParams{
-		DatabaseID: database.ID,
+	rule, err := r.ruleStore.GetRuleWithEntity(c, sqlc.GetRuleWithEntityParams{
+		ProjectID:  projectID,
+		DatabaseID: databaseID,
 		RuleID:     ruleID,
 	})
 
@@ -53,23 +50,24 @@ func (r *RuleService) GetRule(c context.Context, projectID uuid.UUID, databaseID
 }
 
 func (r *RuleService) CreateRule(c context.Context, projectID uuid.UUID, databaseId uuid.UUID, dto dto.RuleCreationDto) (models.Rule, error) {
-	slog.Info("Creating rule")
+	slog.Info("Creating rule", "name", dto.Name, "databaseID", databaseId, "projectID", projectID)
 
-	project, err := CheckProjectExists(c, r.db, projectID)
-
-	if err != nil {
-		return models.Rule{}, err
-	}
-
-	_, err = CheckDatabaseExists(c, r.db, project.ID, databaseId)
+	_, err := r.scopeResolver.RequireDatabase(c, projectID, databaseId)
 
 	if err != nil {
 		slog.Error("Error fetching database", "err", err)
 		return models.Rule{}, err
 	}
 
+	_, err = r.scopeResolver.RequireDatabaseEntity(c, projectID, databaseId, dto.DataBaseEntityId)
+
+	if err != nil {
+		slog.Error("Error fetching database entity", "err", err)
+		return models.Rule{}, err
+	}
+
 	// Check if a rule with the same name already exists
-	exists, err := r.db.GetRuleByDatabaseAndName(c, sqlc.GetRuleByDatabaseAndNameParams{
+	exists, err := r.ruleStore.GetRuleByDatabaseAndName(c, sqlc.GetRuleByDatabaseAndNameParams{
 		DatabaseID: databaseId,
 		Name:       dto.Name,
 	})
@@ -87,7 +85,7 @@ func (r *RuleService) CreateRule(c context.Context, projectID uuid.UUID, databas
 		}
 	}
 
-	rule, err := r.db.CreateRule(c, mapper.ToSqlcCreateRule(databaseId, dto))
+	rule, err := r.ruleStore.CreateRule(c, mapper.ToSqlcCreateRule(databaseId, dto))
 	if err != nil {
 		slog.Error("Unable to create a Rule", "err", err)
 		return models.Rule{}, err
@@ -99,20 +97,11 @@ func (r *RuleService) CreateRule(c context.Context, projectID uuid.UUID, databas
 func (r *RuleService) ListRulesByDatabase(c context.Context, projectID uuid.UUID, databaseID uuid.UUID) ([]models.Rule, error) {
 	slog.Info("Listing rules", "projectID", projectID, "databaseID", databaseID)
 
-	project, err := CheckProjectExists(c, r.db, projectID)
+	rules, err := r.ruleStore.GetRulesWithEntities(c, sqlc.GetRulesWithEntitiesParams{
+		DatabaseID: databaseID,
+		ProjectID:  projectID,
+	})
 
-	if err != nil {
-		return []models.Rule{}, err
-	}
-
-	database, err := CheckDatabaseExists(c, r.db, project.ID, databaseID)
-
-	if err != nil {
-		slog.Error("Error fetching database", "err", err)
-		return []models.Rule{}, err
-	}
-
-	rules, err := r.db.GetRulesWithEntities(c, database.ID)
 	if err != nil {
 		slog.Error("Unable to get rules", "err", err)
 		return []models.Rule{}, err
@@ -121,25 +110,18 @@ func (r *RuleService) ListRulesByDatabase(c context.Context, projectID uuid.UUID
 
 }
 
-func (r *RuleService) DeleteRule(c context.Context, projectID uuid.UUID, databaseID uuid.UUID, ruleID uuid.UUID) error {
+func (r *RuleService) DeleteRule(c context.Context, projectID uuid.UUID, databaseId uuid.UUID, ruleID uuid.UUID) error {
 	slog.Info("Deleting rule", "ruleID", ruleID)
 
-	project, err := CheckProjectExists(c, r.db, projectID)
-
-	if err != nil {
-		slog.Error("Error fetching project", "err", err)
-		return err
-	}
-
-	database, err := CheckDatabaseExists(c, r.db, project.ID, databaseID)
+	_, err := r.scopeResolver.RequireDatabase(c, projectID, databaseId)
 
 	if err != nil {
 		slog.Error("Error fetching database", "err", err)
 		return err
 	}
 
-	err = r.db.DeleteRule(c, sqlc.DeleteRuleParams{
-		DatabaseID: database.ID,
+	err = r.ruleStore.DeleteRule(c, sqlc.DeleteRuleParams{
+		DatabaseID: databaseId,
 		RuleID:     ruleID,
 	})
 	if err != nil {

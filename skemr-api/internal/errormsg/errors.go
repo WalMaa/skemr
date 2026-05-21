@@ -29,10 +29,11 @@ func WriteErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
 }
 
 var (
-	ErrDatabaseAlreadyExists = "database already exists"
-	ErrDatabaseNotFound      = "database not found"
-	ErrProjectNotFound       = "project not found"
-	ErrInvalidIdFormat       = "invalid id format"
-	ErrExpiryTimeInPast      = "expiry time is in the past"
-	ErrRuleWithSameName      = "rule with the same name already exists"
+	ErrDatabaseAlreadyExists  = "database already exists"
+	ErrDatabaseNotFound       = "database not found"
+	ErrProjectNotFound        = "project not found"
+	ErrInvalidIdFormat        = "invalid id format"
+	ErrExpiryTimeInPast       = "expiry time is in the past"
+	ErrRuleWithSameName       = "rule with the same name already exists"
+	ErrDatabaseEntityNotFound = "database entity not found"
 )

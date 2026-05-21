@@ -50,7 +50,8 @@ func (q *Queries) CreateRule(ctx context.Context, arg CreateRuleParams) (Rule, e
 const deleteRule = `-- name: DeleteRule :exec
 DELETE
 FROM rules
-WHERE database_id = $1 AND id = $2
+WHERE database_id = $1
+  AND id = $2
 `
 
 type DeleteRuleParams struct {
@@ -65,8 +66,9 @@ func (q *Queries) DeleteRule(ctx context.Context, arg DeleteRuleParams) error {
 
 const getRule = `-- name: GetRule :one
 SELECT id, name, type, attributes, database_entity_id, database_id, created_at
-FROM rules
-WHERE database_id = $1 AND id = $2
+FROM rules r
+WHERE r.database_id = $1
+  AND r.id = $2
 LIMIT 1
 `
 
@@ -93,7 +95,8 @@ func (q *Queries) GetRule(ctx context.Context, arg GetRuleParams) (Rule, error) 
 const getRuleByDatabaseAndName = `-- name: GetRuleByDatabaseAndName :one
 SELECT id, name, type, attributes, database_entity_id, database_id, created_at
 FROM rules
-WHERE database_id = $1 AND name = $2
+WHERE database_id = $1
+  AND name = $2
 LIMIT 1
 `
 
@@ -118,16 +121,19 @@ func (q *Queries) GetRuleByDatabaseAndName(ctx context.Context, arg GetRuleByDat
 }
 
 const getRuleWithEntity = `-- name: GetRuleWithEntity :one
-SELECT
-    r.id, r.name, r.type, r.attributes, r.database_entity_id, r.database_id, r.created_at,
-    de.id, de.fingerprint, de.project_id, de.database_id, de.status, de.deleted_at, de.first_seen_at, de.entity_type, de.parent_id, de.name, de.attributes, de.created_at
+SELECT r.id, r.name, r.type, r.attributes, r.database_entity_id, r.database_id, r.created_at,
+       de.id, de.fingerprint, de.project_id, de.database_id, de.status, de.deleted_at, de.first_seen_at, de.entity_type, de.parent_id, de.name, de.attributes, de.created_at
 FROM rules r
-JOIN database_entities de ON r.database_entity_id = de.id
-WHERE r.database_id = $1 AND r.id = $2
+         JOIN databases d ON r.database_id = d.id
+         JOIN database_entities de ON r.database_entity_id = de.id
+WHERE d.project_id = $1
+  AND r.database_id = $2
+  AND r.id = $3
 LIMIT 1
 `
 
 type GetRuleWithEntityParams struct {
+	ProjectID  uuid.UUID `json:"project_id"`
 	DatabaseID uuid.UUID `json:"database_id"`
 	RuleID     uuid.UUID `json:"rule_id"`
 }
@@ -138,7 +144,7 @@ type GetRuleWithEntityRow struct {
 }
 
 func (q *Queries) GetRuleWithEntity(ctx context.Context, arg GetRuleWithEntityParams) (GetRuleWithEntityRow, error) {
-	row := q.db.QueryRow(ctx, getRuleWithEntity, arg.DatabaseID, arg.RuleID)
+	row := q.db.QueryRow(ctx, getRuleWithEntity, arg.ProjectID, arg.DatabaseID, arg.RuleID)
 	var i GetRuleWithEntityRow
 	err := row.Scan(
 		&i.Rule.ID,
@@ -165,21 +171,27 @@ func (q *Queries) GetRuleWithEntity(ctx context.Context, arg GetRuleWithEntityPa
 }
 
 const getRulesWithEntities = `-- name: GetRulesWithEntities :many
-SELECT
-    r.id, r.name, r.type, r.attributes, r.database_entity_id, r.database_id, r.created_at,
-    de.id, de.fingerprint, de.project_id, de.database_id, de.status, de.deleted_at, de.first_seen_at, de.entity_type, de.parent_id, de.name, de.attributes, de.created_at
-FROM rules r
-JOIN database_entities de ON r.database_entity_id = de.id
-WHERE r.database_id = $1
+SELECT rules.id, rules.name, rules.type, rules.attributes, rules.database_entity_id, rules.database_id, rules.created_at,
+       database_entities.id, database_entities.fingerprint, database_entities.project_id, database_entities.database_id, database_entities.status, database_entities.deleted_at, database_entities.first_seen_at, database_entities.entity_type, database_entities.parent_id, database_entities.name, database_entities.attributes, database_entities.created_at
+FROM rules
+         JOIN databases ON rules.database_id = databases.id
+         JOIN database_entities ON rules.database_entity_id = database_entities.id
+WHERE rules.database_id = $1
+  AND databases.project_id = $2
 `
+
+type GetRulesWithEntitiesParams struct {
+	DatabaseID uuid.UUID `json:"database_id"`
+	ProjectID  uuid.UUID `json:"project_id"`
+}
 
 type GetRulesWithEntitiesRow struct {
 	Rule           Rule           `json:"rule"`
 	DatabaseEntity DatabaseEntity `json:"database_entity"`
 }
 
-func (q *Queries) GetRulesWithEntities(ctx context.Context, databaseID uuid.UUID) ([]GetRulesWithEntitiesRow, error) {
-	rows, err := q.db.Query(ctx, getRulesWithEntities, databaseID)
+func (q *Queries) GetRulesWithEntities(ctx context.Context, arg GetRulesWithEntitiesParams) ([]GetRulesWithEntitiesRow, error) {
+	rows, err := q.db.Query(ctx, getRulesWithEntities, arg.DatabaseID, arg.ProjectID)
 	if err != nil {
 		return nil, err
 	}

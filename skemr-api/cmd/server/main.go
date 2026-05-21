@@ -93,11 +93,12 @@ func main() {
 	})
 
 	queries := sqlc.New(conn)
+	scopeResolver := service.NewScopeResolver(queries)
 	projectService := service.NewProjectService(queries)
 	databaseService := service.NewDatabaseService(queries, taskClient)
 	webhookService := service.NewWebhookService(queries)
 	projectSecretsService := service.NewAccessTokenService(queries)
-	ruleService := service.NewRuleService(queries)
+	ruleService := service.NewRuleService(queries, scopeResolver)
 	databaseEntityService := service.NewDatabaseEntityService(queries)
 	integrationService := service.NewIntegrationService(ruleService)
 

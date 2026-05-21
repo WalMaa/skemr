@@ -39,19 +39,10 @@ const (
 
 type RuleCreationDto struct {
 	Name             string
-	RuleType         RuleType
+	RuleType         models.RuleType       `json:"ruleType" validate:"required,oneof=locked deprecated advisory warning"`
 	Attributes       models.RuleAttributes `json:"attributes" validate:"omitempty,json"`
-	DataBaseEntityId uuid.UUID
+	DataBaseEntityId uuid.UUID             `json:"databaseEntityId" validate:"required,uuid4"`
 }
-
-type RuleType string
-
-const (
-	RuleTypeLocked     RuleType = "locked"
-	RuleTypeWarn       RuleType = "warn"
-	RuleTypeAdvisory   RuleType = "advisory"
-	RuleTypeDeprecated RuleType = "deprecated"
-)
 
 type SecretCreationDto struct {
 	Name      string `json:"name" validate:"required,min=2,max=100"`
