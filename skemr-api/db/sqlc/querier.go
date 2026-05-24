@@ -12,6 +12,7 @@ import (
 
 type Querier interface {
 	CreateDatabase(ctx context.Context, arg CreateDatabaseParams) (Database, error)
+	CreateDatabaseChange(ctx context.Context, arg CreateDatabaseChangeParams) (DatabaseChange, error)
 	CreateDatabaseEntity(ctx context.Context, arg CreateDatabaseEntityParams) (DatabaseEntity, error)
 	CreateProject(ctx context.Context, name string) (Project, error)
 	CreateProjectSecretKey(ctx context.Context, arg CreateProjectSecretKeyParams) (CreateProjectSecretKeyRow, error)
@@ -24,6 +25,8 @@ type Querier interface {
 	GetDatabaseByIDAndProjectID(ctx context.Context, arg GetDatabaseByIDAndProjectIDParams) (Database, error)
 	GetDatabaseByIdAndProject(ctx context.Context, arg GetDatabaseByIdAndProjectParams) (Database, error)
 	GetDatabaseByNameAndProject(ctx context.Context, arg GetDatabaseByNameAndProjectParams) (Database, error)
+	GetDatabaseChangeByDatabaseIdAndId(ctx context.Context, arg GetDatabaseChangeByDatabaseIdAndIdParams) (DatabaseChange, error)
+	GetDatabaseChangesByDatabaseIdAndId(ctx context.Context, arg GetDatabaseChangesByDatabaseIdAndIdParams) ([]DatabaseChange, error)
 	GetDatabaseEntities(ctx context.Context, arg GetDatabaseEntitiesParams) ([]DatabaseEntity, error)
 	GetDatabaseEntitiesByDatabaseId(ctx context.Context, databaseID uuid.UUID) ([]DatabaseEntity, error)
 	GetDatabaseEntitiesByDatabaseIdAndParentId(ctx context.Context, arg GetDatabaseEntitiesByDatabaseIdAndParentIdParams) ([]DatabaseEntity, error)

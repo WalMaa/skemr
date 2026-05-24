@@ -95,6 +95,7 @@ func main() {
 	queries := sqlc.New(conn)
 	scopeResolver := service.NewScopeResolver(queries)
 	projectService := service.NewProjectService(queries)
+	databaseChangeService := service.NewDatabaseChangeService(queries, scopeResolver)
 	databaseService := service.NewDatabaseService(queries, taskClient)
 	webhookService := service.NewWebhookService(queries)
 	projectSecretsService := service.NewAccessTokenService(queries)
@@ -118,6 +119,7 @@ func main() {
 		RuleService:           ruleService,
 		DatabaseEntityService: databaseEntityService,
 		IntegrationService:    integrationService,
+		DatabaseChangeService: databaseChangeService,
 	}
 
 	// Initialize router

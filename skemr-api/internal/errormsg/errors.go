@@ -29,11 +29,19 @@ func WriteErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
 }
 
 var (
-	ErrDatabaseAlreadyExists  = "database already exists"
-	ErrDatabaseNotFound       = "database not found"
-	ErrProjectNotFound        = "project not found"
-	ErrInvalidIdFormat        = "invalid id format"
-	ErrExpiryTimeInPast       = "expiry time is in the past"
-	ErrRuleWithSameName       = "rule with the same name already exists"
+	// DatabaseChange
+	ErrDatabaseChangeNotFound    = "database change not found"
+	ErrDatabaseChangeFetchFailed = "failed to fetch database changes"
+	// Database
+	ErrDatabaseAlreadyExists = "database already exists"
+	ErrDatabaseNotFound      = "database not found"
+	// Project
+	ErrProjectNotFound = "project not found"
+	// Validation
+	ErrInvalidIdFormat  = "invalid id format"
+	ErrExpiryTimeInPast = "expiry time is in the past"
+	// Rule
+	ErrRuleWithSameName = "rule with the same name already exists"
+	// DatabaseEntity
 	ErrDatabaseEntityNotFound = "database entity not found"
 )

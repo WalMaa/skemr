@@ -21,6 +21,7 @@ type Services struct {
 	AccessTokenService    *service.AccessTokenService
 	DatabaseEntityService *service.DatabaseEntityService
 	IntegrationService    *service.IntegrationService
+	DatabaseChangeService *service.DatabaseChangeService
 }
 
 func InitRouter(services *Services) http.Handler {
@@ -76,10 +77,12 @@ func InitRouter(services *Services) http.Handler {
 			projectSecretsController := controller.NewProjectSecretsController(services.AccessTokenService)
 			ruleController := controller.NewRuleController(services.RuleService)
 			databaseEntityController := controller.NewDatabaseEntityController(services.DatabaseEntityService)
+			databaseChangeController := controller.NewDatabaseChangeController(services.DatabaseChangeService)
 			databaseController.RegisterRoutes(r)
 			projectSecretsController.RegisterRoutes(r)
 			ruleController.RegisterRoutes(r)
 			databaseEntityController.RegisterRoutes(r)
+			databaseChangeController.RegisterRoutes(r)
 
 			r.Get("/", projectController.GetProject)
 			r.Delete("/", projectController.DeleteProject)

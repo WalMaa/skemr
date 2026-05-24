@@ -292,6 +292,14 @@ type Database struct {
 	UpdatedAt                pgtype.Timestamptz `json:"updated_at"`
 }
 
+type DatabaseChange struct {
+	ID         uuid.UUID                `json:"id"`
+	DatabaseID uuid.UUID                `json:"database_id"`
+	EntityID   uuid.UUID                `json:"entity_id"`
+	Action     MigrationStatementAction `json:"action"`
+	CreatedAt  pgtype.Timestamptz       `json:"created_at"`
+}
+
 type DatabaseEntity struct {
 	ID          uuid.UUID            `json:"id"`
 	Fingerprint string               `json:"fingerprint"`
@@ -305,15 +313,6 @@ type DatabaseEntity struct {
 	Name        string               `json:"name"`
 	Attributes  json.RawMessage      `json:"attributes"`
 	CreatedAt   pgtype.Timestamptz   `json:"created_at"`
-}
-
-type MigrationStatement struct {
-	ID           uuid.UUID                `json:"id"`
-	RawStatement string                   `json:"raw_statement"`
-	Action       MigrationStatementAction `json:"action"`
-	Status       MigrationStatus          `json:"status"`
-	Target       pgtype.Text              `json:"target"`
-	RelationName pgtype.Text              `json:"relation_name"`
 }
 
 type Project struct {

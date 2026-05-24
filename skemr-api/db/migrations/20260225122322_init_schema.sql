@@ -100,17 +100,6 @@ CREATE TABLE databases
     CONSTRAINT databases_id_project_id_unique UNIQUE (id, project_id)
 );
 
-CREATE TABLE migration_statements
-(
-    id            UUID PRIMARY KEY                    DEFAULT gen_random_uuid(),
-    raw_statement TEXT                       NOT NULL,
-    action        migration_statement_action NOT NULL,
-    status        migration_status           NOT NULL DEFAULT 'pending',
-    target        TEXT,
-    relation_name TEXT
-);
-
-
 CREATE TABLE tables
 (
     id        UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -150,6 +139,15 @@ CREATE TABLE database_entities
 
     UNIQUE NULLS NOT DISTINCT (database_id, name, entity_type, parent_id) -- Ensure we do not map the same entity twice, use NULLS NOT DISTINCT so parentless are not duplicated
 
+);
+
+CREATE TABLE database_changes
+(
+    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    database_id   UUID NOT NULL REFERENCES databases (id) ON DELETE CASCADE,
+    entity_id     UUID NOT NULL REFERENCES database_entities (id) ON DELETE CASCADE,
+    action        migration_statement_action NOT NULL,
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 

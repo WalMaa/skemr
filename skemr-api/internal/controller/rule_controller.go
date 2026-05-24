@@ -31,7 +31,7 @@ func (h *RuleController) RegisterRoutes(r chi.Router) {
 }
 
 func (h *RuleController) GetRule(w http.ResponseWriter, r *http.Request) {
-	projectID, ok := r.Context().Value("projectID").(uuid.UUID)
+	projectID, ok := r.Context().Value("projectId").(uuid.UUID)
 	if !ok {
 		http.Error(w, "projectId not found in context", http.StatusBadRequest)
 		return
