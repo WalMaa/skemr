@@ -105,6 +105,72 @@ func (_c *MockQuerier_CreateDatabase_Call) RunAndReturn(run func(ctx context.Con
 	return _c
 }
 
+// CreateDatabaseChange provides a mock function for the type MockQuerier
+func (_mock *MockQuerier) CreateDatabaseChange(ctx context.Context, arg sqlc.CreateDatabaseChangeParams) (sqlc.DatabaseChange, error) {
+	ret := _mock.Called(ctx, arg)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateDatabaseChange")
+	}
+
+	var r0 sqlc.DatabaseChange
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sqlc.CreateDatabaseChangeParams) (sqlc.DatabaseChange, error)); ok {
+		return returnFunc(ctx, arg)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sqlc.CreateDatabaseChangeParams) sqlc.DatabaseChange); ok {
+		r0 = returnFunc(ctx, arg)
+	} else {
+		r0 = ret.Get(0).(sqlc.DatabaseChange)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, sqlc.CreateDatabaseChangeParams) error); ok {
+		r1 = returnFunc(ctx, arg)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockQuerier_CreateDatabaseChange_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateDatabaseChange'
+type MockQuerier_CreateDatabaseChange_Call struct {
+	*mock.Call
+}
+
+// CreateDatabaseChange is a helper method to define mock.On call
+//   - ctx context.Context
+//   - arg sqlc.CreateDatabaseChangeParams
+func (_e *MockQuerier_Expecter) CreateDatabaseChange(ctx interface{}, arg interface{}) *MockQuerier_CreateDatabaseChange_Call {
+	return &MockQuerier_CreateDatabaseChange_Call{Call: _e.mock.On("CreateDatabaseChange", ctx, arg)}
+}
+
+func (_c *MockQuerier_CreateDatabaseChange_Call) Run(run func(ctx context.Context, arg sqlc.CreateDatabaseChangeParams)) *MockQuerier_CreateDatabaseChange_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sqlc.CreateDatabaseChangeParams
+		if args[1] != nil {
+			arg1 = args[1].(sqlc.CreateDatabaseChangeParams)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockQuerier_CreateDatabaseChange_Call) Return(databaseChange sqlc.DatabaseChange, err error) *MockQuerier_CreateDatabaseChange_Call {
+	_c.Call.Return(databaseChange, err)
+	return _c
+}
+
+func (_c *MockQuerier_CreateDatabaseChange_Call) RunAndReturn(run func(ctx context.Context, arg sqlc.CreateDatabaseChangeParams) (sqlc.DatabaseChange, error)) *MockQuerier_CreateDatabaseChange_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // CreateDatabaseEntity provides a mock function for the type MockQuerier
 func (_mock *MockQuerier) CreateDatabaseEntity(ctx context.Context, arg sqlc.CreateDatabaseEntityParams) (sqlc.DatabaseEntity, error) {
 	ret := _mock.Called(ctx, arg)
@@ -167,6 +233,72 @@ func (_c *MockQuerier_CreateDatabaseEntity_Call) Return(databaseEntity sqlc.Data
 }
 
 func (_c *MockQuerier_CreateDatabaseEntity_Call) RunAndReturn(run func(ctx context.Context, arg sqlc.CreateDatabaseEntityParams) (sqlc.DatabaseEntity, error)) *MockQuerier_CreateDatabaseEntity_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CreatePipelineRun provides a mock function for the type MockQuerier
+func (_mock *MockQuerier) CreatePipelineRun(ctx context.Context, arg sqlc.CreatePipelineRunParams) (sqlc.PipelineRun, error) {
+	ret := _mock.Called(ctx, arg)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreatePipelineRun")
+	}
+
+	var r0 sqlc.PipelineRun
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sqlc.CreatePipelineRunParams) (sqlc.PipelineRun, error)); ok {
+		return returnFunc(ctx, arg)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sqlc.CreatePipelineRunParams) sqlc.PipelineRun); ok {
+		r0 = returnFunc(ctx, arg)
+	} else {
+		r0 = ret.Get(0).(sqlc.PipelineRun)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, sqlc.CreatePipelineRunParams) error); ok {
+		r1 = returnFunc(ctx, arg)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockQuerier_CreatePipelineRun_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreatePipelineRun'
+type MockQuerier_CreatePipelineRun_Call struct {
+	*mock.Call
+}
+
+// CreatePipelineRun is a helper method to define mock.On call
+//   - ctx context.Context
+//   - arg sqlc.CreatePipelineRunParams
+func (_e *MockQuerier_Expecter) CreatePipelineRun(ctx interface{}, arg interface{}) *MockQuerier_CreatePipelineRun_Call {
+	return &MockQuerier_CreatePipelineRun_Call{Call: _e.mock.On("CreatePipelineRun", ctx, arg)}
+}
+
+func (_c *MockQuerier_CreatePipelineRun_Call) Run(run func(ctx context.Context, arg sqlc.CreatePipelineRunParams)) *MockQuerier_CreatePipelineRun_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sqlc.CreatePipelineRunParams
+		if args[1] != nil {
+			arg1 = args[1].(sqlc.CreatePipelineRunParams)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockQuerier_CreatePipelineRun_Call) Return(pipelineRun sqlc.PipelineRun, err error) *MockQuerier_CreatePipelineRun_Call {
+	_c.Call.Return(pipelineRun, err)
+	return _c
+}
+
+func (_c *MockQuerier_CreatePipelineRun_Call) RunAndReturn(run func(ctx context.Context, arg sqlc.CreatePipelineRunParams) (sqlc.PipelineRun, error)) *MockQuerier_CreatePipelineRun_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -861,6 +993,140 @@ func (_c *MockQuerier_GetDatabaseByNameAndProject_Call) RunAndReturn(run func(ct
 	return _c
 }
 
+// GetDatabaseChangeByDatabaseIdAndId provides a mock function for the type MockQuerier
+func (_mock *MockQuerier) GetDatabaseChangeByDatabaseIdAndId(ctx context.Context, arg sqlc.GetDatabaseChangeByDatabaseIdAndIdParams) (sqlc.DatabaseChange, error) {
+	ret := _mock.Called(ctx, arg)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetDatabaseChangeByDatabaseIdAndId")
+	}
+
+	var r0 sqlc.DatabaseChange
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sqlc.GetDatabaseChangeByDatabaseIdAndIdParams) (sqlc.DatabaseChange, error)); ok {
+		return returnFunc(ctx, arg)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sqlc.GetDatabaseChangeByDatabaseIdAndIdParams) sqlc.DatabaseChange); ok {
+		r0 = returnFunc(ctx, arg)
+	} else {
+		r0 = ret.Get(0).(sqlc.DatabaseChange)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, sqlc.GetDatabaseChangeByDatabaseIdAndIdParams) error); ok {
+		r1 = returnFunc(ctx, arg)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockQuerier_GetDatabaseChangeByDatabaseIdAndId_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetDatabaseChangeByDatabaseIdAndId'
+type MockQuerier_GetDatabaseChangeByDatabaseIdAndId_Call struct {
+	*mock.Call
+}
+
+// GetDatabaseChangeByDatabaseIdAndId is a helper method to define mock.On call
+//   - ctx context.Context
+//   - arg sqlc.GetDatabaseChangeByDatabaseIdAndIdParams
+func (_e *MockQuerier_Expecter) GetDatabaseChangeByDatabaseIdAndId(ctx interface{}, arg interface{}) *MockQuerier_GetDatabaseChangeByDatabaseIdAndId_Call {
+	return &MockQuerier_GetDatabaseChangeByDatabaseIdAndId_Call{Call: _e.mock.On("GetDatabaseChangeByDatabaseIdAndId", ctx, arg)}
+}
+
+func (_c *MockQuerier_GetDatabaseChangeByDatabaseIdAndId_Call) Run(run func(ctx context.Context, arg sqlc.GetDatabaseChangeByDatabaseIdAndIdParams)) *MockQuerier_GetDatabaseChangeByDatabaseIdAndId_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sqlc.GetDatabaseChangeByDatabaseIdAndIdParams
+		if args[1] != nil {
+			arg1 = args[1].(sqlc.GetDatabaseChangeByDatabaseIdAndIdParams)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockQuerier_GetDatabaseChangeByDatabaseIdAndId_Call) Return(databaseChange sqlc.DatabaseChange, err error) *MockQuerier_GetDatabaseChangeByDatabaseIdAndId_Call {
+	_c.Call.Return(databaseChange, err)
+	return _c
+}
+
+func (_c *MockQuerier_GetDatabaseChangeByDatabaseIdAndId_Call) RunAndReturn(run func(ctx context.Context, arg sqlc.GetDatabaseChangeByDatabaseIdAndIdParams) (sqlc.DatabaseChange, error)) *MockQuerier_GetDatabaseChangeByDatabaseIdAndId_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetDatabaseChangesByDatabaseIdAndId provides a mock function for the type MockQuerier
+func (_mock *MockQuerier) GetDatabaseChangesByDatabaseIdAndId(ctx context.Context, arg sqlc.GetDatabaseChangesByDatabaseIdAndIdParams) ([]sqlc.DatabaseChange, error) {
+	ret := _mock.Called(ctx, arg)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetDatabaseChangesByDatabaseIdAndId")
+	}
+
+	var r0 []sqlc.DatabaseChange
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sqlc.GetDatabaseChangesByDatabaseIdAndIdParams) ([]sqlc.DatabaseChange, error)); ok {
+		return returnFunc(ctx, arg)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sqlc.GetDatabaseChangesByDatabaseIdAndIdParams) []sqlc.DatabaseChange); ok {
+		r0 = returnFunc(ctx, arg)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]sqlc.DatabaseChange)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, sqlc.GetDatabaseChangesByDatabaseIdAndIdParams) error); ok {
+		r1 = returnFunc(ctx, arg)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockQuerier_GetDatabaseChangesByDatabaseIdAndId_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetDatabaseChangesByDatabaseIdAndId'
+type MockQuerier_GetDatabaseChangesByDatabaseIdAndId_Call struct {
+	*mock.Call
+}
+
+// GetDatabaseChangesByDatabaseIdAndId is a helper method to define mock.On call
+//   - ctx context.Context
+//   - arg sqlc.GetDatabaseChangesByDatabaseIdAndIdParams
+func (_e *MockQuerier_Expecter) GetDatabaseChangesByDatabaseIdAndId(ctx interface{}, arg interface{}) *MockQuerier_GetDatabaseChangesByDatabaseIdAndId_Call {
+	return &MockQuerier_GetDatabaseChangesByDatabaseIdAndId_Call{Call: _e.mock.On("GetDatabaseChangesByDatabaseIdAndId", ctx, arg)}
+}
+
+func (_c *MockQuerier_GetDatabaseChangesByDatabaseIdAndId_Call) Run(run func(ctx context.Context, arg sqlc.GetDatabaseChangesByDatabaseIdAndIdParams)) *MockQuerier_GetDatabaseChangesByDatabaseIdAndId_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sqlc.GetDatabaseChangesByDatabaseIdAndIdParams
+		if args[1] != nil {
+			arg1 = args[1].(sqlc.GetDatabaseChangesByDatabaseIdAndIdParams)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockQuerier_GetDatabaseChangesByDatabaseIdAndId_Call) Return(databaseChanges []sqlc.DatabaseChange, err error) *MockQuerier_GetDatabaseChangesByDatabaseIdAndId_Call {
+	_c.Call.Return(databaseChanges, err)
+	return _c
+}
+
+func (_c *MockQuerier_GetDatabaseChangesByDatabaseIdAndId_Call) RunAndReturn(run func(ctx context.Context, arg sqlc.GetDatabaseChangesByDatabaseIdAndIdParams) ([]sqlc.DatabaseChange, error)) *MockQuerier_GetDatabaseChangesByDatabaseIdAndId_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetDatabaseEntities provides a mock function for the type MockQuerier
 func (_mock *MockQuerier) GetDatabaseEntities(ctx context.Context, arg sqlc.GetDatabaseEntitiesParams) ([]sqlc.DatabaseEntity, error) {
 	ret := _mock.Called(ctx, arg)
@@ -1525,6 +1791,140 @@ func (_c *MockQuerier_GetHashByPrefixAndProjectID_Call) Return(s string, err err
 }
 
 func (_c *MockQuerier_GetHashByPrefixAndProjectID_Call) RunAndReturn(run func(ctx context.Context, arg sqlc.GetHashByPrefixAndProjectIDParams) (string, error)) *MockQuerier_GetHashByPrefixAndProjectID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetPipelineRunByDatabaseIdAndId provides a mock function for the type MockQuerier
+func (_mock *MockQuerier) GetPipelineRunByDatabaseIdAndId(ctx context.Context, arg sqlc.GetPipelineRunByDatabaseIdAndIdParams) (sqlc.PipelineRun, error) {
+	ret := _mock.Called(ctx, arg)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetPipelineRunByDatabaseIdAndId")
+	}
+
+	var r0 sqlc.PipelineRun
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sqlc.GetPipelineRunByDatabaseIdAndIdParams) (sqlc.PipelineRun, error)); ok {
+		return returnFunc(ctx, arg)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sqlc.GetPipelineRunByDatabaseIdAndIdParams) sqlc.PipelineRun); ok {
+		r0 = returnFunc(ctx, arg)
+	} else {
+		r0 = ret.Get(0).(sqlc.PipelineRun)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, sqlc.GetPipelineRunByDatabaseIdAndIdParams) error); ok {
+		r1 = returnFunc(ctx, arg)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockQuerier_GetPipelineRunByDatabaseIdAndId_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetPipelineRunByDatabaseIdAndId'
+type MockQuerier_GetPipelineRunByDatabaseIdAndId_Call struct {
+	*mock.Call
+}
+
+// GetPipelineRunByDatabaseIdAndId is a helper method to define mock.On call
+//   - ctx context.Context
+//   - arg sqlc.GetPipelineRunByDatabaseIdAndIdParams
+func (_e *MockQuerier_Expecter) GetPipelineRunByDatabaseIdAndId(ctx interface{}, arg interface{}) *MockQuerier_GetPipelineRunByDatabaseIdAndId_Call {
+	return &MockQuerier_GetPipelineRunByDatabaseIdAndId_Call{Call: _e.mock.On("GetPipelineRunByDatabaseIdAndId", ctx, arg)}
+}
+
+func (_c *MockQuerier_GetPipelineRunByDatabaseIdAndId_Call) Run(run func(ctx context.Context, arg sqlc.GetPipelineRunByDatabaseIdAndIdParams)) *MockQuerier_GetPipelineRunByDatabaseIdAndId_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sqlc.GetPipelineRunByDatabaseIdAndIdParams
+		if args[1] != nil {
+			arg1 = args[1].(sqlc.GetPipelineRunByDatabaseIdAndIdParams)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockQuerier_GetPipelineRunByDatabaseIdAndId_Call) Return(pipelineRun sqlc.PipelineRun, err error) *MockQuerier_GetPipelineRunByDatabaseIdAndId_Call {
+	_c.Call.Return(pipelineRun, err)
+	return _c
+}
+
+func (_c *MockQuerier_GetPipelineRunByDatabaseIdAndId_Call) RunAndReturn(run func(ctx context.Context, arg sqlc.GetPipelineRunByDatabaseIdAndIdParams) (sqlc.PipelineRun, error)) *MockQuerier_GetPipelineRunByDatabaseIdAndId_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetPipelineRunsByDatabaseId provides a mock function for the type MockQuerier
+func (_mock *MockQuerier) GetPipelineRunsByDatabaseId(ctx context.Context, databaseID uuid.UUID) ([]sqlc.PipelineRun, error) {
+	ret := _mock.Called(ctx, databaseID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetPipelineRunsByDatabaseId")
+	}
+
+	var r0 []sqlc.PipelineRun
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) ([]sqlc.PipelineRun, error)); ok {
+		return returnFunc(ctx, databaseID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) []sqlc.PipelineRun); ok {
+		r0 = returnFunc(ctx, databaseID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]sqlc.PipelineRun)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
+		r1 = returnFunc(ctx, databaseID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockQuerier_GetPipelineRunsByDatabaseId_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetPipelineRunsByDatabaseId'
+type MockQuerier_GetPipelineRunsByDatabaseId_Call struct {
+	*mock.Call
+}
+
+// GetPipelineRunsByDatabaseId is a helper method to define mock.On call
+//   - ctx context.Context
+//   - databaseID uuid.UUID
+func (_e *MockQuerier_Expecter) GetPipelineRunsByDatabaseId(ctx interface{}, databaseID interface{}) *MockQuerier_GetPipelineRunsByDatabaseId_Call {
+	return &MockQuerier_GetPipelineRunsByDatabaseId_Call{Call: _e.mock.On("GetPipelineRunsByDatabaseId", ctx, databaseID)}
+}
+
+func (_c *MockQuerier_GetPipelineRunsByDatabaseId_Call) Run(run func(ctx context.Context, databaseID uuid.UUID)) *MockQuerier_GetPipelineRunsByDatabaseId_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockQuerier_GetPipelineRunsByDatabaseId_Call) Return(pipelineRuns []sqlc.PipelineRun, err error) *MockQuerier_GetPipelineRunsByDatabaseId_Call {
+	_c.Call.Return(pipelineRuns, err)
+	return _c
+}
+
+func (_c *MockQuerier_GetPipelineRunsByDatabaseId_Call) RunAndReturn(run func(ctx context.Context, databaseID uuid.UUID) ([]sqlc.PipelineRun, error)) *MockQuerier_GetPipelineRunsByDatabaseId_Call {
 	_c.Call.Return(run)
 	return _c
 }

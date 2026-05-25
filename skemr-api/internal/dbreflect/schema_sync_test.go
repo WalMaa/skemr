@@ -56,6 +56,10 @@ func TestSchemaSync(t *testing.T) {
 			DatabaseID: dbID,
 		},
 	}, nil)
+	mockDB.On("CreateDatabaseChange", mock.Anything, mock.Anything).Return(
+		sqlc.DatabaseChange{
+			ID: uuid.New(),
+		}, nil)
 	mockDB.On("UpdateDatabaseEntityAsDeleted", mock.Anything, mock.Anything).Return(nil)
 	syncService := NewSchemaSyncService(mockDB, func(_ models.Database) DatabaseConnector { return connector })
 
@@ -90,6 +94,10 @@ func TestUpdateSchemaCreatesNew(t *testing.T) {
 		DatabaseID:  dataBaseId,
 		Fingerprint: "fingerprint",
 	}, nil)
+	mockDB.On("CreateDatabaseChange", mock.Anything, mock.Anything).Return(
+		sqlc.DatabaseChange{
+			ID: uuid.New(),
+		}, nil)
 
 	syncService := NewSchemaSyncService(mockDB, func(_ models.Database) DatabaseConnector { return mockConnector })
 	schema, err := syncService.updateNamespace(c, schemaRef, database)
@@ -159,6 +167,10 @@ func TestMarkEntityAsDeletedWhenEntityNotAppearingInSync(t *testing.T) {
 	mockDB.On("GetDatabaseEntitiesByDatabaseId", mock.Anything, mock.Anything).Return(oldEntities, nil)
 	mockDB.On("UpdateDatabaseEntityAsDeleted", mock.Anything, entityId2).Return(nil).Once()
 	mockDB.On("GetDatabaseEntityByDatabaseIdAndTypeAndParentAndName", mock.Anything, mock.Anything).Return(oldEntity1, nil)
+	mockDB.On("CreateDatabaseChange", mock.Anything, mock.Anything).Return(
+		sqlc.DatabaseChange{
+			ID: uuid.New(),
+		}, nil)
 
 	mockConnector.On("GetTablesInSchema", mock.Anything, mock.Anything, mock.Anything).Return([]TableRef{}, nil)
 	// Return only the first entity, simulating that the second one has been removed in the database and should be marked as deleted

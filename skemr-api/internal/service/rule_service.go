@@ -107,13 +107,7 @@ func (r *RuleService) ListRulesByDatabase(c context.Context, projectID uuid.UUID
 		return []models.Rule{}, err
 	}
 
-	rules, err := r.db.GetRulesWithEntities(c, database.ID)
-	if err != nil {
-		slog.Error("Unable to get rules", "err", err)
-		return []models.Rule{}, err
-	}
 	return mapper.ToDomainRulesWithEntity(rules), nil
-
 }
 
 func (r *RuleService) DeleteRule(c context.Context, projectID uuid.UUID, databaseId uuid.UUID, ruleID uuid.UUID) error {
