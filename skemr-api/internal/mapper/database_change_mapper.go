@@ -7,11 +7,10 @@ import (
 
 func ToDomainDatabaseChange(change sqlc.DatabaseChange) models.DatabaseChange {
 	return models.DatabaseChange{
-		Id:         change.ID,
-		DatabaseId: change.DatabaseID,
-		EntityId:   change.EntityID,
-		Action:     models.MigrationStatementAction(change.Action),
-		CreatedAt:  Time(&change.CreatedAt),
+		Id:        change.ID,
+		EntityId:  change.EntityID,
+		Action:    models.MigrationStatementAction(change.Action),
+		CreatedAt: Time(&change.CreatedAt),
 	}
 }
 

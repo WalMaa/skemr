@@ -315,6 +315,16 @@ type DatabaseEntity struct {
 	CreatedAt   pgtype.Timestamptz   `json:"created_at"`
 }
 
+type PipelineRun struct {
+	ID          uuid.UUID          `json:"id"`
+	DatabaseID  uuid.UUID          `json:"database_id"`
+	Status      MigrationStatus    `json:"status"`
+	Environment pgtype.Text        `json:"environment"`
+	StartedAt   pgtype.Timestamptz `json:"started_at"`
+	CompletedAt pgtype.Timestamptz `json:"completed_at"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+}
+
 type Project struct {
 	ID        uuid.UUID          `json:"id"`
 	Name      string             `json:"name"`

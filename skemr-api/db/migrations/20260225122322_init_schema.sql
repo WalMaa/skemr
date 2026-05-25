@@ -150,6 +150,17 @@ CREATE TABLE database_changes
     created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE pipeline_runs
+(
+    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    database_id   UUID NOT NULL REFERENCES databases (id) ON DELETE CASCADE,
+    status        migration_status NOT NULL DEFAULT 'pending',
+    environment   TEXT,
+    started_at    TIMESTAMPTZ,
+    completed_at  TIMESTAMPTZ,
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 
 -- Rules specify the protection mechanisms for databases, schemas, tables, and columns.
 CREATE TABLE rules

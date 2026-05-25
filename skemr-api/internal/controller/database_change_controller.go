@@ -48,7 +48,7 @@ func (h *DatabaseChangeController) listDatabaseChanges(w http.ResponseWriter, r 
 }
 
 func (h *DatabaseChangeController) GetDatabaseChange(w http.ResponseWriter, r *http.Request) {
-	projectID, ok := r.Context().Value("projectID").(uuid.UUID)
+	projectID, ok := r.Context().Value("projectId").(uuid.UUID)
 	if !ok {
 		http.Error(w, "projectId not found in context", http.StatusBadRequest)
 		return

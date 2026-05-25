@@ -7,9 +7,8 @@ import (
 )
 
 type DatabaseChange struct {
-	Id         uuid.UUID                `json:"id"`
-	DatabaseId uuid.UUID                `json:"databaseId"`
-	EntityId   uuid.UUID                `json:"entityId"`
-	Action     MigrationStatementAction `json:"action"`
-	CreatedAt  time.Time                `json:"createdAt"`
+	Id        uuid.UUID                `json:"id"`
+	EntityId  uuid.UUID                `json:"entityId"`
+	Action    MigrationStatementAction `json:"action"`
+	CreatedAt time.Time                `json:"createdAt"`
 }

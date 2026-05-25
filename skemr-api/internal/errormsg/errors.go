@@ -44,4 +44,7 @@ var (
 	ErrRuleWithSameName = "rule with the same name already exists"
 	// DatabaseEntity
 	ErrDatabaseEntityNotFound = "database entity not found"
+	// PipelineRun
+	ErrPipelineRunNotFound    = "pipeline run not found"
+	ErrPipelineRunFetchFailed = "failed to fetch pipeline runs"
 )
