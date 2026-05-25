@@ -28,6 +28,13 @@ func WriteErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
 	)
 }
 
+func WriteInvalidRequestBodyErrorResponse(w http.ResponseWriter, r *http.Request) {
+	WriteErrorResponse(w, r, &models.ErrorResponse{
+		Message: "Invalid request body",
+		Status:  http.StatusBadRequest,
+	})
+}
+
 var (
 	// DatabaseChange
 	ErrDatabaseChangeNotFound    = "database change not found"
@@ -45,6 +52,7 @@ var (
 	// DatabaseEntity
 	ErrDatabaseEntityNotFound = "database entity not found"
 	// PipelineRun
-	ErrPipelineRunNotFound    = "pipeline run not found"
-	ErrPipelineRunFetchFailed = "failed to fetch pipeline runs"
+	ErrPipelineRunNotFound     = "pipeline run not found"
+	ErrPipelineRunFetchFailed  = "failed to fetch pipeline runs"
+	ErrPipelineRunCreateFailed = "failed to create pipeline run"
 )

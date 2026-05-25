@@ -97,19 +97,19 @@ func (s *PipelineRunService) GetPipelineRuns(c context.Context, projectId uuid.U
 	return mapper.ToDomainPipelineRuns(pipelineRuns), nil
 }
 
-func (s *PipelineRunService) CreatePipelineRun(c context.Context, projectId uuid.UUID, databaseId uuid.UUID, pipelineRun dto.PipelineRunCreationDto) (sqlc.PipelineRun, error) {
+func (s *PipelineRunService) CreatePipelineRun(c context.Context, projectId uuid.UUID, databaseId uuid.UUID, pipelineRun dto.PipelineRunCreationDto) (models.PipelineRun, error) {
 	slog.Info("Creating pipeline run", "pipelineRun", pipelineRun, "databaseId", databaseId, "projectId", projectId)
 	_, err := s.scopeResolver.RequireDatabase(c, projectId, databaseId)
 	if err != nil {
 		slog.Error("Error fetching database", "err", err)
-		return sqlc.PipelineRun{}, err
+		return models.PipelineRun{}, err
 	}
 
 	completedAt, err := time.Parse(time.RFC3339, pipelineRun.CompletedAt)
 
 	if err != nil {
 		slog.Error("Error parsing completedAt", "err", err)
-		return sqlc.PipelineRun{}, err
+		return models.PipelineRun{}, err
 	}
 
 	createdPipelineRun, err := s.store.CreatePipelineRun(c, sqlc.CreatePipelineRunParams{
@@ -127,8 +127,8 @@ func (s *PipelineRunService) CreatePipelineRun(c context.Context, projectId uuid
 
 	if err != nil {
 		slog.Error("Error creating pipeline run", "err", err)
-		return sqlc.PipelineRun{}, err
+		return models.PipelineRun{}, err
 	}
 
-	return createdPipelineRun, nil
+	return mapper.ToDomainPipelineRun(createdPipelineRun), nil
 }

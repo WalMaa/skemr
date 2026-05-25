@@ -92,6 +92,11 @@ func main() {
 		TLSConfig: nil,
 	})
 
+	if cfg.App.Env == "dev" {
+		runSchema(conn)
+		seedTestData(conn)
+	}
+
 	queries := sqlc.New(conn)
 	scopeResolver := service.NewScopeResolver(queries)
 	projectService := service.NewProjectService(queries)
@@ -101,14 +106,8 @@ func main() {
 	projectSecretsService := service.NewAccessTokenService(queries)
 	ruleService := service.NewRuleService(queries, scopeResolver)
 	databaseEntityService := service.NewDatabaseEntityService(queries)
-	integrationService := service.NewIntegrationService(ruleService)
-
-	if cfg.App.Env == "dev" {
-		runSchema(conn)
-		seedTestData(conn)
-	}
-
-	worker.StartTaskWorkers(queries, cfg)
+	pipelineRunService := service.NewPipelineRunService(queries, scopeResolver)
+	integrationService := service.NewIntegrationService(ruleService, pipelineRunService)
 
 	// Initialize services
 	services := &routers.Services{
@@ -120,7 +119,10 @@ func main() {
 		DatabaseEntityService: databaseEntityService,
 		IntegrationService:    integrationService,
 		DatabaseChangeService: databaseChangeService,
+		PipelineRunService:    pipelineRunService,
 	}
+
+	worker.StartTaskWorkers(queries, cfg)
 
 	// Initialize router
 	router := routers.InitRouter(services)

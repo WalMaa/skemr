@@ -22,6 +22,7 @@ type Services struct {
 	DatabaseEntityService *service.DatabaseEntityService
 	IntegrationService    *service.IntegrationService
 	DatabaseChangeService *service.DatabaseChangeService
+	PipelineRunService    *service.PipelineRunService
 }
 
 func InitRouter(services *Services) http.Handler {

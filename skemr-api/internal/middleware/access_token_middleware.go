@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -48,7 +49,7 @@ func AccessTokenMiddleware(service *service.AccessTokenService) func(next http.H
 			}
 			token := tokenHeaderValue[len("Bearer "):]
 
-			ok, err := authenticateToken(c, service, projectId, token)
+			ok, err := authenticateToken(c, service, projectId, strings.TrimSpace(token))
 
 			if err != nil {
 				errormsg.WriteErrorResponse(w, r, &models.ErrorResponse{
