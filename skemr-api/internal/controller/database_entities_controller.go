@@ -30,23 +30,22 @@ type Query struct {
 }
 
 func (h *DatabaseEntityController) GetDatabaseEntity(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	projectId, ok := ctx.Value("projectId").(uuid.UUID)
+	projectId, ok := ParseUUIDParam(w, r, "projectId")
 	if !ok {
-		http.Error(w, "projectId not found in context", http.StatusBadRequest)
 		return
 	}
-	databaseId, err := uuid.Parse(chi.URLParam(r, "databaseId"))
-	if err != nil {
-		http.Error(w, "Invalid database ID format", http.StatusBadRequest)
+
+	databaseId, ok := ParseUUIDParam(w, r, "databaseId")
+	if !ok {
 		return
 	}
-	entityId, err := uuid.Parse(chi.URLParam(r, "entityId"))
-	if err != nil {
-		http.Error(w, "Invalid entity ID format", http.StatusBadRequest)
+
+	entityId, ok := ParseUUIDParam(w, r, "entityId")
+	if !ok {
 		return
 	}
-	entity, err := h.Service.GetDatabaseEntityByID(ctx, projectId, databaseId, entityId)
+
+	entity, err := h.Service.GetDatabaseEntityByID(r.Context(), projectId, databaseId, entityId)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -57,13 +56,17 @@ func (h *DatabaseEntityController) GetDatabaseEntity(w http.ResponseWriter, r *h
 
 func (h *DatabaseEntityController) GetDatabaseEntities(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	projectId := ctx.Value("projectId").(uuid.UUID)
 
-	databaseId, err := uuid.Parse(chi.URLParam(r, "databaseId"))
-	if err != nil {
-		http.Error(w, "Invalid database ID format", http.StatusBadRequest)
+	projectId, ok := ParseUUIDParam(w, r, "projectId")
+	if !ok {
 		return
 	}
+
+	databaseId, ok := ParseUUIDParam(w, r, "databaseId")
+	if !ok {
+		return
+	}
+
 	entityTypeQuery := r.URL.Query().Get("type")
 	var entityType *models.DatabaseEntityType
 	if entityTypeQuery != "" {

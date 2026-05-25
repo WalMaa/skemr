@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/walmaa/skemr-api/internal/controller"
 	"github.com/walmaa/skemr-api/internal/errormsg"
 	"github.com/walmaa/skemr-api/internal/service"
 	"github.com/walmaa/skemr-common/models"
@@ -16,25 +16,9 @@ func AccessTokenMiddleware(service *service.AccessTokenService) func(next http.H
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			c := r.Context()
-			projectIdParam := chi.URLParam(r, "projectId")
 
-			if projectIdParam == "" {
-				errormsg.WriteErrorResponse(w, r, &models.ErrorResponse{
-					Message: "projectIdParam is required",
-					Errors:  nil,
-					Status:  http.StatusBadRequest,
-				})
-				return
-			}
-
-			projectId, err := uuid.Parse(projectIdParam)
-
-			if err != nil {
-				errormsg.WriteErrorResponse(w, r, &models.ErrorResponse{
-					Message: "Invalid projectId format",
-					Errors:  nil,
-					Status:  http.StatusBadRequest,
-				})
+			projectId, ok := controller.ParseUUIDParam(w, r, "projectId")
+			if !ok {
 				return
 			}
 

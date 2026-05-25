@@ -5,7 +5,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
-	"github.com/google/uuid"
 	"github.com/walmaa/skemr-api/internal/dto"
 	"github.com/walmaa/skemr-api/internal/errormsg"
 	"github.com/walmaa/skemr-api/internal/service"
@@ -28,25 +27,13 @@ func (h *IntegrationController) RegisterRoutes(r chi.Router) {
 }
 
 func (h *IntegrationController) listRulesByDatabase(w http.ResponseWriter, r *http.Request) {
-	databaseId, err := uuid.Parse(chi.URLParam(r, "databaseId"))
-	if err != nil {
-		errormsg.WriteErrorResponse(w, r, &models.ErrorResponse{
-			Message: "Invalid database ID format",
-			Status:  http.StatusBadRequest,
-			Errors:  nil,
-		},
-		)
+	projectId, ok := ParseUUIDParam(w, r, "projectId")
+	if !ok {
 		return
 	}
 
-	projectId, err := uuid.Parse(chi.URLParam(r, "projectId"))
-	if err != nil {
-		errormsg.WriteErrorResponse(w, r, &models.ErrorResponse{
-			Message: "Invalid project ID format",
-			Status:  http.StatusBadRequest,
-			Errors:  nil,
-		},
-		)
+	databaseId, ok := ParseUUIDParam(w, r, "databaseId")
+	if !ok {
 		return
 	}
 
@@ -65,25 +52,13 @@ func (h *IntegrationController) listRulesByDatabase(w http.ResponseWriter, r *ht
 
 func (h *IntegrationController) createPipelineRun(w http.ResponseWriter, r *http.Request) {
 
-	databaseId, err := uuid.Parse(chi.URLParam(r, "databaseId"))
-	if err != nil {
-		errormsg.WriteErrorResponse(w, r, &models.ErrorResponse{
-			Message: "Invalid database ID format",
-			Status:  http.StatusBadRequest,
-			Errors:  nil,
-		},
-		)
+	projectId, ok := ParseUUIDParam(w, r, "projectId")
+	if !ok {
 		return
 	}
 
-	projectId, err := uuid.Parse(chi.URLParam(r, "projectId"))
-	if err != nil {
-		errormsg.WriteErrorResponse(w, r, &models.ErrorResponse{
-			Message: "Invalid project ID format",
-			Status:  http.StatusBadRequest,
-			Errors:  nil,
-		},
-		)
+	databaseId, ok := ParseUUIDParam(w, r, "databaseId")
+	if !ok {
 		return
 	}
 
@@ -93,7 +68,7 @@ func (h *IntegrationController) createPipelineRun(w http.ResponseWriter, r *http
 		return
 	}
 
-	err = validation.Validate.Struct(req)
+	err := validation.Validate.Struct(req)
 
 	if err != nil {
 		errorResponse := validation.CreateErrorResponse(err)

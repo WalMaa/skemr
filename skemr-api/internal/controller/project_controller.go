@@ -4,14 +4,11 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
-	"github.com/google/uuid"
 	"github.com/walmaa/skemr-api/internal/dto"
 	"github.com/walmaa/skemr-api/internal/errormsg"
 	"github.com/walmaa/skemr-api/internal/service"
 	"github.com/walmaa/skemr-api/internal/validation"
-	"github.com/walmaa/skemr-common/models"
 )
 
 type ProjectController struct {
@@ -60,15 +57,12 @@ func (h *ProjectController) CreateProject(w http.ResponseWriter, r *http.Request
 }
 
 func (h *ProjectController) GetProject(w http.ResponseWriter, r *http.Request) {
-	projectID, err := uuid.Parse(chi.URLParam(r, "projectId"))
-	if err != nil {
-		errormsg.WriteErrorResponse(w, r, &models.ErrorResponse{
-			Message: errormsg.ErrInvalidIdFormat,
-			Status:  http.StatusBadRequest,
-		})
+	projectId, ok := ParseUUIDParam(w, r, "projectId")
+	if !ok {
 		return
 	}
-	project, err := h.Service.GetProject(r.Context(), projectID)
+
+	project, err := h.Service.GetProject(r.Context(), projectId)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -79,15 +73,12 @@ func (h *ProjectController) GetProject(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ProjectController) DeleteProject(w http.ResponseWriter, r *http.Request) {
-	projectID, err := uuid.Parse(chi.URLParam(r, "projectId"))
-	if err != nil {
-		errormsg.WriteErrorResponse(w, r, &models.ErrorResponse{
-			Message: errormsg.ErrInvalidIdFormat,
-			Status:  http.StatusBadRequest,
-		})
+	projectId, ok := ParseUUIDParam(w, r, "projectId")
+	if !ok {
 		return
 	}
-	err = h.Service.DeleteProject(r.Context(), projectID)
+
+	err := h.Service.DeleteProject(r.Context(), projectId)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

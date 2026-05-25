@@ -26,18 +26,17 @@ func (h *PipelineRunController) RegisterRoutes(r chi.Router) {
 }
 
 func (h *PipelineRunController) listPipelineRuns(w http.ResponseWriter, r *http.Request) {
-	projectID, ok := r.Context().Value("projectId").(uuid.UUID)
+	projectId, ok := ParseUUIDParam(w, r, "projectId")
 	if !ok {
-		http.Error(w, "projectId not found in context", http.StatusBadRequest)
-		return
-	}
-	databaseId, err := uuid.Parse(chi.URLParam(r, "databaseId"))
-	if err != nil {
-		http.Error(w, "invalid databaseId", http.StatusBadRequest)
 		return
 	}
 
-	pipelineRuns, err := h.Service.GetPipelineRuns(r.Context(), projectID, databaseId)
+	databaseId, ok := ParseUUIDParam(w, r, "databaseId")
+	if !ok {
+		return
+	}
+
+	pipelineRuns, err := h.Service.GetPipelineRuns(r.Context(), projectId, databaseId)
 
 	if err != nil {
 		errormsg.WriteErrorResponse(w, r, err)
@@ -47,14 +46,13 @@ func (h *PipelineRunController) listPipelineRuns(w http.ResponseWriter, r *http.
 }
 
 func (h *PipelineRunController) getPipelineRun(w http.ResponseWriter, r *http.Request) {
-	projectID, ok := r.Context().Value("projectId").(uuid.UUID)
+	projectId, ok := ParseUUIDParam(w, r, "projectId")
 	if !ok {
-		http.Error(w, "projectId not found in context", http.StatusBadRequest)
 		return
 	}
-	databaseId, err := uuid.Parse(chi.URLParam(r, "databaseId"))
-	if err != nil {
-		http.Error(w, "invalid databaseId", http.StatusBadRequest)
+
+	databaseId, ok := ParseUUIDParam(w, r, "databaseId")
+	if !ok {
 		return
 	}
 
@@ -65,7 +63,7 @@ func (h *PipelineRunController) getPipelineRun(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	pipelineRun, err := h.Service.GetPipelineRun(r.Context(), projectID, databaseId, pipelineRunId)
+	pipelineRun, err := h.Service.GetPipelineRun(r.Context(), projectId, databaseId, pipelineRunId)
 	if err != nil {
 		errormsg.WriteErrorResponse(w, r, err)
 	}
