@@ -6,6 +6,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/walmaa/skemr-api/internal/errormsg"
+	"github.com/walmaa/skemr-common/models"
 )
 
 const CtxProjectID = "projectId"
@@ -19,7 +21,10 @@ func ProjectIDMiddleware(next http.Handler) http.Handler {
 		}
 		id, err := uuid.Parse(param)
 		if err != nil {
-			http.Error(w, "invalid projectId", http.StatusBadRequest)
+			errormsg.WriteErrorResponse(w, r, &models.ErrorResponse{
+				Status:  http.StatusBadRequest,
+				Message: "Invalid project id",
+			})
 			return
 		}
 		ctx := context.WithValue(r.Context(), CtxProjectID, id)

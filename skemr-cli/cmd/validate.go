@@ -47,6 +47,10 @@ var validateCmd = &cobra.Command{
 		slog.Debug("Validate command executed", "project_id", projectId, "database_id", databaseId, "migration_files_dir", migrationFilesDir)
 		ruleEngine := rulengn.NewRuleEngine()
 
+		// Process files
+		filePaths := make([]string, 0)
+		collectFilePathsFromDir(&filePaths, migrationFilesDir)
+
 		// Get rules
 		rules, err := controlplaneclient.GetRules(c, projectId, databaseId, token)
 
@@ -56,17 +60,14 @@ var validateCmd = &cobra.Command{
 		}
 		slog.Debug("Fetched rules from control plane", "ruleCount", len(rules))
 
-		// Fetch all database entities. This is used to match columns to right parents (tables)
+		// Fetch all database entities. This is used to match columns to the right parents (tables)
 		entities, err := controlplaneclient.GetDatabaseEntities(c, projectId, databaseId, token)
-		slog.Debug("Fetched database entities from control plane", "entityCount", len(entities))
 
 		if err != nil {
+			slog.Error("Error fetching database entities from control plane", "err", err)
 			os.Exit(1)
 		}
-
-		// Process files
-		filePaths := make([]string, 0)
-		collectFilePathsFromDir(&filePaths, migrationFilesDir)
+		slog.Debug("Fetched database entities from control plane", "entityCount", len(entities))
 
 		// Rule check
 		dtos := make([]rulengn.MigrationFileDto, len(filePaths))

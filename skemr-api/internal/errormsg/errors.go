@@ -28,10 +28,31 @@ func WriteErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
 	)
 }
 
+func WriteInvalidRequestBodyErrorResponse(w http.ResponseWriter, r *http.Request) {
+	WriteErrorResponse(w, r, &models.ErrorResponse{
+		Message: "Invalid request body",
+		Status:  http.StatusBadRequest,
+	})
+}
+
 var (
+	// DatabaseChange
+	ErrDatabaseChangeNotFound    = "database change not found"
+	ErrDatabaseChangeFetchFailed = "failed to fetch database changes"
+	// Database
 	ErrDatabaseAlreadyExists = "database already exists"
 	ErrDatabaseNotFound      = "database not found"
-	ErrProjectNotFound       = "project not found"
-	ErrInvalidIdFormat       = "invalid id format"
-	ErrExpiryTimeInPast      = "expiry time is in the past"
+	// Project
+	ErrProjectNotFound = "project not found"
+	// Validation
+	ErrInvalidIdFormat  = "invalid id format"
+	ErrExpiryTimeInPast = "expiry time is in the past"
+	// Rule
+	ErrRuleWithSameName = "rule with the same name already exists"
+	// DatabaseEntity
+	ErrDatabaseEntityNotFound = "database entity not found"
+	// PipelineRun
+	ErrPipelineRunNotFound     = "pipeline run not found"
+	ErrPipelineRunFetchFailed  = "failed to fetch pipeline runs"
+	ErrPipelineRunCreateFailed = "failed to create pipeline run"
 )

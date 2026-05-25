@@ -16,17 +16,17 @@ const (
 )
 
 const (
-	DatabaseEntityTypeDatabase DatabaseEntityType = "database"
-	DatabaseEntityTypeSchema   DatabaseEntityType = "schema"
-	DatabaseEntityTypeTable    DatabaseEntityType = "table"
-	DatabaseEntityTypeColumn   DatabaseEntityType = "column"
+	DatabaseEntityTypeDatabase  DatabaseEntityType = "database"
+	DatabaseEntityTypeNamespace DatabaseEntityType = "namespace"
+	DatabaseEntityTypeTable     DatabaseEntityType = "table"
+	DatabaseEntityTypeColumn    DatabaseEntityType = "column"
 )
 
 type DatabaseEntity struct {
 	ID          uuid.UUID              `json:"id"`
 	Name        string                 `json:"name"` // Name of the entity "public", "users", "email", "my_view"
 	Type        DatabaseEntityType     `json:"type"`
-	ParentId    *uuid.UUID             `json:"parentId"` // in case of column, references table. table references schema etc.
+	ParentId    *uuid.UUID             `json:"parentId"` // in case of column, references table. table references namespace etc.
 	Status      DatabaseEntityStatus   `json:"status"`
 	CreatedAt   time.Time              `json:"createdAt"`
 	DeletedAt   *time.Time             `json:"deletedAt"`

@@ -114,7 +114,7 @@ func (s *SchemaSyncService) SyncSchema(c context.Context, database models.Databa
 
 	// For each schema, get tables and columns
 	for _, schema := range schemaRefs {
-		schema, err := s.updateSchema(c, schema, database)
+		schema, err := s.updateNamespace(c, schema, database)
 		if err != nil {
 			return err
 		}
@@ -126,7 +126,7 @@ func (s *SchemaSyncService) SyncSchema(c context.Context, database models.Databa
 			return fmt.Errorf("error getting tables in schema %q: %w", schema.Name, err)
 		}
 		for _, tableRef := range tables {
-			table, err := s.UpdateTable(c, tableRef, database, schema.ID)
+			table, err := s.updateTable(c, tableRef, database, schema.ID)
 
 			if err != nil {
 				return fmt.Errorf("error updating tables: %w", err)
@@ -139,7 +139,7 @@ func (s *SchemaSyncService) SyncSchema(c context.Context, database models.Databa
 				return fmt.Errorf("error getting columns in table %q.%q: %w", schema.Name, tableRef.Name, err)
 			}
 			for _, column := range columns {
-				column, err := s.SyncColumn(c, column, database, table.ID)
+				column, err := s.updateColumn(c, column, database, table.ID)
 				if err != nil {
 					return fmt.Errorf("Error updating column: %w", err)
 				}
@@ -155,7 +155,7 @@ func (s *SchemaSyncService) SyncSchema(c context.Context, database models.Databa
 	// Mark any entities that were not found in the new schema as deleted
 	for _, entity := range savedEntities {
 		if !slices.Contains(currentEntityIds, entity.ID) {
-			err := s.markEntityAsDeleted(c, entity.ID)
+			err := s.markEntityAsDeleted(c, database.ID, entity.ID)
 			if err != nil {
 				slog.Error("Error marking entity as deleted", "entityId", entity.ID, "error", err)
 				// Do not return error as we want to continue marking other entities as deleted
@@ -166,16 +166,16 @@ func (s *SchemaSyncService) SyncSchema(c context.Context, database models.Databa
 	return nil
 }
 
-// updateSchema checks if a schema with the given name exists for the database.
+// updateNamespace checks if a namespace (schema in postgres) with the given name exists for the database.
 // If it does not exist, it creates a new schema entity.
 // If it does exist, it currently does nothing but can be extended to update schema attributes if needed.
-func (s *SchemaSyncService) updateSchema(c context.Context, schemaRef SchemaRef, database models.Database) (sqlc.DatabaseEntity, error) {
+func (s *SchemaSyncService) updateNamespace(c context.Context, schemaRef SchemaRef, database models.Database) (sqlc.DatabaseEntity, error) {
 	args := sqlc.GetDatabaseEntityByDatabaseIdAndTypeAndParentAndNameParams{
 		DatabaseID: database.ID,
 		EntityType: sqlc.DatabaseEntityTypeSchema,
 		Name:       schemaRef.Name,
 	}
-	schema, err := s.db.GetDatabaseEntityByDatabaseIdAndTypeAndParentAndName(c, args)
+	namespace, err := s.db.GetDatabaseEntityByDatabaseIdAndTypeAndParentAndName(c, args)
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		slog.Error("error getting schema", "error", err.Error())
 		return sqlc.DatabaseEntity{}, err
@@ -185,14 +185,11 @@ func (s *SchemaSyncService) updateSchema(c context.Context, schemaRef SchemaRef,
 
 		// If that schema does not exist by name, check by fingerprint to see if it is the same schema with an updated name.
 
-		fingerprint := GenerateSchemaFingerprint(schemaRef, database.ID)
+		fingerprint := GenerateNamespaceFingerprint(schemaRef)
 
-		schema, err = s.db.GetDatabaseEntityByFingerprint(c, sqlc.GetDatabaseEntityByFingerprintParams{
-			DatabaseID: database.ID,
-			Fingerprint: pgtype.Text{
-				String: fingerprint,
-				Valid:  true,
-			},
+		namespace, err = s.db.GetDatabaseEntityByFingerprint(c, sqlc.GetDatabaseEntityByFingerprintParams{
+			DatabaseID:  database.ID,
+			Fingerprint: fingerprint,
 		})
 
 		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
@@ -202,62 +199,79 @@ func (s *SchemaSyncService) updateSchema(c context.Context, schemaRef SchemaRef,
 
 		// If found by fingerprint, update the name to the new name.
 		if !errors.Is(err, pgx.ErrNoRows) {
-			slog.Debug("Schema found by fingerprint, updating name", "oldName", schema.Name, "newName", schemaRef.Name)
+			slog.Debug("Schema found by fingerprint, updating name", "oldName", namespace.Name, "newName", schemaRef.Name)
 
-			schema, err = s.db.UpdateDatabaseEntityName(c, sqlc.UpdateDatabaseEntityNameParams{
-				ID:   schema.ID,
+			namespace, err = s.db.UpdateDatabaseEntityName(c, sqlc.UpdateDatabaseEntityNameParams{
+				ID:   namespace.ID,
 				Name: schemaRef.Name,
 			})
 			if err != nil {
 				slog.Error("error updating schema name", "error", err.Error())
 				return sqlc.DatabaseEntity{}, err
 			}
-			slog.Info("Schema renamed", "oldName", schema.Name, "newName", schemaRef.Name)
-			schema.Name = schemaRef.Name
-			return schema, nil
+
+			s.markDatabaseChange(c, database.ID, namespace.ID, models.MigrationStatementActionUpdate)
+			slog.Info("Schema renamed", "oldName", namespace.Name, "newName", schemaRef.Name)
+			namespace.Name = schemaRef.Name
+			return namespace, nil
 		}
 
 		// If that schema does not exist yet, save it
 		args := sqlc.CreateDatabaseEntityParams{
-			ProjectID:  database.ProjectID,
-			EntityType: sqlc.DatabaseEntityTypeSchema,
-			DatabaseID: database.ID,
-			Name:       schemaRef.Name,
-			Fingerprint: pgtype.Text{
-				String: fingerprint,
-				Valid:  true,
-			},
+			ProjectID:   database.ProjectID,
+			EntityType:  sqlc.DatabaseEntityTypeSchema,
+			DatabaseID:  database.ID,
+			Name:        schemaRef.Name,
+			Fingerprint: fingerprint,
 		}
-		schema, err := s.db.CreateDatabaseEntity(c, args)
+		namespace, err := s.db.CreateDatabaseEntity(c, args)
 		if err != nil {
 			slog.Error("error creating schema", "error", err)
 			return sqlc.DatabaseEntity{}, err
 		}
-		slog.Info("schema created", "schema", schema.Name)
-		return schema, err
+
+		s.markDatabaseChange(c, database.ID, namespace.ID, models.MigrationStatementActionCreate)
+		slog.Info("namespace created", "namespace", namespace.Name)
+		return namespace, err
 	}
 
-	// TODO: If schema does exist, update if needed. Currently no-op
-	slog.Info("schema exists", "schema", schema)
+	// TODO: If namespace does exist, update if needed. Currently no-op
+	slog.Info("namespace exists", "namespace", namespace)
 
-	return schema, err
+	return namespace, err
 
 }
 
 // markEntityAsDeleted sets the status of the entity to "deleted".
 // This is used for entities that were not found in the new schema during sync.
 // We want to keep these entities in the database to show how the schema has changed.
-func (s *SchemaSyncService) markEntityAsDeleted(c context.Context, entityId uuid.UUID) error {
+func (s *SchemaSyncService) markEntityAsDeleted(c context.Context, databaseId uuid.UUID, entityId uuid.UUID) error {
 	slog.Debug("Marking entity as deleted", "entityId", entityId)
 	err := s.db.UpdateDatabaseEntityAsDeleted(c, entityId)
 	if err != nil {
 		slog.Error("error marking entity as deleted", "error", err)
 		return err
 	}
+
+	s.markDatabaseChange(c, databaseId, entityId, models.MigrationStatementActionDelete)
+
 	return nil
 }
 
-func (s *SchemaSyncService) UpdateTable(c context.Context, tableRef TableRef, database models.Database, schemaId uuid.UUID) (sqlc.DatabaseEntity, error) {
+func (s *SchemaSyncService) markDatabaseChange(c context.Context, databaseId uuid.UUID, entityId uuid.UUID, action models.MigrationStatementAction) {
+	slog.Debug("Marking database change as deleted", "databaseId", databaseId, "entityId", entityId)
+	_, err := s.db.CreateDatabaseChange(c, sqlc.CreateDatabaseChangeParams{
+		DatabaseID: databaseId,
+		EntityID:   entityId,
+		Action:     sqlc.MigrationStatementAction(action),
+	})
+
+	if err != nil {
+		slog.Error("error creating database change", "error", err)
+	}
+}
+
+func (s *SchemaSyncService) updateTable(c context.Context, tableRef TableRef, database models.Database, schemaId uuid.UUID) (sqlc.DatabaseEntity, error) {
 	args := sqlc.GetDatabaseEntityByDatabaseIdAndTypeAndParentAndNameParams{
 		DatabaseID: database.ID,
 		ParentID:   &schemaId,
@@ -277,11 +291,8 @@ func (s *SchemaSyncService) UpdateTable(c context.Context, tableRef TableRef, da
 		fingerprint := GenerateTableFingerprint(tableRef)
 
 		table, err = s.db.GetDatabaseEntityByFingerprint(c, sqlc.GetDatabaseEntityByFingerprintParams{
-			DatabaseID: database.ID,
-			Fingerprint: pgtype.Text{
-				String: fingerprint,
-				Valid:  true,
-			},
+			DatabaseID:  database.ID,
+			Fingerprint: fingerprint,
 		})
 
 		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
@@ -303,27 +314,27 @@ func (s *SchemaSyncService) UpdateTable(c context.Context, tableRef TableRef, da
 				slog.Error("error updating table name", "error", err.Error())
 				return sqlc.DatabaseEntity{}, err
 			}
+			s.markDatabaseChange(c, database.ID, table.ID, models.MigrationStatementActionUpdate)
 			slog.Info("Table renamed", "oldName", table.Name, "newName", tableRef.Name)
 			table.Name = tableRef.Name
 			return table, nil
 		}
 
 		args := sqlc.CreateDatabaseEntityParams{
-			ProjectID:  database.ProjectID,
-			EntityType: sqlc.DatabaseEntityTypeTable,
-			ParentID:   &schemaId,
-			DatabaseID: database.ID,
-			Name:       tableRef.Name,
-			Fingerprint: pgtype.Text{
-				String: GenerateTableFingerprint(tableRef),
-				Valid:  true,
-			},
+			ProjectID:   database.ProjectID,
+			EntityType:  sqlc.DatabaseEntityTypeTable,
+			ParentID:    &schemaId,
+			DatabaseID:  database.ID,
+			Name:        tableRef.Name,
+			Fingerprint: fingerprint,
 		}
 		table, err := s.db.CreateDatabaseEntity(c, args)
 		if err != nil {
-			slog.Error("error creating schema", "error", err)
+			slog.Error("error creating table", "error", err)
 			return sqlc.DatabaseEntity{}, err
 		}
+
+		s.markDatabaseChange(c, database.ID, table.ID, models.MigrationStatementActionCreate)
 		slog.Info("Table created", "schema", table.Name)
 		return table, err
 	}
@@ -334,8 +345,8 @@ func (s *SchemaSyncService) UpdateTable(c context.Context, tableRef TableRef, da
 	return table, err
 }
 
-// SyncColumn syncs a database column to a database entity.
-func (s *SchemaSyncService) SyncColumn(c context.Context, columnRef ColumnRef, database models.Database, tableId uuid.UUID) (sqlc.DatabaseEntity, error) {
+// updateColumn syncs a database column to a database entity.
+func (s *SchemaSyncService) updateColumn(c context.Context, columnRef ColumnRef, database models.Database, tableId uuid.UUID) (sqlc.DatabaseEntity, error) {
 	args := sqlc.GetDatabaseEntityByDatabaseIdAndTypeAndParentAndNameParams{
 		DatabaseID: database.ID,
 		ParentID:   &tableId,
@@ -366,11 +377,8 @@ func (s *SchemaSyncService) SyncColumn(c context.Context, columnRef ColumnRef, d
 		fingerprint := GenerateColumnFingerprint(columnRef, tableId)
 
 		column, err = s.db.GetDatabaseEntityByFingerprint(c, sqlc.GetDatabaseEntityByFingerprintParams{
-			DatabaseID: database.ID,
-			Fingerprint: pgtype.Text{
-				String: fingerprint,
-				Valid:  true,
-			},
+			DatabaseID:  database.ID,
+			Fingerprint: fingerprint,
 		})
 
 		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
@@ -390,6 +398,8 @@ func (s *SchemaSyncService) SyncColumn(c context.Context, columnRef ColumnRef, d
 				slog.Error("error updating column name", "error", err.Error())
 				return sqlc.DatabaseEntity{}, err
 			}
+
+			s.markDatabaseChange(c, database.ID, column.ID, models.MigrationStatementActionUpdate)
 			slog.Info("Column renamed", "oldName", column.Name, "newName", columnRef.Name)
 			column.Name = columnRef.Name
 			return column, nil
@@ -397,22 +407,21 @@ func (s *SchemaSyncService) SyncColumn(c context.Context, columnRef ColumnRef, d
 
 		// If that column does not exist yet, save it
 		args := sqlc.CreateDatabaseEntityParams{
-			ProjectID:  database.ProjectID,
-			EntityType: sqlc.DatabaseEntityTypeColumn,
-			ParentID:   &tableId,
-			DatabaseID: database.ID,
-			Name:       columnRef.Name,
-			Attributes: attributesJson,
-			Fingerprint: pgtype.Text{
-				String: GenerateColumnFingerprint(columnRef, tableId),
-				Valid:  true,
-			},
+			ProjectID:   database.ProjectID,
+			EntityType:  sqlc.DatabaseEntityTypeColumn,
+			ParentID:    &tableId,
+			DatabaseID:  database.ID,
+			Name:        columnRef.Name,
+			Attributes:  attributesJson,
+			Fingerprint: fingerprint,
 		}
 		column, err := s.db.CreateDatabaseEntity(c, args)
 		if err != nil {
-			slog.Error("error creating schema", "error", err)
+			slog.Error("error creating column", "error", err)
 			return sqlc.DatabaseEntity{}, err
 		}
+
+		s.markDatabaseChange(c, database.ID, column.ID, models.MigrationStatementActionCreate)
 		slog.Info("Column created", "name", column.Name)
 		return column, err
 	}

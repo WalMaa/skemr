@@ -1,14 +1,14 @@
 package controller
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
-	"github.com/google/uuid"
 	"github.com/walmaa/skemr-api/internal/dto"
+	"github.com/walmaa/skemr-api/internal/errormsg"
 	"github.com/walmaa/skemr-api/internal/service"
+	"github.com/walmaa/skemr-api/internal/validation"
 )
 
 type RuleController struct {
@@ -29,22 +29,22 @@ func (h *RuleController) RegisterRoutes(r chi.Router) {
 }
 
 func (h *RuleController) GetRule(w http.ResponseWriter, r *http.Request) {
-	projectID, ok := r.Context().Value("projectID").(uuid.UUID)
+	projectId, ok := ParseUUIDParam(w, r, "projectId")
 	if !ok {
-		http.Error(w, "projectId not found in context", http.StatusBadRequest)
 		return
 	}
-	databaseId, err := uuid.Parse(chi.URLParam(r, "databaseId"))
-	if err != nil {
-		http.Error(w, "invalid databaseId", http.StatusBadRequest)
+
+	databaseId, ok := ParseUUIDParam(w, r, "databaseId")
+	if !ok {
 		return
 	}
-	ruleId, err := uuid.Parse(chi.URLParam(r, "ruleId"))
-	if err != nil {
-		http.Error(w, "invalid ruleId", http.StatusBadRequest)
+
+	ruleId, ok := ParseUUIDParam(w, r, "ruleId")
+	if !ok {
 		return
 	}
-	rule, err := h.Service.GetRule(r.Context(), projectID, databaseId, ruleId)
+
+	rule, err := h.Service.GetRule(r.Context(), projectId, databaseId, ruleId)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -53,22 +53,22 @@ func (h *RuleController) GetRule(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *RuleController) deleteRule(w http.ResponseWriter, r *http.Request) {
-	projectID, ok := r.Context().Value("projectId").(uuid.UUID)
+	projectId, ok := ParseUUIDParam(w, r, "projectId")
 	if !ok {
-		http.Error(w, "projectId not found in context", http.StatusBadRequest)
 		return
 	}
-	databaseId, err := uuid.Parse(chi.URLParam(r, "databaseId"))
-	if err != nil {
-		http.Error(w, "invalid databaseId", http.StatusBadRequest)
+
+	databaseId, ok := ParseUUIDParam(w, r, "databaseId")
+	if !ok {
 		return
 	}
-	ruleId, err := uuid.Parse(chi.URLParam(r, "ruleId"))
-	if err != nil {
-		http.Error(w, "invalid ruleId", http.StatusBadRequest)
+
+	ruleId, ok := ParseUUIDParam(w, r, "ruleId")
+	if !ok {
 		return
 	}
-	err = h.Service.DeleteRule(r.Context(), projectID, databaseId, ruleId)
+
+	err := h.Service.DeleteRule(r.Context(), projectId, databaseId, ruleId)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -77,24 +77,35 @@ func (h *RuleController) deleteRule(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *RuleController) createRule(w http.ResponseWriter, r *http.Request) {
-	databaseId, err := uuid.Parse(chi.URLParam(r, "databaseId"))
-	if err != nil {
-		http.Error(w, "invalid databaseId", http.StatusBadRequest)
-		return
-	}
-	projectID, ok := r.Context().Value("projectId").(uuid.UUID)
+	projectId, ok := ParseUUIDParam(w, r, "projectId")
 	if !ok {
-		http.Error(w, "projectId not found in context", http.StatusBadRequest)
 		return
 	}
+
+	databaseId, ok := ParseUUIDParam(w, r, "databaseId")
+	if !ok {
+		return
+	}
+
 	var body dto.RuleCreationDto
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+
+	if err := render.Decode(r, &body); err != nil {
+		errormsg.WriteErrorResponse(w, r, err)
 		return
 	}
-	rule, err := h.Service.CreateRule(r.Context(), projectID, databaseId, body)
+
+	err := validation.Validate.Struct(body)
+
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		errorResponse := validation.CreateErrorResponse(err)
+		errormsg.WriteErrorResponse(w, r, &errorResponse)
+		return
+	}
+
+	rule, err := h.Service.CreateRule(r.Context(), projectId, databaseId, body)
+
+	if err != nil {
+		errormsg.WriteErrorResponse(w, r, err)
 		return
 	}
 
@@ -103,17 +114,17 @@ func (h *RuleController) createRule(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *RuleController) ListRules(w http.ResponseWriter, r *http.Request) {
-	databaseId, err := uuid.Parse(chi.URLParam(r, "databaseId"))
-	if err != nil {
-		http.Error(w, "invalid databaseId", http.StatusBadRequest)
-		return
-	}
-	projectID, ok := r.Context().Value("projectId").(uuid.UUID)
+	projectId, ok := ParseUUIDParam(w, r, "projectId")
 	if !ok {
-		http.Error(w, "projectId not found in context", http.StatusBadRequest)
 		return
 	}
-	rules, err := h.Service.ListRulesByDatabase(r.Context(), projectID, databaseId)
+
+	databaseId, ok := ParseUUIDParam(w, r, "databaseId")
+	if !ok {
+		return
+	}
+
+	rules, err := h.Service.ListRulesByDatabase(r.Context(), projectId, databaseId)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

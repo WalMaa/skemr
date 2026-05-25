@@ -6,7 +6,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
-	"github.com/google/uuid"
 	"github.com/walmaa/skemr-api/internal/dto"
 	"github.com/walmaa/skemr-api/internal/errormsg"
 	"github.com/walmaa/skemr-api/internal/service"
@@ -33,12 +32,13 @@ func (h *DatabaseController) RegisterRoutes(r chi.Router) {
 }
 
 func (h *DatabaseController) deleteDatabase(w http.ResponseWriter, r *http.Request) {
-	databaseId, err := uuid.Parse(chi.URLParam(r, "databaseId"))
-	if err != nil {
-		http.Error(w, "Invalid ID format", http.StatusBadRequest)
+
+	// TODO: scope this to the project
+	databaseId, ok := ParseUUIDParam(w, r, "databaseId")
+	if !ok {
 		return
 	}
-	err = h.Service.DeleteDatabase(r.Context(), databaseId)
+	err := h.Service.DeleteDatabase(r.Context(), databaseId)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -47,12 +47,12 @@ func (h *DatabaseController) deleteDatabase(w http.ResponseWriter, r *http.Reque
 }
 
 func (h *DatabaseController) listDatabasesByProject(w http.ResponseWriter, r *http.Request) {
-	id, err := uuid.Parse(chi.URLParam(r, "projectId"))
-	if err != nil {
-		http.Error(w, "Invalid project ID format", http.StatusBadRequest)
+	projectId, ok := ParseUUIDParam(w, r, "projectId")
+	if !ok {
 		return
 	}
-	databases, err := h.Service.ListDatabasesByProject(r.Context(), id)
+
+	databases, err := h.Service.ListDatabasesByProject(r.Context(), projectId)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -61,14 +61,14 @@ func (h *DatabaseController) listDatabasesByProject(w http.ResponseWriter, r *ht
 }
 
 func (h *DatabaseController) createDatabase(w http.ResponseWriter, r *http.Request) {
-	projectId, err := uuid.Parse(chi.URLParam(r, "projectId"))
-	if err != nil {
-		http.Error(w, "Invalid project ID format", http.StatusBadRequest)
+	projectId, ok := ParseUUIDParam(w, r, "projectId")
+	if !ok {
 		return
 	}
+
 	var body dto.DatabaseCreationDto
 
-	err = render.Decode(r, &body)
+	err := render.Decode(r, &body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -91,12 +91,16 @@ func (h *DatabaseController) createDatabase(w http.ResponseWriter, r *http.Reque
 }
 
 func (h *DatabaseController) updateDatabase(w http.ResponseWriter, r *http.Request) {
-	projectId := r.Context().Value("projectId").(uuid.UUID)
-	databaseId, err := uuid.Parse(chi.URLParam(r, "databaseId"))
-	if err != nil {
-		http.Error(w, "Invalid database ID format", http.StatusBadRequest)
+	projectId, ok := ParseUUIDParam(w, r, "projectId")
+	if !ok {
 		return
 	}
+
+	databaseId, ok := ParseUUIDParam(w, r, "databaseId")
+	if !ok {
+		return
+	}
+
 	var body dto.DatabaseUpdateDto
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -111,13 +115,17 @@ func (h *DatabaseController) updateDatabase(w http.ResponseWriter, r *http.Reque
 }
 
 func (h *DatabaseController) syncDatabase(w http.ResponseWriter, r *http.Request) {
-	projectId := r.Context().Value("projectId").(uuid.UUID)
-	databaseId, err := uuid.Parse(chi.URLParam(r, "databaseId"))
-	if err != nil {
-		http.Error(w, "Invalid database ID format", http.StatusBadRequest)
+	projectId, ok := ParseUUIDParam(w, r, "projectId")
+	if !ok {
 		return
 	}
-	err = h.Service.EnqueueManualDatabaseSync(r.Context(), projectId, databaseId)
+
+	databaseId, ok := ParseUUIDParam(w, r, "databaseId")
+	if !ok {
+		return
+	}
+
+	err := h.Service.EnqueueManualDatabaseSync(r.Context(), projectId, databaseId)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -126,11 +134,13 @@ func (h *DatabaseController) syncDatabase(w http.ResponseWriter, r *http.Request
 }
 
 func (h *DatabaseController) getDatabase(w http.ResponseWriter, r *http.Request) {
-	databaseId, err := uuid.Parse(chi.URLParam(r, "databaseId"))
-	if err != nil {
-		http.Error(w, "Invalid ID format", http.StatusBadRequest)
+
+	// TODO: scope this to the project
+	databaseId, ok := ParseUUIDParam(w, r, "databaseId")
+	if !ok {
 		return
 	}
+
 	database, err := h.Service.GetDatabase(r.Context(), databaseId)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

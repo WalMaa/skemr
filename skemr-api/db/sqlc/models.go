@@ -6,6 +6,7 @@ package sqlc
 
 import (
 	"database/sql/driver"
+	"encoding/json"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -291,9 +292,17 @@ type Database struct {
 	UpdatedAt                pgtype.Timestamptz `json:"updated_at"`
 }
 
+type DatabaseChange struct {
+	ID         uuid.UUID                `json:"id"`
+	DatabaseID uuid.UUID                `json:"database_id"`
+	EntityID   uuid.UUID                `json:"entity_id"`
+	Action     MigrationStatementAction `json:"action"`
+	CreatedAt  pgtype.Timestamptz       `json:"created_at"`
+}
+
 type DatabaseEntity struct {
 	ID          uuid.UUID            `json:"id"`
-	Fingerprint pgtype.Text          `json:"fingerprint"`
+	Fingerprint string               `json:"fingerprint"`
 	ProjectID   uuid.UUID            `json:"project_id"`
 	DatabaseID  uuid.UUID            `json:"database_id"`
 	Status      DatabaseEntityStatus `json:"status"`
@@ -302,17 +311,18 @@ type DatabaseEntity struct {
 	EntityType  DatabaseEntityType   `json:"entity_type"`
 	ParentID    *uuid.UUID           `json:"parent_id"`
 	Name        string               `json:"name"`
-	Attributes  []byte               `json:"attributes"`
+	Attributes  json.RawMessage      `json:"attributes"`
 	CreatedAt   pgtype.Timestamptz   `json:"created_at"`
 }
 
-type MigrationStatement struct {
-	ID           uuid.UUID                `json:"id"`
-	RawStatement string                   `json:"raw_statement"`
-	Action       MigrationStatementAction `json:"action"`
-	Status       MigrationStatus          `json:"status"`
-	Target       pgtype.Text              `json:"target"`
-	RelationName pgtype.Text              `json:"relation_name"`
+type PipelineRun struct {
+	ID          uuid.UUID          `json:"id"`
+	DatabaseID  uuid.UUID          `json:"database_id"`
+	Status      MigrationStatus    `json:"status"`
+	Environment pgtype.Text        `json:"environment"`
+	StartedAt   pgtype.Timestamptz `json:"started_at"`
+	CompletedAt pgtype.Timestamptz `json:"completed_at"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 }
 
 type Project struct {
@@ -347,6 +357,7 @@ type Rule struct {
 	ID               uuid.UUID          `json:"id"`
 	Name             string             `json:"name"`
 	Type             RuleType           `json:"type"`
+	Attributes       json.RawMessage    `json:"attributes"`
 	DatabaseEntityID uuid.UUID          `json:"database_entity_id"`
 	DatabaseID       uuid.UUID          `json:"database_id"`
 	CreatedAt        pgtype.Timestamptz `json:"created_at"`

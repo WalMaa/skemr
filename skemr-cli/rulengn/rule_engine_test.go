@@ -3,6 +3,7 @@ package rulengn
 import (
 	"os"
 	"path/filepath"
+	"strconv"
 	"testing"
 
 	"github.com/google/uuid"
@@ -30,6 +31,11 @@ var entities = []models.DatabaseEntity{
 		ID:   uuid.New(),
 		Name: "age",
 		Type: models.DatabaseEntityTypeColumn,
+	},
+	{
+		ID:   uuid.New(),
+		Name: "public",
+		Type: models.DatabaseEntityTypeNamespace,
 	},
 }
 
@@ -86,7 +92,7 @@ func TestDeprecatedRuleTrigger(t *testing.T) {
 		},
 	}
 
-	result, err := ruleEngine.CheckStatement(MigrationFileDto{File: migrationFile}, rules, entities)
+	result, err := ruleEngine.checkStatement(MigrationFileDto{File: migrationFile}, rules, entities)
 	assert.NoError(t, err)
 
 	// Assert the result
@@ -119,7 +125,7 @@ func TestWarnRuleTrigger(t *testing.T) {
 		},
 	}
 
-	result, err := ruleEngine.CheckStatement(MigrationFileDto{File: migrationFile}, rules, entities)
+	result, err := ruleEngine.checkStatement(MigrationFileDto{File: migrationFile}, rules, entities)
 	assert.NoError(t, err)
 
 	// Assert the result
@@ -152,7 +158,7 @@ func TestLockedRuleViolation(t *testing.T) {
 		},
 	}
 
-	result, err := ruleEngine.CheckStatement(MigrationFileDto{File: migrationFile}, rules, entities)
+	result, err := ruleEngine.checkStatement(MigrationFileDto{File: migrationFile}, rules, entities)
 	assert.NoError(t, err)
 
 	// Assert the result
@@ -185,7 +191,7 @@ func TestLockedTableRuleViolationOnColumnAdd(t *testing.T) {
 		},
 	}
 
-	result, err := ruleEngine.CheckStatement(MigrationFileDto{File: migrationFile}, rules, entities)
+	result, err := ruleEngine.checkStatement(MigrationFileDto{File: migrationFile}, rules, entities)
 	assert.NoError(t, err)
 
 	// Assert the result
@@ -217,7 +223,7 @@ func TestLockedColumnRuleViolationWithQualifiedTable(t *testing.T) {
 		},
 	}
 
-	result, err := ruleEngine.CheckStatement(MigrationFileDto{File: migrationFile}, rules, entities)
+	result, err := ruleEngine.checkStatement(MigrationFileDto{File: migrationFile}, rules, entities)
 	assert.NoError(t, err)
 
 	assert.Equal(t, 1, len(result))
@@ -250,7 +256,7 @@ func TestAdvisoryRuleTrigger(t *testing.T) {
 		},
 	}
 
-	result, err := ruleEngine.CheckStatement(MigrationFileDto{File: migrationFile}, rules, entities)
+	result, err := ruleEngine.checkStatement(MigrationFileDto{File: migrationFile}, rules, entities)
 	assert.NoError(t, err)
 
 	// Assert the result
@@ -261,7 +267,7 @@ func TestAdvisoryRuleTrigger(t *testing.T) {
 }
 
 // If tables A and B have identical column names, and there is a rule that locks on column name on table A,
-// Then dropping the column on table B should not trigger the rule, but dropping the column on table A should trigger the rule.
+// Then dropping the column on table B should not trigger the rule. However, dropping the column on table A should trigger the rule.
 func TestIdenticalColumnNameRule(t *testing.T) {
 	tableAId := uuid.New()
 	tableBId := uuid.New()
@@ -312,7 +318,7 @@ func TestIdenticalColumnNameRule(t *testing.T) {
 		},
 	}
 
-	result, err := ruleEngine.CheckStatement(MigrationFileDto{File: migrationFile}, rules, entities)
+	result, err := ruleEngine.checkStatement(MigrationFileDto{File: migrationFile}, rules, entities)
 	assert.NoError(t, err)
 
 	// Assert the result
@@ -320,4 +326,109 @@ func TestIdenticalColumnNameRule(t *testing.T) {
 	assert.Equal(t, models.RuleTypeLocked, result[0].Type)
 	assert.Equal(t, "Locked Age Column on Users Table", result[0].Rule.Name)
 	assert.Equal(t, migrationFile, result[0].File)
+}
+
+// If namespaces A and B have identical table names, and there is a locked rule on table A
+// Then dropping the table on namespace B should not trigger the rule. However, dropping the table on namespace A should trigger the rule.
+func TestIdenticalTableNameWithNamespacesRule(t *testing.T) {
+	namespaceAId := uuid.New()
+	namespaceBId := uuid.New()
+	tableA := models.DatabaseEntity{
+		ID:       uuid.New(),
+		Name:     "users",
+		Type:     models.DatabaseEntityTypeTable,
+		ParentId: &namespaceAId,
+	}
+	tableB := models.DatabaseEntity{
+		ID:       uuid.New(),
+		Name:     "users",
+		Type:     models.DatabaseEntityTypeTable,
+		ParentId: &namespaceBId,
+	}
+
+	entities := []models.DatabaseEntity{
+		{
+			ID:   namespaceAId,
+			Name: "public",
+			Type: models.DatabaseEntityTypeNamespace,
+		},
+		tableA,
+		{
+			ID:   namespaceBId,
+			Name: "other",
+			Type: models.DatabaseEntityTypeNamespace,
+		},
+		tableB,
+	}
+	ruleEngine := NewRuleEngine()
+
+	// Create a temporary migration file
+	tmpFile, err := os.CreateTemp(t.TempDir(), "migration-*.sql")
+	assert.NoError(t, err)
+	defer func() { _ = tmpFile.Close() }()
+	content := "DROP TABLE other.users;\nDROP TABLE public.users;"
+	_, err = tmpFile.WriteString(content)
+	assert.NoError(t, err)
+	migrationFile := tmpFile.Name()
+
+	rules := []models.Rule{
+		{
+			ID:             uuid.New(),
+			Name:           "Locked Users Table in Public Namespace",
+			RuleType:       models.RuleTypeLocked,
+			DataBaseEntity: tableA,
+		},
+	}
+
+	result, err := ruleEngine.checkStatement(MigrationFileDto{File: migrationFile}, rules, entities)
+	assert.NoError(t, err)
+
+	// Assert the result
+	assert.Equal(t, 1, len(result))
+	assert.Equal(t, models.RuleTypeLocked, result[0].Type)
+	assert.Equal(t, "Locked Users Table in Public Namespace", result[0].Rule.Name)
+	assert.Equal(t, migrationFile, result[0].File)
+}
+
+func BenchmarkRuleEngine_checkStatement(b *testing.B) {
+	// Create 100 rules
+	rules := make([]models.Rule, 100)
+	for i := range rules {
+		rules[i] = models.Rule{
+			ID:       uuid.New(),
+			Name:     "Rule " + strconv.Itoa(i),
+			RuleType: models.RuleTypeDeprecated,
+			DataBaseEntity: models.DatabaseEntity{
+				Name: "age",
+			},
+		}
+	}
+
+	// create 500 entities
+	entities := make([]models.DatabaseEntity, 500)
+	for i := range entities {
+		entities[i] = models.DatabaseEntity{
+			ID:   uuid.New(),
+			Name: "entity" + strconv.Itoa(i),
+			Type: models.DatabaseEntityTypeTable,
+		}
+	}
+
+	ruleEngine := NewRuleEngine()
+
+	// Create a temporary migration file containing 1000 statements
+	tmpFile, err := os.CreateTemp(b.TempDir(), "migration-*.sql")
+	assert.NoError(b, err)
+	defer func() { _ = tmpFile.Close() }()
+	for i := 0; i < 1000; i++ {
+		_, err = tmpFile.WriteString("ALTER TABLE users DROP COLUMN age;\n")
+		assert.NoError(b, err)
+	}
+	migrationFile := tmpFile.Name()
+
+	b.ResetTimer()
+	for b.Loop() {
+		_, err := ruleEngine.checkStatement(MigrationFileDto{File: migrationFile}, rules, entities)
+		assert.NoError(b, err)
+	}
 }

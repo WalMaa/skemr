@@ -1,6 +1,7 @@
 package validation
 
 import (
+	"net/http"
 	"strings"
 
 	"github.com/go-playground/validator/v10"
@@ -18,6 +19,7 @@ func CreateErrorResponse(err error) models.ErrorResponse {
 	errorResponse := models.ErrorResponse{
 		Message: "Validation failed",
 		Errors:  make(map[string]string),
+		Status:  http.StatusBadRequest,
 	}
 
 	for _, fieldErr := range validationErrors {

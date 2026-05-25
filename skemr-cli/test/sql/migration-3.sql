@@ -1,1 +1,5 @@
 DROP TABLE orders CASCADE;
+
+ALTER TABLE orders ADD COLUMN updated_at TIMESTAMP;
+
+ALTER SCHEMA analytics RENAME TO console;

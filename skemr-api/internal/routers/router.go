@@ -21,6 +21,8 @@ type Services struct {
 	AccessTokenService    *service.AccessTokenService
 	DatabaseEntityService *service.DatabaseEntityService
 	IntegrationService    *service.IntegrationService
+	DatabaseChangeService *service.DatabaseChangeService
+	PipelineRunService    *service.PipelineRunService
 }
 
 func InitRouter(services *Services) http.Handler {
@@ -72,14 +74,22 @@ func InitRouter(services *Services) http.Handler {
 		// Project level routes
 		r.Route("/projects/{projectId}", func(r chi.Router) {
 			r.Use(middleware.ProjectIDMiddleware)
+
+			// define controllers
 			databaseController := controller.NewDatabaseController(services.DatabaseService)
 			projectSecretsController := controller.NewProjectSecretsController(services.AccessTokenService)
 			ruleController := controller.NewRuleController(services.RuleService)
 			databaseEntityController := controller.NewDatabaseEntityController(services.DatabaseEntityService)
+			databaseChangeController := controller.NewDatabaseChangeController(services.DatabaseChangeService)
+			pipelineRunController := controller.NewPipelineRunController(services.PipelineRunService)
+
+			// register routes
 			databaseController.RegisterRoutes(r)
 			projectSecretsController.RegisterRoutes(r)
 			ruleController.RegisterRoutes(r)
 			databaseEntityController.RegisterRoutes(r)
+			databaseChangeController.RegisterRoutes(r)
+			pipelineRunController.RegisterRoutes(r)
 
 			r.Get("/", projectController.GetProject)
 			r.Delete("/", projectController.DeleteProject)

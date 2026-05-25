@@ -11,6 +11,14 @@ WHERE id = @id
   AND project_id = @project_id
 LIMIT 1;
 
+-- name: GetDatabaseEntityByProjectIdDatabaseIdAndId :one
+SELECT *
+FROM database_entities
+WHERE id = @id
+  AND project_id = @project_id
+  AND database_id = @database_id
+LIMIT 1;
+
 -- name: GetDatabaseEntitiesByProjectId :many
 SELECT *
 FROM database_entities
@@ -60,7 +68,7 @@ LIMIT 1;
 -- name: CreateDatabaseEntity :one
 INSERT INTO database_entities
 (project_id, database_id, entity_type, parent_id, name, attributes, fingerprint)
-VALUES (@project_id, @database_id, @entity_type, @parent_id, @name, @attributes, @fingerprint)
+VALUES (@project_id, @database_id, @entity_type, @parent_id, @name, COALESCE(@attributes, '{}'::jsonb), @fingerprint)
 RETURNING *;
 
 -- name: UpdateDatabaseEntityName :one

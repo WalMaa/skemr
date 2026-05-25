@@ -2,6 +2,7 @@ package dto
 
 import (
 	"github.com/google/uuid"
+	"github.com/walmaa/skemr-common/models"
 )
 
 type ProjectCreationDto struct {
@@ -38,20 +39,18 @@ const (
 
 type RuleCreationDto struct {
 	Name             string
-	RuleType         RuleType
-	DataBaseEntityId uuid.UUID
+	RuleType         models.RuleType       `json:"ruleType" validate:"required,oneof=locked deprecated advisory warning"`
+	Attributes       models.RuleAttributes `json:"attributes" validate:"omitempty,json"`
+	DataBaseEntityId uuid.UUID             `json:"databaseEntityId" validate:"required,uuid4"`
 }
-
-type RuleType string
-
-const (
-	RuleTypeLocked     RuleType = "locked"
-	RuleTypeWarn       RuleType = "warn"
-	RuleTypeAdvisory   RuleType = "advisory"
-	RuleTypeDeprecated RuleType = "deprecated"
-)
 
 type SecretCreationDto struct {
 	Name      string `json:"name" validate:"required,min=2,max=100"`
 	ExpiresAt string `json:"expiresAt" validate:"omitempty,datetime=2006-01-02T15:04:05Z07:00"`
+}
+
+type PipelineRunCreationDto struct {
+	Status      models.MigrationStatus `json:"status" validate:"required,oneof=completed failed"`
+	Environment string                 `json:"environment" validate:"required"`
+	CompletedAt string                 `json:"completedAt" validate:"required,datetime=2006-01-02T15:04:05Z07:00"`
 }

@@ -137,7 +137,7 @@ func (s *AccessTokenService) DeleteToken(c context.Context, projectId uuid.UUID,
 }
 
 func (s *AccessTokenService) ValidateToken(c context.Context, projectId uuid.UUID, token string) (bool, error) {
-	slog.Info("Validating token")
+	slog.Info("Validating token", "projectId", projectId)
 
 	// Extract the prefix to find the token in the database
 

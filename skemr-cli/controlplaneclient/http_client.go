@@ -81,11 +81,16 @@ func GetDatabaseEntity(ctx context.Context, projectId string, databaseId string,
 		return nil, err
 	}
 
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			slog.Error("Error closing response body", "error", err)
+		}
+	}(resp.Body)
+
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("Error getting database entity, status code: %d", resp.StatusCode)
 	}
-
-	defer resp.Body.Close()
 
 	var out models.DatabaseEntity
 	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
@@ -116,11 +121,16 @@ func GetDatabaseEntities(ctx context.Context, projectId string, databaseId strin
 		return nil, err
 	}
 
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			slog.Error("Error closing response body", "error", err)
+		}
+	}(resp.Body)
+
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("Error getting database entities, status code: %d", resp.StatusCode)
 	}
-
-	defer resp.Body.Close()
 
 	var out []models.DatabaseEntity
 	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {

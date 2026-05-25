@@ -33,8 +33,11 @@ func (h *ProjectSecretsController) RegisterRoutes(r chi.Router) {
 }
 
 func (h *ProjectSecretsController) createToken(w http.ResponseWriter, r *http.Request) {
-	c := r.Context()
-	projectId := c.Value("projectId").(uuid.UUID)
+	projectId, ok := ParseUUIDParam(w, r, "projectId")
+	if !ok {
+		return
+	}
+
 	var body dto.SecretCreationDto
 	if err := render.Decode(r, &body); err != nil {
 		http.Error(w, "Invalid request", http.StatusBadRequest)
@@ -48,7 +51,7 @@ func (h *ProjectSecretsController) createToken(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	token, err := h.Service.CreateToken(c, projectId, body)
+	token, err := h.Service.CreateToken(r.Context(), projectId, body)
 	if err != nil {
 		errormsg.WriteErrorResponse(w, r, err)
 		return
@@ -72,10 +75,12 @@ func (h *ProjectSecretsController) getSecret(w http.ResponseWriter, r *http.Requ
 }
 
 func (h *ProjectSecretsController) getSecrets(w http.ResponseWriter, r *http.Request) {
-	c := r.Context()
-	projectId := c.Value("projectId").(uuid.UUID)
+	projectId, ok := ParseUUIDParam(w, r, "projectId")
+	if !ok {
+		return
+	}
 
-	tokens, err := h.Service.GetTokens(c, projectId)
+	tokens, err := h.Service.GetTokens(r.Context(), projectId)
 	if err != nil {
 		slog.Error("Error getting tokens", "err", err)
 		return
@@ -90,8 +95,10 @@ func (h *ProjectSecretsController) updateSecret(_ http.ResponseWriter, _ *http.R
 }
 
 func (h *ProjectSecretsController) deleteSecret(w http.ResponseWriter, r *http.Request) {
-	c := r.Context()
-	projectId := c.Value("projectId").(uuid.UUID)
+	projectId, ok := ParseUUIDParam(w, r, "projectId")
+	if !ok {
+		return
+	}
 
 	secretId, err := uuid.Parse(chi.URLParam(r, "secretId"))
 
@@ -99,7 +106,7 @@ func (h *ProjectSecretsController) deleteSecret(w http.ResponseWriter, r *http.R
 		http.Error(w, "Invalid Secret ID", http.StatusBadRequest)
 	}
 
-	err = h.Service.DeleteToken(c, projectId, secretId)
+	err = h.Service.DeleteToken(r.Context(), projectId, secretId)
 	if err != nil {
 		slog.Error("Error deleting token", "err", err)
 		http.Error(w, "Error deleting token", http.StatusInternalServerError)
