@@ -8,6 +8,7 @@ import (
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/go-chi/render"
+	"github.com/walmaa/skemr-api/internal/ai"
 	"github.com/walmaa/skemr-api/internal/controller"
 	"github.com/walmaa/skemr-api/internal/middleware"
 	"github.com/walmaa/skemr-api/internal/service"
@@ -23,6 +24,7 @@ type Services struct {
 	IntegrationService    *service.IntegrationService
 	DatabaseChangeService *service.DatabaseChangeService
 	PipelineRunService    *service.PipelineRunService
+	AIClient              ai.Model
 }
 
 func InitRouter(services *Services) http.Handler {
@@ -82,6 +84,7 @@ func InitRouter(services *Services) http.Handler {
 			databaseEntityController := controller.NewDatabaseEntityController(services.DatabaseEntityService)
 			databaseChangeController := controller.NewDatabaseChangeController(services.DatabaseChangeService)
 			pipelineRunController := controller.NewPipelineRunController(services.PipelineRunService)
+			aiController := ai.NewAIController(services.AIClient)
 
 			// register routes
 			databaseController.RegisterRoutes(r)
@@ -90,6 +93,7 @@ func InitRouter(services *Services) http.Handler {
 			databaseEntityController.RegisterRoutes(r)
 			databaseChangeController.RegisterRoutes(r)
 			pipelineRunController.RegisterRoutes(r)
+			aiController.RegisterRoutes(r)
 
 			r.Get("/", projectController.GetProject)
 			r.Delete("/", projectController.DeleteProject)

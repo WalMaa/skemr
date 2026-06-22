@@ -1,0 +1,9 @@
+@host = http://localhost:8080
+@apiBaseUrl = {{host}}/api/v1
+@jwt = replace-with-jwt
+@projectId = aaaabbbb-aaaa-aaaa-aaaa-aaaabbbbcccc
+@databaseId = 11112222-3333-4444-5555-666677778888
+
+### List database changes
+POST {{apiBaseUrl}}/projects/{{projectId}}/ai/complete
+Authorization: Bearer {{jwt}}
