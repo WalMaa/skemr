@@ -16,6 +16,7 @@ import (
 	"github.com/pressly/goose/v3"
 	"github.com/walmaa/skemr-api/config"
 	"github.com/walmaa/skemr-api/db/sqlc"
+	"github.com/walmaa/skemr-api/internal/ai"
 	"github.com/walmaa/skemr-api/internal/routers"
 	"github.com/walmaa/skemr-api/internal/service"
 	"github.com/walmaa/skemr-api/internal/tasks"
@@ -96,6 +97,8 @@ func main() {
 		runSchema(conn)
 		seedTestData(conn)
 	}
+
+    _ = ai.NewOpenAIClient(cfg.OpenAI.APIKey)
 
 	queries := sqlc.New(conn)
 	scopeResolver := service.NewScopeResolver(queries)
