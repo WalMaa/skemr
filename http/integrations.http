@@ -1,0 +1,20 @@
+@host = http://localhost:8080
+@apiBaseUrl = {{host}}/api/v1
+@projectId = aaaabbbb-aaaa-aaaa-aaaa-aaaabbbbcccc
+@databaseId = 11112222-3333-4444-5555-666677778888
+@projectAccessToken = replace-with-project-access-token
+
+### List CI/CD rules using a project access token
+GET {{apiBaseUrl}}/projects/{{projectId}}/databases/{{databaseId}}/integrations/ci-cd/rules
+Authorization: Bearer {{projectAccessToken}}
+
+### Report a completed CI/CD pipeline run
+POST {{apiBaseUrl}}/projects/{{projectId}}/databases/{{databaseId}}/integrations/ci-cd/pipeline-runs
+Authorization: Bearer {{projectAccessToken}}
+Content-Type: application/json
+
+{
+  "environment": "production",
+  "status": "completed",
+  "completedAt": "2026-06-23T12:00:00Z"
+}

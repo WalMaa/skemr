@@ -1,0 +1,14 @@
+@host = http://localhost:8080
+@apiBaseUrl = {{host}}/api/v1
+@jwt = replace-with-jwt
+@projectId = aaaabbbb-aaaa-aaaa-aaaa-aaaabbbbcccc
+@databaseId = 11112222-3333-4444-5555-666677778888
+@pipelineRunId = 55556666-7777-4aaa-8bbb-000011112222
+
+### List pipeline runs
+GET {{apiBaseUrl}}/projects/{{projectId}}/databases/{{databaseId}}/pipeline-runs
+Authorization: Bearer {{jwt}}
+
+### Get a pipeline run
+GET {{apiBaseUrl}}/projects/{{projectId}}/databases/{{databaseId}}/pipeline-runs/{{pipelineRunId}}
+Authorization: Bearer {{jwt}}

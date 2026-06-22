@@ -1,0 +1,49 @@
+@host = http://localhost:8080
+@apiBaseUrl = {{host}}/api/v1
+@jwt = replace-with-jwt
+@projectId = aaaabbbb-aaaa-aaaa-aaaa-aaaabbbbcccc
+@databaseId = 11112222-3333-4444-5555-666677778888
+
+### List databases in a project
+GET {{apiBaseUrl}}/projects/{{projectId}}/databases
+Authorization: Bearer {{jwt}}
+
+### Create a PostgreSQL database connection
+# @name createDatabase
+POST {{apiBaseUrl}}/projects/{{projectId}}/databases
+Authorization: Bearer {{jwt}}
+Content-Type: application/json
+
+{
+  "displayName": "Test Database",
+  "dbName": "test_db",
+  "username": "test_user",
+  "password": "test_pass",
+  "host": "localhost",
+  "port": 5433,
+  "sslMode": "disable",
+  "databaseType": "postgres"
+}
+
+### Get a database
+GET {{apiBaseUrl}}/projects/{{projectId}}/databases/{{databaseId}}
+Authorization: Bearer {{jwt}}
+
+### Update a database connection
+PATCH {{apiBaseUrl}}/projects/{{projectId}}/databases/{{databaseId}}
+Authorization: Bearer {{jwt}}
+Content-Type: application/json
+
+{
+  "displayName": "Test Database",
+  "dbName": "test_db",
+  "username": "test_user",
+  "password": "test_pass",
+  "host": "localhost",
+  "port": 5433,
+  "sslMode": "disable"
+}
+
+### Queue a manual database schema sync
+POST {{apiBaseUrl}}/projects/{{projectId}}/databases/{{databaseId}}/sync
+Authorization: Bearer {{jwt}}

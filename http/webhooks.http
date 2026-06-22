@@ -1,0 +1,34 @@
+@host = http://localhost:8080
+@apiBaseUrl = {{host}}/api/v1
+@gitlabWebhookToken = replace-with-gitlab-webhook-token
+
+### Send a GitLab merge-request webhook
+# GitLab sets the X-Gitlab-* headers and request body automatically in production.
+POST {{apiBaseUrl}}/webhooks/gitlab
+Content-Type: application/json
+X-Gitlab-Token: {{gitlabWebhookToken}}
+X-Gitlab-Event: Merge Request Hook
+
+{
+  "object_kind": "merge_request",
+  "event_type": "merge_request",
+  "user": {
+    "name": "Example User",
+    "username": "example"
+  },
+  "project": {
+    "id": 1,
+    "name": "example-project",
+    "path_with_namespace": "group/example-project",
+    "web_url": "https://gitlab.example.com/group/example-project"
+  },
+  "object_attributes": {
+    "id": 1,
+    "iid": 1,
+    "title": "Example merge request",
+    "state": "opened",
+    "source_branch": "feature/example",
+    "target_branch": "main"
+  }
+}
+

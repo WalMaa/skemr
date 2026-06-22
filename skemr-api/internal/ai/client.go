@@ -43,7 +43,7 @@ type OpenAIClient struct {
 	client *openai.Client
 }
 
-func NewOpenAIClient(apiKey string) *OpenAIClient {
+func NewOpenAIClient() *OpenAIClient {
 	client := openai.NewClient()
 	return &OpenAIClient{client: &client}
 }
@@ -54,7 +54,7 @@ func (c *OpenAIClient) Complete(ctx context.Context, msgs []Message, tools []Too
 
 	params := responses.ResponseNewParams{
 			Input: responses.ResponseNewParamsInputUnion{
-				OfString: openai.String("Hello"),
+				OfString: openai.String("What is the current working directory and list the files in it?"),
 			},
 			Model: openai.ChatModelGPT5Nano,
 			Tools: Tools,
@@ -84,6 +84,7 @@ func (c *OpenAIClient) Complete(ctx context.Context, msgs []Message, tools []Too
 				slog.Warn("Unknown tool call", "toolName", toolCall.Name)
 			}
 
+			slog.Info("Sending tool result back to model", "toolName", toolCall.Name, "result", toolCallResult)
 			// Continue conversation with tool call result
 			toolCallResponseParams := responses.ResponseNewParams{
 				Model: openai.ChatModelGPT5Nano,
@@ -91,7 +92,7 @@ func (c *OpenAIClient) Complete(ctx context.Context, msgs []Message, tools []Too
 				Input: responses.ResponseNewParamsInputUnion{
 					OfInputItemList: []responses.ResponseInputItemUnionParam{{
 						OfFunctionCallOutput: &responses.ResponseInputItemFunctionCallOutputParam{
-							CallID: toolCall.ID,
+							CallID: toolCall.CallID,
 							Output: responses.ResponseInputItemFunctionCallOutputOutputUnionParam{
 								OfString: openai.String(toolCallResult),
 							},
@@ -106,7 +107,7 @@ func (c *OpenAIClient) Complete(ctx context.Context, msgs []Message, tools []Too
 			}
 
 			return Completion{
-				Text: toolCallResponse.Output[0].AsMessage().JSON.Content.Raw(),
+				Text: toolCallResponse.OutputText(),
 				ToolCalls: []ToolCall{{
 					ID: toolCall.ID,
 					Name: toolCall.Name,
@@ -117,6 +118,6 @@ func (c *OpenAIClient) Complete(ctx context.Context, msgs []Message, tools []Too
 	}
 
 	return Completion{
-		Text: response.Output[0].AsMessage().JSON.Content.Raw(),
+		Text: response.OutputText(),
 	}, nil
 }

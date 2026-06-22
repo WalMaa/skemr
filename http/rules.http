@@ -1,10 +1,32 @@
-@baseurl = http://localhost:8080/api/v1
-# @name projects
-GET {{baseurl}}/projects/
+@host = http://localhost:8080
+@apiBaseUrl = {{host}}/api/v1
+@jwt = replace-with-jwt
+@projectId = aaaabbbb-aaaa-aaaa-aaaa-aaaabbbbcccc
+@databaseId = 11112222-3333-4444-5555-666677778888
+@databaseEntityId = 22223333-4444-4aaa-8bbb-777788889999
+@ruleId = 33334444-5555-4aaa-8bbb-888899990000
 
+### Create an advisory rule for a database entity
+# @name createRule
+POST {{apiBaseUrl}}/projects/{{projectId}}/databases/{{databaseId}}/rules
+Authorization: Bearer {{jwt}}
+Content-Type: application/json
 
-###
-@project_id = {{projects.response.body.$.[0].id}}
+{
+  "name": "Review users table changes",
+  "ruleType": "advisory",
+  "databaseEntityId": "{{databaseEntityId}}",
+  "attributes": {}
+}
 
-# @name project
-GET {{baseurl}}/projects/{{project_id}}
+### List rules for a database
+GET {{apiBaseUrl}}/projects/{{projectId}}/databases/{{databaseId}}/rules
+Authorization: Bearer {{jwt}}
+
+### Get a rule
+GET {{apiBaseUrl}}/projects/{{projectId}}/databases/{{databaseId}}/rules/{{ruleId}}
+Authorization: Bearer {{jwt}}
+
+### Delete a rule
+DELETE {{apiBaseUrl}}/projects/{{projectId}}/databases/{{databaseId}}/rules/{{ruleId}}
+Authorization: Bearer {{jwt}}

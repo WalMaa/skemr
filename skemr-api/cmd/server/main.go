@@ -98,7 +98,7 @@ func main() {
 		seedTestData(conn)
 	}
 
-    _ = ai.NewOpenAIClient(cfg.OpenAI.APIKey)
+    aiClient := ai.NewOpenAIClient()
 
 	queries := sqlc.New(conn)
 	scopeResolver := service.NewScopeResolver(queries)
@@ -123,6 +123,7 @@ func main() {
 		IntegrationService:    integrationService,
 		DatabaseChangeService: databaseChangeService,
 		PipelineRunService:    pipelineRunService,
+		AIClient:              aiClient,
 	}
 
 	worker.StartTaskWorkers(queries, cfg)

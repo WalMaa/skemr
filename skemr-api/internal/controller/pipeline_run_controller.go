@@ -66,6 +66,7 @@ func (h *PipelineRunController) getPipelineRun(w http.ResponseWriter, r *http.Re
 	pipelineRun, err := h.Service.GetPipelineRun(r.Context(), projectId, databaseId, pipelineRunId)
 	if err != nil {
 		errormsg.WriteErrorResponse(w, r, err)
+		return
 	}
 
 	render.JSON(w, r, pipelineRun)
