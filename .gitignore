@@ -6,7 +6,7 @@
 *.dylib
 *.test
 *.out
-__debug__*
+__debug_*
 
 # Go build output
 /bin/

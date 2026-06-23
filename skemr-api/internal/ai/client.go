@@ -5,119 +5,115 @@ import (
 	"encoding/json"
 	"log/slog"
 
+	"github.com/google/uuid"
 	"github.com/openai/openai-go/v3"
 	"github.com/openai/openai-go/v3/responses"
 )
 
 type ToolCall struct {
-	ID string `json:"id"`
-	Name string `json:"name"`
-	Input json.RawMessage `json:"input"`
+	ID        string          `json:"id"`
+	CallID    string          `json:"callId"`
+	Name      string          `json:"name"`
+	Arguments json.RawMessage `json:"arguments"`
 }
 
 type Completion struct {
-	Text string `json:"text"`
-	ToolCalls []ToolCall `json:"toolCalls"`
+	Text      string     `json:"text"`
+	ToolCalls []ToolCall `json:"toolCalls,omitempty"`
 }
 
 type Message struct {
-	Role string `json:"role"`
+	Role    string `json:"role"`
 	Content string `json:"content"`
 }
 
-type ToolSpec struct {
-	Name string `json:"name"`
-	Description string `json:"description"`
-}
-
 type Model interface {
-	Complete (ctx context.Context, msgs []Message, tools []ToolSpec) (Completion, error)
-}
-
-type Tool interface {
-	Spec() ToolSpec
-	Run(ctx context.Context, input json.RawMessage) (string, error)
+	Complete(ctx context.Context, msgs []Message, tools []ToolSpec, actor Actor) (Completion, error)
 }
 
 type OpenAIClient struct {
-	client *openai.Client
+	client       *openai.Client
+	toolRegistry *ToolRegistry
 }
 
-func NewOpenAIClient() *OpenAIClient {
+type Actor struct {
+	UserID    uuid.UUID
+	ProjectID uuid.UUID
+}
+
+func NewOpenAIClient(toolRegistry *ToolRegistry) *OpenAIClient {
 	client := openai.NewClient()
-	return &OpenAIClient{client: &client}
+	return &OpenAIClient{client: &client, toolRegistry: toolRegistry}
 }
 
-
-
-func (c *OpenAIClient) Complete(ctx context.Context, msgs []Message, tools []ToolSpec) (Completion, error) {
+func (c *OpenAIClient) Complete(ctx context.Context, msgs []Message, tools []ToolSpec, actor Actor) (Completion, error) {
 
 	params := responses.ResponseNewParams{
-			Input: responses.ResponseNewParamsInputUnion{
-				OfString: openai.String("What is the current working directory and list the files in it?"),
-			},
-			Model: openai.ChatModelGPT5Nano,
-			Tools: Tools,
-		}
+		Input: responses.ResponseNewParamsInputUnion{
+			OfString: openai.String("What is the current working directory and list the files in it?"),
+		},
+		Model: openai.ChatModelGPT5Nano,
+		Tools: c.toolRegistry.toToolUnionParams(),
+	}
 
-	response, err := c.client.Responses.New(ctx, params)
+	response, err := c.prompt(ctx, params)
 
 	if err != nil {
 		slog.Error("Error generating response", "err", err)
 		return Completion{}, err
 	}
 
+	var outputs []responses.ResponseInputItemUnionParam
+	// Tool call handling
 	for _, item := range response.Output {
-		if item.Type == "function_call" {
-			toolCall := item.AsFunctionCall()
-			toolCallResult := ""
-			switch toolCall.Name {
-			case "get_cwd":
-				cwd, _ := getCwd(ctx)
-				slog.Info("Tool call result", "toolName", toolCall.Name, "result", cwd)
-				toolCallResult = cwd
-			case "ls":
-				lsResult, _ := ls(ctx)
-				slog.Info("Tool call result", "toolName", toolCall.Name, "result", lsResult)
-				toolCallResult = lsResult
-			default:
-				slog.Warn("Unknown tool call", "toolName", toolCall.Name)
-			}
-
-			slog.Info("Sending tool result back to model", "toolName", toolCall.Name, "result", toolCallResult)
-			// Continue conversation with tool call result
-			toolCallResponseParams := responses.ResponseNewParams{
-				Model: openai.ChatModelGPT5Nano,
-				PreviousResponseID: openai.String(response.ID),
-				Input: responses.ResponseNewParamsInputUnion{
-					OfInputItemList: []responses.ResponseInputItemUnionParam{{
-						OfFunctionCallOutput: &responses.ResponseInputItemFunctionCallOutputParam{
-							CallID: toolCall.CallID,
-							Output: responses.ResponseInputItemFunctionCallOutputOutputUnionParam{
-								OfString: openai.String(toolCallResult),
-							},
-						},
-					}},
-				},
-			}
-			toolCallResponse, err := c.client.Responses.New(ctx, toolCallResponseParams)
-			if err != nil {
-				slog.Error("Error generating response after tool call", "err", err)
-				return Completion{}, err
-			}
-
-			return Completion{
-				Text: toolCallResponse.OutputText(),
-				ToolCalls: []ToolCall{{
-					ID: toolCall.ID,
-					Name: toolCall.Name,
-					Input: nil,
-				}},
-			}, nil
+		if item.Type != "function_call" {
+			continue
 		}
+		toolCall := item.AsFunctionCall()
+		toolCallResult, err := c.toolRegistry.Run(ctx, toolCall.Name, nil, actor)
+
+		if err != nil {
+			slog.Error("Error running tool", "toolName", toolCall.Name, "err", err)
+		}
+		slog.Debug("toolCallResult", "result", toolCallResult)
+
+		responseInput := responses.ResponseInputItemUnionParam{
+			OfFunctionCallOutput: &responses.ResponseInputItemFunctionCallOutputParam{
+				CallID: toolCall.CallID,
+				Output: responses.ResponseInputItemFunctionCallOutputOutputUnionParam{
+					OfString: openai.String(toolCallResult),
+				},
+			},
+		}
+
+		outputs = append(outputs, responseInput)
+
+	}
+	toolCallResponseParams := responses.ResponseNewParams{
+		Model:              openai.ChatModelGPT5Nano,
+		PreviousResponseID: openai.String(response.ID),
+		Input: responses.ResponseNewParamsInputUnion{
+			OfInputItemList: outputs,
+		},
+	}
+
+	// Continue conversation with tool call result
+	toolCallResponse, err := c.prompt(ctx, toolCallResponseParams)
+
+	if err != nil {
+		slog.Error("Error generating response after tool call", "err", err)
+		return Completion{}, err
 	}
 
 	return Completion{
-		Text: response.OutputText(),
+		Text: toolCallResponse.OutputText(),
 	}, nil
+}
+
+// prompt sends a prompt to the OpenAI API and returns the response.
+// Used as a wrapper for logging
+func (c *OpenAIClient) prompt(ctx context.Context, params responses.ResponseNewParams) (*responses.Response, error) {
+	response, err := c.client.Responses.New(ctx, params)
+	slog.Debug("response", "inputTokens", response.Usage.InputTokens, "outputTokens", response.Usage.OutputTokens, "totalTokens", response.Usage.TotalTokens)
+	return response, err
 }
