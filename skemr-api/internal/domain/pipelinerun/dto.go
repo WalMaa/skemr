@@ -1,13 +1,6 @@
-package dto
+package pipelinerun
 
-import (
-	"github.com/walmaa/skemr-common/models"
-)
-
-type SecretCreationDto struct {
-	Name      string `json:"name" validate:"required,min=2,max=100"`
-	ExpiresAt string `json:"expiresAt" validate:"omitempty,datetime=2006-01-02T15:04:05Z07:00"`
-}
+import "github.com/walmaa/skemr-common/models"
 
 type PipelineRunCreationDto struct {
 	Status      models.MigrationStatus `json:"status" validate:"required,oneof=completed failed"`

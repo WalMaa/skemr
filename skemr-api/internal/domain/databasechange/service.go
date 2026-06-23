@@ -1,4 +1,4 @@
-package service
+package databasechange
 
 import (
 	"context"
@@ -11,13 +11,16 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/walmaa/skemr-api/db/sqlc"
 	"github.com/walmaa/skemr-api/internal/errormsg"
-	"github.com/walmaa/skemr-api/internal/mapper"
 	"github.com/walmaa/skemr-common/models"
 )
 
 type DatabaseChangeStore interface {
 	GetDatabaseChangeByDatabaseIdAndId(ctx context.Context, arg sqlc.GetDatabaseChangeByDatabaseIdAndIdParams) (sqlc.DatabaseChange, error)
 	GetDatabaseChangesByDatabaseIdAndId(c context.Context, params sqlc.GetDatabaseChangesByDatabaseIdAndIdParams) ([]sqlc.DatabaseChange, error)
+}
+
+type ScopeResolver interface {
+	RequireDatabase(c context.Context, projectID uuid.UUID, databaseID uuid.UUID) (models.Database, error)
 }
 
 type DatabaseChangeService struct {
@@ -57,7 +60,7 @@ func (s *DatabaseChangeService) GetDatabaseChange(c context.Context, projectId u
 		}
 	}
 
-	return mapper.ToDomainDatabaseChange(databaseChange), nil
+	return ToDomainDatabaseChange(databaseChange), nil
 }
 
 func (s *DatabaseChangeService) GetDatabaseChanges(c context.Context, projectId uuid.UUID, databaseId uuid.UUID, limit int, offset int) ([]models.DatabaseChange, error) {
@@ -90,5 +93,5 @@ func (s *DatabaseChangeService) GetDatabaseChanges(c context.Context, projectId 
 		}
 	}
 
-	return mapper.ToDomainDatabaseChanges(databaseChanges), nil
+	return ToDomainDatabaseChanges(databaseChanges), nil
 }

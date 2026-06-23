@@ -1,7 +1,8 @@
-package mapper
+package pipelinerun
 
 import (
 	"github.com/walmaa/skemr-api/db/sqlc"
+	"github.com/walmaa/skemr-api/internal/mapper"
 	"github.com/walmaa/skemr-common/models"
 )
 
@@ -10,9 +11,9 @@ func ToDomainPipelineRun(r sqlc.PipelineRun) models.PipelineRun {
 		ID:          r.ID,
 		Status:      models.MigrationStatus(r.Status),
 		Environment: r.Environment.String,
-		StartedAt:   Time(&r.StartedAt),
-		CompletedAt: Time(&r.CompletedAt),
-		CreatedAt:   Time(&r.CreatedAt),
+		StartedAt:   mapper.Time(&r.StartedAt),
+		CompletedAt: mapper.Time(&r.CompletedAt),
+		CreatedAt:   mapper.Time(&r.CreatedAt),
 	}
 }
 

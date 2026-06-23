@@ -1,7 +1,8 @@
-package mapper
+package accesstoken
 
 import (
 	"github.com/walmaa/skemr-api/db/sqlc"
+	"github.com/walmaa/skemr-api/internal/mapper"
 	"github.com/walmaa/skemr-common/models"
 )
 
@@ -10,10 +11,10 @@ func ToDomainProjectAccessKey(token sqlc.ProjectAccessToken) models.ProjectAcces
 		ID:        token.ID,
 		ProjectID: token.ProjectID,
 		Name:      token.Name,
-		LastUsed:  TimePtr(&token.LastUsed),
-		ExpiresAt: TimePtr(&token.ExpiresAt),
-		CreatedAt: Time(&token.CreatedAt),
-		UpdatedAt: Time(&token.UpdatedAt),
+		LastUsed:  mapper.TimePtr(&token.LastUsed),
+		ExpiresAt: mapper.TimePtr(&token.ExpiresAt),
+		CreatedAt: mapper.Time(&token.CreatedAt),
+		UpdatedAt: mapper.Time(&token.UpdatedAt),
 	}
 }
 

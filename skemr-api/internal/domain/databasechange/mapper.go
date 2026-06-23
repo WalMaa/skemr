@@ -1,7 +1,8 @@
-package mapper
+package databasechange
 
 import (
 	"github.com/walmaa/skemr-api/db/sqlc"
+	"github.com/walmaa/skemr-api/internal/mapper"
 	"github.com/walmaa/skemr-common/models"
 )
 
@@ -10,7 +11,7 @@ func ToDomainDatabaseChange(change sqlc.DatabaseChange) models.DatabaseChange {
 		Id:        change.ID,
 		EntityId:  change.EntityID,
 		Action:    models.MigrationStatementAction(change.Action),
-		CreatedAt: Time(&change.CreatedAt),
+		CreatedAt: mapper.Time(&change.CreatedAt),
 	}
 }
 

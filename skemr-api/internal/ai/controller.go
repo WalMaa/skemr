@@ -6,8 +6,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
-	"github.com/walmaa/skemr-api/internal/controller"
 	"github.com/walmaa/skemr-api/internal/errormsg"
+	"github.com/walmaa/skemr-api/internal/requestparams"
 )
 
 type AIController struct {
@@ -23,7 +23,7 @@ func (h *AIController) RegisterRoutes(r chi.Router) {
 }
 
 func (h *AIController) complete(w http.ResponseWriter, r *http.Request) {
-	projectId, ok := controller.ParseUUIDParam(w, r, "projectId")
+	projectId, ok := requestparams.ParseUUIDParam(w, r, "projectId")
 	if !ok {
 		return
 	}

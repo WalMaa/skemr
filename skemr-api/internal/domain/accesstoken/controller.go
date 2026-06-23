@@ -1,4 +1,4 @@
-package controller
+package accesstoken
 
 import (
 	"log/slog"
@@ -7,18 +7,17 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
-	"github.com/walmaa/skemr-api/internal/dto"
 	"github.com/walmaa/skemr-api/internal/errormsg"
-	"github.com/walmaa/skemr-api/internal/service"
+	"github.com/walmaa/skemr-api/internal/requestparams"
 	"github.com/walmaa/skemr-api/internal/validation"
 	"github.com/walmaa/skemr-common/models"
 )
 
 type ProjectSecretsController struct {
-	Service *service.AccessTokenService
+	Service *AccessTokenService
 }
 
-func NewProjectSecretsController(s *service.AccessTokenService) *ProjectSecretsController {
+func NewProjectSecretsController(s *AccessTokenService) *ProjectSecretsController {
 	return &ProjectSecretsController{Service: s}
 }
 
@@ -33,12 +32,12 @@ func (h *ProjectSecretsController) RegisterRoutes(r chi.Router) {
 }
 
 func (h *ProjectSecretsController) createToken(w http.ResponseWriter, r *http.Request) {
-	projectId, ok := ParseUUIDParam(w, r, "projectId")
+	projectId, ok := requestparams.ParseUUIDParam(w, r, "projectId")
 	if !ok {
 		return
 	}
 
-	var body dto.SecretCreationDto
+	var body AccessTokenCreationDto
 	if err := render.Decode(r, &body); err != nil {
 		http.Error(w, "Invalid request", http.StatusBadRequest)
 		return
@@ -75,7 +74,7 @@ func (h *ProjectSecretsController) getSecret(w http.ResponseWriter, r *http.Requ
 }
 
 func (h *ProjectSecretsController) getSecrets(w http.ResponseWriter, r *http.Request) {
-	projectId, ok := ParseUUIDParam(w, r, "projectId")
+	projectId, ok := requestparams.ParseUUIDParam(w, r, "projectId")
 	if !ok {
 		return
 	}
@@ -95,7 +94,7 @@ func (h *ProjectSecretsController) updateSecret(_ http.ResponseWriter, _ *http.R
 }
 
 func (h *ProjectSecretsController) deleteSecret(w http.ResponseWriter, r *http.Request) {
-	projectId, ok := ParseUUIDParam(w, r, "projectId")
+	projectId, ok := requestparams.ParseUUIDParam(w, r, "projectId")
 	if !ok {
 		return
 	}

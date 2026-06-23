@@ -1,4 +1,4 @@
-package controller
+package databasechange
 
 import (
 	"net/http"
@@ -6,14 +6,14 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/walmaa/skemr-api/internal/errormsg"
-	"github.com/walmaa/skemr-api/internal/service"
+	"github.com/walmaa/skemr-api/internal/requestparams"
 )
 
 type DatabaseChangeController struct {
-	Service *service.DatabaseChangeService
+	Service *DatabaseChangeService
 }
 
-func NewDatabaseChangeController(s *service.DatabaseChangeService) *DatabaseChangeController {
+func NewDatabaseChangeController(s *DatabaseChangeService) *DatabaseChangeController {
 	return &DatabaseChangeController{Service: s}
 }
 
@@ -26,12 +26,12 @@ func (h *DatabaseChangeController) RegisterRoutes(r chi.Router) {
 }
 
 func (h *DatabaseChangeController) listDatabaseChanges(w http.ResponseWriter, r *http.Request) {
-	projectId, ok := ParseUUIDParam(w, r, "projectId")
+	projectId, ok := requestparams.ParseUUIDParam(w, r, "projectId")
 	if !ok {
 		return
 	}
 
-	databaseId, ok := ParseUUIDParam(w, r, "databaseId")
+	databaseId, ok := requestparams.ParseUUIDParam(w, r, "databaseId")
 	if !ok {
 		return
 	}
@@ -46,17 +46,17 @@ func (h *DatabaseChangeController) listDatabaseChanges(w http.ResponseWriter, r 
 }
 
 func (h *DatabaseChangeController) GetDatabaseChange(w http.ResponseWriter, r *http.Request) {
-	projectId, ok := ParseUUIDParam(w, r, "projectId")
+	projectId, ok := requestparams.ParseUUIDParam(w, r, "projectId")
 	if !ok {
 		return
 	}
 
-	databaseId, ok := ParseUUIDParam(w, r, "databaseId")
+	databaseId, ok := requestparams.ParseUUIDParam(w, r, "databaseId")
 	if !ok {
 		return
 	}
 
-	databaseChangeId, ok := ParseUUIDParam(w, r, "databaseChangeId")
+	databaseChangeId, ok := requestparams.ParseUUIDParam(w, r, "databaseChangeId")
 	if !ok {
 		return
 	}

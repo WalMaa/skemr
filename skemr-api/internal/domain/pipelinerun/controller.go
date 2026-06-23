@@ -1,4 +1,4 @@
-package controller
+package pipelinerun
 
 import (
 	"net/http"
@@ -7,14 +7,14 @@ import (
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
 	"github.com/walmaa/skemr-api/internal/errormsg"
-	"github.com/walmaa/skemr-api/internal/service"
+	"github.com/walmaa/skemr-api/internal/requestparams"
 )
 
 type PipelineRunController struct {
-	Service *service.PipelineRunService
+	Service *PipelineRunService
 }
 
-func NewPipelineRunController(s *service.PipelineRunService) *PipelineRunController {
+func NewPipelineRunController(s *PipelineRunService) *PipelineRunController {
 	return &PipelineRunController{Service: s}
 }
 
@@ -26,12 +26,12 @@ func (h *PipelineRunController) RegisterRoutes(r chi.Router) {
 }
 
 func (h *PipelineRunController) listPipelineRuns(w http.ResponseWriter, r *http.Request) {
-	projectId, ok := ParseUUIDParam(w, r, "projectId")
+	projectId, ok := requestparams.ParseUUIDParam(w, r, "projectId")
 	if !ok {
 		return
 	}
 
-	databaseId, ok := ParseUUIDParam(w, r, "databaseId")
+	databaseId, ok := requestparams.ParseUUIDParam(w, r, "databaseId")
 	if !ok {
 		return
 	}
@@ -46,12 +46,12 @@ func (h *PipelineRunController) listPipelineRuns(w http.ResponseWriter, r *http.
 }
 
 func (h *PipelineRunController) getPipelineRun(w http.ResponseWriter, r *http.Request) {
-	projectId, ok := ParseUUIDParam(w, r, "projectId")
+	projectId, ok := requestparams.ParseUUIDParam(w, r, "projectId")
 	if !ok {
 		return
 	}
 
-	databaseId, ok := ParseUUIDParam(w, r, "databaseId")
+	databaseId, ok := requestparams.ParseUUIDParam(w, r, "databaseId")
 	if !ok {
 		return
 	}

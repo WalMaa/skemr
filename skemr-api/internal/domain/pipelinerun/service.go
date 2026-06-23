@@ -1,4 +1,4 @@
-package service
+package pipelinerun
 
 import (
 	"context"
@@ -11,9 +11,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/walmaa/skemr-api/db/sqlc"
-	"github.com/walmaa/skemr-api/internal/dto"
 	"github.com/walmaa/skemr-api/internal/errormsg"
-	"github.com/walmaa/skemr-api/internal/mapper"
 	"github.com/walmaa/skemr-common/models"
 )
 
@@ -21,6 +19,10 @@ type PipelineRunStore interface {
 	GetPipelineRunByDatabaseIdAndId(ctx context.Context, arg sqlc.GetPipelineRunByDatabaseIdAndIdParams) (sqlc.PipelineRun, error)
 	GetPipelineRunsByDatabaseId(ctx context.Context, databaseId uuid.UUID) ([]sqlc.PipelineRun, error)
 	CreatePipelineRun(ctx context.Context, pipelineRun sqlc.CreatePipelineRunParams) (sqlc.PipelineRun, error)
+}
+
+type ScopeResolver interface {
+	RequireDatabase(c context.Context, projectID uuid.UUID, databaseID uuid.UUID) (models.Database, error)
 }
 
 type PipelineRunService struct {
@@ -63,7 +65,7 @@ func (s *PipelineRunService) GetPipelineRun(c context.Context, projectId uuid.UU
 		}
 	}
 
-	return mapper.ToDomainPipelineRun(pipelineRun), nil
+	return ToDomainPipelineRun(pipelineRun), nil
 }
 
 func (s *PipelineRunService) GetPipelineRuns(c context.Context, projectId uuid.UUID, databaseId uuid.UUID) ([]models.PipelineRun, error) {
@@ -94,10 +96,10 @@ func (s *PipelineRunService) GetPipelineRuns(c context.Context, projectId uuid.U
 		}
 	}
 
-	return mapper.ToDomainPipelineRuns(pipelineRuns), nil
+	return ToDomainPipelineRuns(pipelineRuns), nil
 }
 
-func (s *PipelineRunService) CreatePipelineRun(c context.Context, projectId uuid.UUID, databaseId uuid.UUID, pipelineRun dto.PipelineRunCreationDto) (models.PipelineRun, error) {
+func (s *PipelineRunService) CreatePipelineRun(c context.Context, projectId uuid.UUID, databaseId uuid.UUID, pipelineRun PipelineRunCreationDto) (models.PipelineRun, error) {
 	slog.Info("Creating pipeline run", "pipelineRun", pipelineRun, "databaseId", databaseId, "projectId", projectId)
 	_, err := s.scopeResolver.RequireDatabase(c, projectId, databaseId)
 	if err != nil {
@@ -130,5 +132,5 @@ func (s *PipelineRunService) CreatePipelineRun(c context.Context, projectId uuid
 		return models.PipelineRun{}, err
 	}
 
-	return mapper.ToDomainPipelineRun(createdPipelineRun), nil
+	return ToDomainPipelineRun(createdPipelineRun), nil
 }

@@ -1,4 +1,4 @@
-package service
+package accesstoken
 
 import (
 	"context"
@@ -13,9 +13,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/walmaa/skemr-api/db/sqlc"
 	"github.com/walmaa/skemr-api/internal/domain/projects"
-	"github.com/walmaa/skemr-api/internal/dto"
 	"github.com/walmaa/skemr-api/internal/errormsg"
-	"github.com/walmaa/skemr-api/internal/mapper"
 	"github.com/walmaa/skemr-api/internal/tokens"
 	"github.com/walmaa/skemr-common/models"
 )
@@ -31,7 +29,7 @@ func NewAccessTokenService(q sqlc.Querier) *AccessTokenService {
 	return &AccessTokenService{db: q}
 }
 
-func (s *AccessTokenService) CreateToken(c context.Context, projectId uuid.UUID, dto dto.SecretCreationDto) (string, error) {
+func (s *AccessTokenService) CreateToken(c context.Context, projectId uuid.UUID, dto AccessTokenCreationDto) (string, error) {
 	slog.Info("Creating a secret", "projectId", projectId, "name", dto.Name)
 
 	project, err := projects.CheckProjectExists(c, s.db, projectId)
@@ -110,7 +108,7 @@ func (s *AccessTokenService) GetTokens(c context.Context, projectId uuid.UUID) (
 		return nil, err
 	}
 
-	return mapper.ToDomainProjectAccessKeys(accessTokens), nil
+	return ToDomainProjectAccessKeys(accessTokens), nil
 
 }
 

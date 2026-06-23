@@ -10,8 +10,11 @@ import (
 	"github.com/go-chi/render"
 	"github.com/walmaa/skemr-api/internal/ai"
 	"github.com/walmaa/skemr-api/internal/controller"
+	"github.com/walmaa/skemr-api/internal/domain/accesstoken"
+	"github.com/walmaa/skemr-api/internal/domain/databasechange"
 	"github.com/walmaa/skemr-api/internal/domain/databases"
 	"github.com/walmaa/skemr-api/internal/domain/entities"
+	"github.com/walmaa/skemr-api/internal/domain/pipelinerun"
 	"github.com/walmaa/skemr-api/internal/domain/projects"
 	"github.com/walmaa/skemr-api/internal/domain/rules"
 	"github.com/walmaa/skemr-api/internal/middleware"
@@ -23,11 +26,11 @@ type Services struct {
 	DatabaseService       *databases.DatabaseService
 	RuleService           *rules.RuleService
 	WebhookService        *service.WebhookService
-	AccessTokenService    *service.AccessTokenService
+	AccessTokenService    *accesstoken.AccessTokenService
 	DatabaseEntityService *entities.DatabaseEntityService
 	IntegrationService    *service.IntegrationService
-	DatabaseChangeService *service.DatabaseChangeService
-	PipelineRunService    *service.PipelineRunService
+	DatabaseChangeService *databasechange.DatabaseChangeService
+	PipelineRunService    *pipelinerun.PipelineRunService
 	AIClient              ai.Model
 }
 
@@ -83,11 +86,11 @@ func InitRouter(services *Services) http.Handler {
 
 			// define controllers
 			databaseController := databases.NewDatabaseController(services.DatabaseService)
-			projectSecretsController := controller.NewProjectSecretsController(services.AccessTokenService)
+			projectSecretsController := accesstoken.NewProjectSecretsController(services.AccessTokenService)
 			ruleController := rules.NewRuleController(services.RuleService)
 			databaseEntityController := entities.NewDatabaseEntityController(services.DatabaseEntityService)
-			databaseChangeController := controller.NewDatabaseChangeController(services.DatabaseChangeService)
-			pipelineRunController := controller.NewPipelineRunController(services.PipelineRunService)
+			databaseChangeController := databasechange.NewDatabaseChangeController(services.DatabaseChangeService)
+			pipelineRunController := pipelinerun.NewPipelineRunController(services.PipelineRunService)
 			aiController := ai.NewAIController(services.AIClient)
 
 			// register routes
