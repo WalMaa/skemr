@@ -29,7 +29,7 @@ func (h *AIController) complete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	msgs := []Message{
-		{Role: "user", Content: "What is the current working directory and list the files in it?"},
+		{Role: "user", Content: "What databases are currently active?"},
 	}
 
 	// TODO: In a real application, you would extract the user ID from the request context or session.
@@ -38,7 +38,7 @@ func (h *AIController) complete(w http.ResponseWriter, r *http.Request) {
 		ProjectID: projectId,
 	}
 
-	result, err := h.client.Complete(r.Context(), msgs, nil, actor)
+	result, err := h.client.Complete(r.Context(), msgs, actor)
 
 	if err != nil {
 		errormsg.WriteErrorResponse(w, r, err)

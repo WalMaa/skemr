@@ -9,64 +9,6 @@ import (
 	"github.com/walmaa/skemr-common/models"
 )
 
-func getCwd(ctx context.Context) (string, error) {
-
-	return "/home/user", nil
-
-}
-
-func ls(ctx context.Context) (string, error) {
-
-	return "file1.txt\nfile2.txt\n", nil
-
-}
-
-type LsTool struct{}
-
-func (t *LsTool) Spec() ToolSpec {
-
-	return ToolSpec{
-
-		Name: "ls",
-
-		Description: "List the files of the current directory",
-
-		Parameters: json.RawMessage(`{}`),
-
-		Strict: true,
-	}
-
-}
-
-func (t *LsTool) Run(ctx context.Context, input json.RawMessage) (string, error) {
-
-	return ls(ctx)
-
-}
-
-type GetCwdTool struct{}
-
-func (t *GetCwdTool) Spec() ToolSpec {
-
-	return ToolSpec{
-
-		Name: "get_cwd",
-
-		Description: "Get the current working directory",
-
-		Parameters: json.RawMessage(`{}`),
-
-		Strict: true,
-	}
-
-}
-
-func (t *GetCwdTool) Run(ctx context.Context, input json.RawMessage) (string, error) {
-
-	return getCwd(ctx)
-
-}
-
 type DatabaseEntityToolService interface {
 	GetDatabaseEntities(ctx context.Context, databaseId uuid.UUID, actor Actor) ([]models.DatabaseEntity, error)
 }

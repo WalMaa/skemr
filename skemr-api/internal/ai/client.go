@@ -28,7 +28,7 @@ type Message struct {
 }
 
 type Model interface {
-	Complete(ctx context.Context, msgs []Message, tools []ToolSpec, actor Actor) (Completion, error)
+	Complete(ctx context.Context, msgs []Message, actor Actor) (Completion, error)
 }
 
 type OpenAIClient struct {
@@ -46,11 +46,12 @@ func NewOpenAIClient(toolRegistry *ToolRegistry) *OpenAIClient {
 	return &OpenAIClient{client: &client, toolRegistry: toolRegistry}
 }
 
-func (c *OpenAIClient) Complete(ctx context.Context, msgs []Message, tools []ToolSpec, actor Actor) (Completion, error) {
+func (c *OpenAIClient) Complete(ctx context.Context, msgs []Message, actor Actor) (Completion, error) {
+	slog.Info("Completing with OpenAI", "actor", actor, "messages", msgs)
 
 	params := responses.ResponseNewParams{
 		Input: responses.ResponseNewParamsInputUnion{
-			OfString: openai.String("What is the current working directory and list the files in it?"),
+			OfString: openai.String("What databases are currently active?"),
 		},
 		Model: openai.ChatModelGPT5Nano,
 		Tools: c.toolRegistry.toToolUnionParams(),
@@ -97,6 +98,13 @@ func (c *OpenAIClient) Complete(ctx context.Context, msgs []Message, tools []Too
 		},
 	}
 
+	// If there are no tool calls, return the original response
+	if len(outputs) == 0 {
+		return Completion{
+			Text: response.OutputText(),
+		}, nil
+	}
+
 	// Continue conversation with tool call result
 	toolCallResponse, err := c.prompt(ctx, toolCallResponseParams)
 
@@ -114,6 +122,9 @@ func (c *OpenAIClient) Complete(ctx context.Context, msgs []Message, tools []Too
 // Used as a wrapper for logging
 func (c *OpenAIClient) prompt(ctx context.Context, params responses.ResponseNewParams) (*responses.Response, error) {
 	response, err := c.client.Responses.New(ctx, params)
-	slog.Debug("response", "inputTokens", response.Usage.InputTokens, "outputTokens", response.Usage.OutputTokens, "totalTokens", response.Usage.TotalTokens)
+
+	if err == nil {
+		slog.Debug("response", "inputTokens", response.Usage.InputTokens, "outputTokens", response.Usage.OutputTokens, "totalTokens", response.Usage.TotalTokens)
+	}
 	return response, err
 }
