@@ -28,7 +28,7 @@ type ToolRegistry struct {
 func NewToolRegistry(tools ...Tool) *ToolRegistry {
 	toolMap := make(map[string]Tool)
 
-	for _, tool := range toolMap {
+	for _, tool := range tools {
 		toolMap[tool.Spec().Name] = tool
 	}
 	return &ToolRegistry{

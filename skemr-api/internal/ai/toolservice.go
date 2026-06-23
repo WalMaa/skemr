@@ -33,3 +33,15 @@ func (s *ToolService) GetDatabaseEntities(ctx context.Context, databaseId uuid.U
 	return mapper.ToDomainDatabaseEntities(entities), nil
 
 }
+
+func (s *ToolService) GetDatabases(ctx context.Context, actor Actor) ([]models.Database, error) {
+	slog.Info("ToolService: GetDatabases", "actor", actor)
+
+	databases, err := s.db.GetDatabasesByProjectId(ctx, actor.ProjectID)
+	if err != nil {
+		slog.Error("Error getting databases", "error", err)
+		return nil, err
+	}
+
+	return mapper.ToDomainDatabases(databases), nil
+}
