@@ -98,9 +98,14 @@ func main() {
 		seedTestData(conn)
 	}
 
-    aiClient := ai.NewOpenAIClient()
-
+	
 	queries := sqlc.New(conn)
+
+	toolService := ai.NewToolService(queries)
+	toolRegistry := ai.NewToolRegistry(
+		ai.NewDatabaseEntityTool(toolService),
+	)
+	aiClient := ai.NewOpenAIClient(toolRegistry)
 	scopeResolver := service.NewScopeResolver(queries)
 	projectService := service.NewProjectService(queries)
 	databaseChangeService := service.NewDatabaseChangeService(queries, scopeResolver)
