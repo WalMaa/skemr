@@ -36,6 +36,7 @@ func NewToolRegistry(tools ...Tool) *ToolRegistry {
 	}
 }
 
+// toToolUnionParams converts the registered tools into a slice of ToolUnionParam for use with the OpenAI API.
 func (r *ToolRegistry) toToolUnionParams() []responses.ToolUnionParam {
 	var toolUnionParams []responses.ToolUnionParam
 	for _, tool := range r.tools {

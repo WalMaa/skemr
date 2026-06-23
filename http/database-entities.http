@@ -1,7 +1,7 @@
 @host = http://localhost:8080
 @apiBaseUrl = {{host}}/api/v1
 @jwt = replace-with-jwt
-@projectId = aaaabbbb-aaaa-4aaa-8aaa-aaaabbbbcccc
+@projectId = aaaabbbb-aaaa-aaaa-aaaa-aaaabbbbcccc
 @databaseId = 11112222-3333-4444-5555-666677778888
 @databaseEntityId = 22223333-4444-4aaa-8bbb-777788889999
 @parentEntityId = 33334444-5555-4aaa-8bbb-888899990000

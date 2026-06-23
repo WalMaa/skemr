@@ -29,7 +29,7 @@ func (h *AIController) complete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	msgs := []Message{
-		{Role: "user", Content: "What databases are currently active?"},
+		{Role: "user", Content: "Can you list database entities"},
 	}
 
 	// TODO: In a real application, you would extract the user ID from the request context or session.

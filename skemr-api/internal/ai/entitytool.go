@@ -29,9 +29,9 @@ func (t *DatabaseEntityTool) Spec() ToolSpec {
 
 		Name: "get_database_entities",
 
-		Description: "Get the database entities for a given project and database",
+		Description: "Get the database entities for a database. It requires a databaseId parameter.",
 
-		Parameters: json.RawMessage(`{"projectId": "string", "databaseId": "string"}`),
+		Parameters: json.RawMessage(`{"databaseId": "uuid"}`),
 
 		Strict: true,
 	}

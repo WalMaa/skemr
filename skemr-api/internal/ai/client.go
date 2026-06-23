@@ -3,6 +3,7 @@ package ai
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 
 	"github.com/google/uuid"
@@ -15,6 +16,7 @@ type ToolCall struct {
 	CallID    string          `json:"callId"`
 	Name      string          `json:"name"`
 	Arguments json.RawMessage `json:"arguments"`
+	Result    string          `json:"result,omitempty"`
 }
 
 type Completion struct {
@@ -41,84 +43,130 @@ type Actor struct {
 	ProjectID uuid.UUID
 }
 
+const maxToolTurns = 5
+const defaultModel = openai.ChatModelGPT5Nano
+
+const systemPrompt = `You are a helpful assistant that can answer questions about the current state of the system.
+ You have access to a set of tools that can provide information about the system's databases and their contents. 
+ Use these tools to answer questions accurately and efficiently.
+ If you can not answer a question with the available tools, respond with "I don't know" instead of making up an answer.
+ Do not make up any information.
+ Do not claim functionality that does not exist within the provided tooling.`
+
 func NewOpenAIClient(toolRegistry *ToolRegistry) *OpenAIClient {
 	client := openai.NewClient()
 	return &OpenAIClient{client: &client, toolRegistry: toolRegistry}
 }
 
-func (c *OpenAIClient) Complete(ctx context.Context, msgs []Message, actor Actor) (Completion, error) {
-	slog.Info("Completing with OpenAI", "actor", actor, "messages", msgs)
+func (c *OpenAIClient) collectAndRunToolCalls(ctx context.Context, response *responses.Response, actor Actor) ([]ToolCall, error) {
+	var toolCalls []ToolCall
 
-	params := responses.ResponseNewParams{
-		Input: responses.ResponseNewParamsInputUnion{
-			OfString: openai.String("What databases are currently active?"),
-		},
-		Model: openai.ChatModelGPT5Nano,
-		Tools: c.toolRegistry.toToolUnionParams(),
-	}
-
-	response, err := c.prompt(ctx, params)
-
-	if err != nil {
-		slog.Error("Error generating response", "err", err)
-		return Completion{}, err
-	}
-
-	var outputs []responses.ResponseInputItemUnionParam
-	// Tool call handling
 	for _, item := range response.Output {
 		if item.Type != "function_call" {
 			continue
 		}
 		toolCall := item.AsFunctionCall()
-		toolCallResult, err := c.toolRegistry.Run(ctx, toolCall.Name, nil, actor)
+		slog.Debug("Calling tool", "toolName", toolCall.Name)
+		toolCallResult, err := c.toolRegistry.Run(ctx, toolCall.Name, json.RawMessage(toolCall.Arguments), actor)
 
 		if err != nil {
 			slog.Error("Error running tool", "toolName", toolCall.Name, "err", err)
+			return nil, err
 		}
 		slog.Debug("toolCallResult", "result", toolCallResult)
 
-		responseInput := responses.ResponseInputItemUnionParam{
-			OfFunctionCallOutput: &responses.ResponseInputItemFunctionCallOutputParam{
-				CallID: toolCall.CallID,
-				Output: responses.ResponseInputItemFunctionCallOutputOutputUnionParam{
-					OfString: openai.String(toolCallResult),
+		toolCalls = append(toolCalls, ToolCall{
+			ID:        toolCall.ID,
+			CallID:    toolCall.CallID,
+			Name:      toolCall.Name,
+			Arguments: nil,
+			Result:    toolCallResult,
+		})
+	}
+
+	return toolCalls, nil
+}
+
+func (c *OpenAIClient) Complete(ctx context.Context, msgs []Message, actor Actor) (Completion, error) {
+	slog.Info("Completing with OpenAI", "actor", actor, "messages", msgs)
+
+		if len(msgs) == 0 {
+		return Completion{}, fmt.Errorf("no messages provided")
+	}
+
+	userPrompt := msgs[len(msgs)-1].Content
+
+	initialParams := responses.ResponseNewParams{
+		Instructions: openai.String(systemPrompt),
+		Input: responses.ResponseNewParamsInputUnion{
+			OfString: openai.String(userPrompt),
+		},
+		Model: defaultModel,
+		Tools: c.toolRegistry.toToolUnionParams(),
+	}
+
+	params := initialParams
+
+	for range maxToolTurns {
+		// On first loop iteration, use the initial params. On subsequent iterations, use the params from the previous response.
+		// In this way, we can continue the conversation with the tool call results.
+		response, err := c.prompt(ctx, params)
+
+		if err != nil {
+			slog.Error("Error generating response", "err", err)
+			return Completion{}, err
+		}
+
+		// Tool call handling
+		toolCalls, err := c.collectAndRunToolCalls(ctx, response, actor)
+
+		if err != nil {
+			slog.Error("Error collecting and running tool calls", "err", err)
+			return Completion{}, err
+		}
+
+		var outputs []responses.ResponseInputItemUnionParam
+
+		for _, toolCall := range toolCalls {
+
+			responseInput := responses.ResponseInputItemUnionParam{
+				OfFunctionCallOutput: &responses.ResponseInputItemFunctionCallOutputParam{
+					CallID: toolCall.CallID,
+					Output: responses.ResponseInputItemFunctionCallOutputOutputUnionParam{
+						OfString: openai.String(toolCall.Result),
+					},
 				},
+			}
+
+			outputs = append(outputs, responseInput)
+
+		}
+		toolCallResponseParams := responses.ResponseNewParams{
+			Instructions: openai.String(systemPrompt),
+			Model:              defaultModel,
+			Tools: c.toolRegistry.toToolUnionParams(),
+			PreviousResponseID: openai.String(response.ID),
+			Input: responses.ResponseNewParamsInputUnion{
+				OfInputItemList: outputs,
 			},
 		}
 
-		outputs = append(outputs, responseInput)
+		// If there are no tool calls, return the original response
+		if len(outputs) == 0 {
+			return Completion{
+				Text: response.OutputText(),
+			}, nil
+		}
 
-	}
-	toolCallResponseParams := responses.ResponseNewParams{
-		Model:              openai.ChatModelGPT5Nano,
-		PreviousResponseID: openai.String(response.ID),
-		Input: responses.ResponseNewParamsInputUnion{
-			OfInputItemList: outputs,
-		},
-	}
-
-	// If there are no tool calls, return the original response
-	if len(outputs) == 0 {
-		return Completion{
-			Text: response.OutputText(),
-		}, nil
+		// Update params for the next iteration
+		params = toolCallResponseParams
 	}
 
-	// Continue conversation with tool call result
-	toolCallResponse, err := c.prompt(ctx, toolCallResponseParams)
+	return Completion{}, fmt.Errorf("Tool loop exceeded %d turns", maxToolTurns)
 
-	if err != nil {
-		slog.Error("Error generating response after tool call", "err", err)
-		return Completion{}, err
-	}
-
-	return Completion{
-		Text: toolCallResponse.OutputText(),
-	}, nil
 }
 
-// prompt sends a prompt to the OpenAI API and returns the response.
+// prompt calls the OpenAI API and returns the response.
 // Used as a wrapper for logging
 func (c *OpenAIClient) prompt(ctx context.Context, params responses.ResponseNewParams) (*responses.Response, error) {
 	response, err := c.client.Responses.New(ctx, params)

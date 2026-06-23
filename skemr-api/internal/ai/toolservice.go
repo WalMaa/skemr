@@ -20,11 +20,9 @@ func NewToolService(db sqlc.Querier) *ToolService {
 }
 
 func (s *ToolService) GetDatabaseEntities(ctx context.Context, databaseId uuid.UUID, actor Actor) ([]models.DatabaseEntity, error) {
-	slog.Info("ToolService: GetDatabaseEntities", "actor", actor)
+	slog.Info("ToolService: GetDatabaseEntities", "actor", actor, "databaseId", databaseId)
 
-	databaseEntities, err := s.db.GetDatabaseEntities(ctx, sqlc.GetDatabaseEntitiesParams{
-		DatabaseID: databaseId,
-	})
+	databaseEntities, err := s.db.GetDatabaseEntitiesByDatabaseId(ctx, databaseId)
 
 	if err != nil {
 		slog.Error("Error getting database entities", "error", err)

@@ -4,6 +4,6 @@
 @projectId = aaaabbbb-aaaa-aaaa-aaaa-aaaabbbbcccc
 @databaseId = 11112222-3333-4444-5555-666677778888
 
-### List database changes
+### Prompt the AI to complete a question about the system's databases
 POST {{apiBaseUrl}}/projects/{{projectId}}/ai/complete
 Authorization: Bearer {{jwt}}
