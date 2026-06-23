@@ -1,4 +1,4 @@
-package service
+package rules
 
 import (
 	"net/http"
@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/walmaa/skemr-api/db/sqlc"
-	"github.com/walmaa/skemr-api/internal/dto"
 	"github.com/walmaa/skemr-api/internal/errormsg"
 	"github.com/walmaa/skemr-api/test/mocks"
 	"github.com/walmaa/skemr-common/models"
@@ -24,7 +23,7 @@ func TestCreateLockedRule(t *testing.T) {
 
 	svc := NewRuleService(ruleStore, scopeResolver)
 
-	input := dto.RuleCreationDto{
+	input := RuleCreationDto{
 		Name:             "test",
 		RuleType:         ruleType,
 		Attributes:       models.RuleAttributes{},
@@ -59,7 +58,7 @@ func TestCreateDeprecatedRule(t *testing.T) {
 
 	svc := NewRuleService(ruleStore, scopeResolver)
 
-	input := dto.RuleCreationDto{
+	input := RuleCreationDto{
 		Name:             "test",
 		RuleType:         ruleType,
 		Attributes:       models.RuleAttributes{},
@@ -94,7 +93,7 @@ func TestCreateAdvisoryRule(t *testing.T) {
 
 	svc := NewRuleService(ruleStore, scopeResolver)
 
-	input := dto.RuleCreationDto{
+	input := RuleCreationDto{
 		Name:             "test",
 		RuleType:         ruleType,
 		Attributes:       models.RuleAttributes{},
@@ -129,7 +128,7 @@ func TestCreateWarningRule(t *testing.T) {
 
 	svc := NewRuleService(ruleStore, scopeResolver)
 
-	input := dto.RuleCreationDto{
+	input := RuleCreationDto{
 		Name:             "test",
 		RuleType:         ruleType,
 		Attributes:       models.RuleAttributes{},
@@ -163,7 +162,7 @@ func TestCreateRuleWithoutDatabaseEntity(t *testing.T) {
 
 	svc := NewRuleService(ruleStore, scopeResolver)
 
-	input := dto.RuleCreationDto{
+	input := RuleCreationDto{
 		Name:             "test",
 		RuleType:         models.RuleTypeLocked,
 		Attributes:       models.RuleAttributes{},
@@ -193,7 +192,7 @@ func TestCreateRuleWithNonExistentDatabaseEntity(t *testing.T) {
 
 	svc := NewRuleService(ruleStore, scopeResolver)
 
-	input := dto.RuleCreationDto{
+	input := RuleCreationDto{
 		Name:             "test",
 		RuleType:         models.RuleTypeLocked,
 		Attributes:       models.RuleAttributes{},
@@ -224,7 +223,7 @@ func TestCreateRuleWithNonExistentProjectOrDatabase(t *testing.T) {
 
 	svc := NewRuleService(ruleStore, scopeResolver)
 
-	input := dto.RuleCreationDto{
+	input := RuleCreationDto{
 		Name:             "test",
 		RuleType:         models.RuleTypeLocked,
 		Attributes:       models.RuleAttributes{},
@@ -253,7 +252,7 @@ func TestCreateRuleWithExistingName(t *testing.T) {
 
 	svc := NewRuleService(ruleStore, scopeResolver)
 
-	input := dto.RuleCreationDto{
+	input := RuleCreationDto{
 		Name:             "test",
 		RuleType:         models.RuleTypeLocked,
 		Attributes:       models.RuleAttributes{},

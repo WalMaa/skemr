@@ -12,6 +12,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/walmaa/skemr-api/db/sqlc"
+	"github.com/walmaa/skemr-api/internal/domain/projects"
 	"github.com/walmaa/skemr-api/internal/dto"
 	"github.com/walmaa/skemr-api/internal/errormsg"
 	"github.com/walmaa/skemr-api/internal/mapper"
@@ -33,7 +34,7 @@ func NewAccessTokenService(q sqlc.Querier) *AccessTokenService {
 func (s *AccessTokenService) CreateToken(c context.Context, projectId uuid.UUID, dto dto.SecretCreationDto) (string, error) {
 	slog.Info("Creating a secret", "projectId", projectId, "name", dto.Name)
 
-	project, err := CheckProjectExists(c, s.db, projectId)
+	project, err := projects.CheckProjectExists(c, s.db, projectId)
 
 	if err != nil {
 		slog.Error("Unable to get project", "err", err)
@@ -96,7 +97,7 @@ func (s *AccessTokenService) CreateToken(c context.Context, projectId uuid.UUID,
 
 func (s *AccessTokenService) GetTokens(c context.Context, projectId uuid.UUID) ([]models.ProjectAccessToken, error) {
 	slog.Info("Getting tokens", "projectId", projectId)
-	project, err := CheckProjectExists(c, s.db, projectId)
+	project, err := projects.CheckProjectExists(c, s.db, projectId)
 
 	if err != nil {
 		slog.Error("Unable to get project", "err", err)
@@ -116,7 +117,7 @@ func (s *AccessTokenService) GetTokens(c context.Context, projectId uuid.UUID) (
 func (s *AccessTokenService) DeleteToken(c context.Context, projectId uuid.UUID, secretId uuid.UUID) error {
 	slog.Info("Deleting token", "projectId", projectId, "secretId", secretId)
 
-	project, err := CheckProjectExists(c, s.db, projectId)
+	project, err := projects.CheckProjectExists(c, s.db, projectId)
 
 	if err != nil {
 		slog.Error("Unable to get project", "err", err)

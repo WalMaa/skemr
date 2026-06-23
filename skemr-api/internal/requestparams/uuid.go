@@ -1,4 +1,4 @@
-package controller
+package requestparams
 
 import (
 	"net/http"
@@ -14,7 +14,6 @@ func ParseUUIDParam(w http.ResponseWriter, r *http.Request, name string) (uuid.U
 	if raw == "" {
 		errormsg.WriteErrorResponse(w, r, &models.ErrorResponse{
 			Message: "missing " + name,
-			Errors:  nil,
 			Status:  http.StatusBadRequest,
 		})
 		return uuid.Nil, false
@@ -24,7 +23,6 @@ func ParseUUIDParam(w http.ResponseWriter, r *http.Request, name string) (uuid.U
 	if err != nil {
 		errormsg.WriteErrorResponse(w, r, &models.ErrorResponse{
 			Message: "invalid " + name,
-			Errors:  nil,
 			Status:  http.StatusBadRequest,
 		})
 		return uuid.Nil, false

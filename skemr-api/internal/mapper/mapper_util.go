@@ -7,7 +7,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/walmaa/skemr-api/db/sqlc"
-	"github.com/walmaa/skemr-api/internal/dto"
+	"github.com/walmaa/skemr-common/models"
 )
 
 func ToBytes(v interface{}) []byte {
@@ -80,7 +80,7 @@ func TimePtr(v *pgtype.Timestamptz) *time.Time {
 	return nil
 }
 
-func NullDatabaseType(databaseType dto.DatabaseType) sqlc.NullDatabaseType {
+func NullDatabaseType(databaseType models.DatabaseType) sqlc.NullDatabaseType {
 	if databaseType == "" {
 		return sqlc.NullDatabaseType{
 			DatabaseType: "",

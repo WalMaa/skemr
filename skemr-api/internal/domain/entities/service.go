@@ -1,4 +1,4 @@
-package service
+package entities
 
 import (
 	"context"
@@ -6,7 +6,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/walmaa/skemr-api/db/sqlc"
-	"github.com/walmaa/skemr-api/internal/mapper"
+	"github.com/walmaa/skemr-api/internal/domain/databases"
+	"github.com/walmaa/skemr-api/internal/domain/projects"
 	"github.com/walmaa/skemr-common/models"
 )
 
@@ -22,31 +23,31 @@ func NewDatabaseEntityService(q sqlc.Querier) *DatabaseEntityService {
 
 func (s *DatabaseEntityService) GetDatabaseEntityByID(c context.Context, projectId uuid.UUID, databaseId uuid.UUID, entityId uuid.UUID) (models.DatabaseEntity, error) {
 	slog.Info("Getting database entity", "projectId", projectId, "database", databaseId, "entityId", entityId)
-	project, err := CheckProjectExists(c, s.db, projectId)
+	project, err := projects.CheckProjectExists(c, s.db, projectId)
 
 	if err != nil {
 		return models.DatabaseEntity{}, err
 	}
 
-	_, err = CheckDatabaseExists(c, s.db, project.ID, databaseId)
+	_, err = databases.CheckDatabaseExists(c, s.db, project.ID, databaseId)
 	if err != nil {
 		return models.DatabaseEntity{}, err
 	}
 
 	entity, err := s.db.GetDatabaseEntity(c, entityId)
 
-	return mapper.ToDomainDatabaseEntity(entity), err
+	return ToDomainDatabaseEntity(entity), err
 }
 
 func (s *DatabaseEntityService) ListDatabaseEntitiesByDatabase(c context.Context, projectId uuid.UUID, databaseId uuid.UUID, entityType *models.DatabaseEntityType, parentId *uuid.UUID) ([]models.DatabaseEntity, error) {
 	slog.Info("Listing database entities", "projectId", projectId, "database", databaseId)
-	project, err := CheckProjectExists(c, s.db, projectId)
+	project, err := projects.CheckProjectExists(c, s.db, projectId)
 
 	if err != nil {
 		return []models.DatabaseEntity{}, err
 	}
 
-	database, err := CheckDatabaseExists(c, s.db, project.ID, databaseId)
+	database, err := databases.CheckDatabaseExists(c, s.db, project.ID, databaseId)
 	if err != nil {
 		return []models.DatabaseEntity{}, err
 	}
@@ -68,5 +69,5 @@ func (s *DatabaseEntityService) ListDatabaseEntitiesByDatabase(c context.Context
 		return []models.DatabaseEntity{}, err
 	}
 
-	return mapper.ToDomainDatabaseEntities(entities), nil
+	return ToDomainDatabaseEntities(entities), nil
 }

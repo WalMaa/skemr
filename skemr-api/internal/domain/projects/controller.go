@@ -1,21 +1,20 @@
-package controller
+package projects
 
 import (
 	"encoding/json"
 	"net/http"
 
 	"github.com/go-chi/render"
-	"github.com/walmaa/skemr-api/internal/dto"
 	"github.com/walmaa/skemr-api/internal/errormsg"
-	"github.com/walmaa/skemr-api/internal/service"
+	"github.com/walmaa/skemr-api/internal/requestparams"
 	"github.com/walmaa/skemr-api/internal/validation"
 )
 
 type ProjectController struct {
-	Service *service.ProjectService
+	Service *ProjectService
 }
 
-func NewProjectController(s *service.ProjectService) *ProjectController {
+func NewProjectController(s *ProjectService) *ProjectController {
 	return &ProjectController{Service: s}
 }
 
@@ -32,7 +31,7 @@ func (h *ProjectController) GetProjects(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *ProjectController) CreateProject(w http.ResponseWriter, r *http.Request) {
-	var body dto.ProjectCreationDto
+	var body ProjectCreationDto
 
 	if err := render.Decode(r, &body); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -57,7 +56,7 @@ func (h *ProjectController) CreateProject(w http.ResponseWriter, r *http.Request
 }
 
 func (h *ProjectController) GetProject(w http.ResponseWriter, r *http.Request) {
-	projectId, ok := ParseUUIDParam(w, r, "projectId")
+	projectId, ok := requestparams.ParseUUIDParam(w, r, "projectId")
 	if !ok {
 		return
 	}
@@ -73,7 +72,7 @@ func (h *ProjectController) GetProject(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ProjectController) DeleteProject(w http.ResponseWriter, r *http.Request) {
-	projectId, ok := ParseUUIDParam(w, r, "projectId")
+	projectId, ok := requestparams.ParseUUIDParam(w, r, "projectId")
 	if !ok {
 		return
 	}

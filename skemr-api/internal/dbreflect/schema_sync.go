@@ -14,7 +14,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/walmaa/skemr-api/db/sqlc"
-	"github.com/walmaa/skemr-api/internal/mapper"
+	"github.com/walmaa/skemr-api/internal/domain/databases"
 	"github.com/walmaa/skemr-api/internal/tasks"
 	"github.com/walmaa/skemr-common/models"
 )
@@ -49,7 +49,7 @@ func (s *SchemaSyncService) ProcessSyncTask(c context.Context, t *asynq.Task) er
 		slog.Error("Could not get database for database sync", slog.String("databaseId", p.DatabaseID.String()))
 		return err
 	}
-	err = s.SyncSchema(c, mapper.ToDomainDatabase(database))
+	err = s.SyncSchema(c, databases.ToDomainDatabase(database))
 	if err != nil {
 		slog.Error("Error syncing database schema", "databaseId", p.DatabaseID, "error", err)
 		_, err := s.db.UpdateDatabaseSyncFail(c, sqlc.UpdateDatabaseSyncFailParams{

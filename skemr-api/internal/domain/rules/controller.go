@@ -1,21 +1,20 @@
-package controller
+package rules
 
 import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
-	"github.com/walmaa/skemr-api/internal/dto"
 	"github.com/walmaa/skemr-api/internal/errormsg"
-	"github.com/walmaa/skemr-api/internal/service"
+	"github.com/walmaa/skemr-api/internal/requestparams"
 	"github.com/walmaa/skemr-api/internal/validation"
 )
 
 type RuleController struct {
-	Service *service.RuleService
+	Service *RuleService
 }
 
-func NewRuleController(s *service.RuleService) *RuleController {
+func NewRuleController(s *RuleService) *RuleController {
 	return &RuleController{Service: s}
 }
 
@@ -29,17 +28,17 @@ func (h *RuleController) RegisterRoutes(r chi.Router) {
 }
 
 func (h *RuleController) GetRule(w http.ResponseWriter, r *http.Request) {
-	projectId, ok := ParseUUIDParam(w, r, "projectId")
+	projectId, ok := requestparams.ParseUUIDParam(w, r, "projectId")
 	if !ok {
 		return
 	}
 
-	databaseId, ok := ParseUUIDParam(w, r, "databaseId")
+	databaseId, ok := requestparams.ParseUUIDParam(w, r, "databaseId")
 	if !ok {
 		return
 	}
 
-	ruleId, ok := ParseUUIDParam(w, r, "ruleId")
+	ruleId, ok := requestparams.ParseUUIDParam(w, r, "ruleId")
 	if !ok {
 		return
 	}
@@ -53,17 +52,17 @@ func (h *RuleController) GetRule(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *RuleController) deleteRule(w http.ResponseWriter, r *http.Request) {
-	projectId, ok := ParseUUIDParam(w, r, "projectId")
+	projectId, ok := requestparams.ParseUUIDParam(w, r, "projectId")
 	if !ok {
 		return
 	}
 
-	databaseId, ok := ParseUUIDParam(w, r, "databaseId")
+	databaseId, ok := requestparams.ParseUUIDParam(w, r, "databaseId")
 	if !ok {
 		return
 	}
 
-	ruleId, ok := ParseUUIDParam(w, r, "ruleId")
+	ruleId, ok := requestparams.ParseUUIDParam(w, r, "ruleId")
 	if !ok {
 		return
 	}
@@ -77,17 +76,17 @@ func (h *RuleController) deleteRule(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *RuleController) createRule(w http.ResponseWriter, r *http.Request) {
-	projectId, ok := ParseUUIDParam(w, r, "projectId")
+	projectId, ok := requestparams.ParseUUIDParam(w, r, "projectId")
 	if !ok {
 		return
 	}
 
-	databaseId, ok := ParseUUIDParam(w, r, "databaseId")
+	databaseId, ok := requestparams.ParseUUIDParam(w, r, "databaseId")
 	if !ok {
 		return
 	}
 
-	var body dto.RuleCreationDto
+	var body RuleCreationDto
 
 	if err := render.Decode(r, &body); err != nil {
 		errormsg.WriteErrorResponse(w, r, err)
@@ -114,12 +113,12 @@ func (h *RuleController) createRule(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *RuleController) ListRules(w http.ResponseWriter, r *http.Request) {
-	projectId, ok := ParseUUIDParam(w, r, "projectId")
+	projectId, ok := requestparams.ParseUUIDParam(w, r, "projectId")
 	if !ok {
 		return
 	}
 
-	databaseId, ok := ParseUUIDParam(w, r, "databaseId")
+	databaseId, ok := requestparams.ParseUUIDParam(w, r, "databaseId")
 	if !ok {
 		return
 	}

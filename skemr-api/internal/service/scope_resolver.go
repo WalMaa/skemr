@@ -9,8 +9,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/walmaa/skemr-api/db/sqlc"
+	"github.com/walmaa/skemr-api/internal/domain/databases"
+	"github.com/walmaa/skemr-api/internal/domain/entities"
 	"github.com/walmaa/skemr-api/internal/errormsg"
-	"github.com/walmaa/skemr-api/internal/mapper"
 	"github.com/walmaa/skemr-common/models"
 )
 
@@ -48,7 +49,7 @@ func (s *SqlcScopeResolver) RequireDatabase(c context.Context, projectId uuid.UU
 		return models.Database{}, err
 	}
 
-	return mapper.ToDomainDatabase(database), nil
+	return databases.ToDomainDatabase(database), nil
 }
 
 func (s *SqlcScopeResolver) RequireDatabaseEntity(c context.Context, projectId uuid.UUID, databaseId uuid.UUID, entityId uuid.UUID) (models.DatabaseEntity, error) {
@@ -74,5 +75,5 @@ func (s *SqlcScopeResolver) RequireDatabaseEntity(c context.Context, projectId u
 		return models.DatabaseEntity{}, err
 	}
 
-	return mapper.ToDomainDatabaseEntity(entity), nil
+	return entities.ToDomainDatabaseEntity(entity), nil
 }

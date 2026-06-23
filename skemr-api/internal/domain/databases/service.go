@@ -1,4 +1,4 @@
-package service
+package databases
 
 import (
 	"context"
@@ -10,9 +10,8 @@ import (
 	"github.com/hibiken/asynq"
 	"github.com/jackc/pgx/v5"
 	"github.com/walmaa/skemr-api/db/sqlc"
-	"github.com/walmaa/skemr-api/internal/dto"
+	"github.com/walmaa/skemr-api/internal/domain/projects"
 	"github.com/walmaa/skemr-api/internal/errormsg"
-	"github.com/walmaa/skemr-api/internal/mapper"
 	"github.com/walmaa/skemr-api/internal/tasks"
 	"github.com/walmaa/skemr-common/models"
 )
@@ -43,14 +42,14 @@ func CheckDatabaseExists(c context.Context, db sqlc.Querier, projectId uuid.UUID
 		}
 	}
 
-	return mapper.ToDomainDatabase(database), nil
+	return ToDomainDatabase(database), nil
 }
 
-func (r *DatabaseService) CreateDatabase(c context.Context, projectId uuid.UUID, dto dto.DatabaseCreationDto) (models.Database, error) {
+func (r *DatabaseService) CreateDatabase(c context.Context, projectId uuid.UUID, dto DatabaseCreationDto) (models.Database, error) {
 	slog.Info("Creating database", "name", dto)
 
 	// Check if the project exists
-	_, err := CheckProjectExists(c, r.db, projectId)
+	_, err := projects.CheckProjectExists(c, r.db, projectId)
 	if err != nil {
 		return models.Database{}, err
 	}
@@ -73,7 +72,7 @@ func (r *DatabaseService) CreateDatabase(c context.Context, projectId uuid.UUID,
 			Status:  http.StatusConflict,
 		}
 	}
-	database, err := r.db.CreateDatabase(c, mapper.ToCreateDatabaseParams(projectId, dto))
+	database, err := r.db.CreateDatabase(c, ToCreateDatabaseParams(projectId, dto))
 
 	if err != nil {
 		slog.Error("Error creating database", "err", err)
@@ -81,7 +80,7 @@ func (r *DatabaseService) CreateDatabase(c context.Context, projectId uuid.UUID,
 	}
 
 	r.createDatabaseSyncTask(database.ID)
-	return mapper.ToDomainDatabase(database), nil
+	return ToDomainDatabase(database), nil
 }
 
 // CreateDatabaseSyncTask Creates a Database sync task for Asynq background processing.
@@ -102,7 +101,7 @@ func (r *DatabaseService) createDatabaseSyncTask(databaseId uuid.UUID) {
 func (r *DatabaseService) EnqueueManualDatabaseSync(c context.Context, projectId uuid.UUID, databaseId uuid.UUID) error {
 	slog.Info("Enqueuing manual database sync", "projectId", projectId, "databaseId", databaseId)
 
-	project, err := CheckProjectExists(c, r.db, projectId)
+	project, err := projects.CheckProjectExists(c, r.db, projectId)
 
 	if err != nil {
 		slog.Error("Error fetching project", "err", err)
@@ -128,7 +127,7 @@ func (r *DatabaseService) GetDatabase(c context.Context, databaseId uuid.UUID) (
 		slog.Error("Unable to get database", "databaseId", databaseId, "err", err)
 		return models.Database{}, err
 	}
-	return mapper.ToDomainDatabase(database), nil
+	return ToDomainDatabase(database), nil
 }
 
 func (r *DatabaseService) DeleteDatabase(c context.Context, id uuid.UUID) error {
@@ -138,7 +137,7 @@ func (r *DatabaseService) DeleteDatabase(c context.Context, id uuid.UUID) error 
 
 func (r *DatabaseService) ListDatabasesByProject(c context.Context, projectId uuid.UUID) ([]models.Database, error) {
 	slog.Info("Listing databases for project", "project_id", projectId)
-	project, err := CheckProjectExists(c, r.db, projectId)
+	project, err := projects.CheckProjectExists(c, r.db, projectId)
 	if err != nil {
 		slog.Error("Could not get project")
 		return nil, err
@@ -150,14 +149,14 @@ func (r *DatabaseService) ListDatabasesByProject(c context.Context, projectId uu
 		return nil, err
 	}
 
-	return mapper.ToDomainDatabases(databases), nil
+	return ToDomainDatabases(databases), nil
 }
 
-func (r *DatabaseService) UpdateDatabase(c context.Context, projectId uuid.UUID, databaseId uuid.UUID, dto dto.DatabaseUpdateDto) (models.Database, error) {
+func (r *DatabaseService) UpdateDatabase(c context.Context, projectId uuid.UUID, databaseId uuid.UUID, dto DatabaseUpdateDto) (models.Database, error) {
 
 	slog.Info("Updating database", "id", databaseId)
 
-	project, err := CheckProjectExists(c, r.db, projectId)
+	project, err := projects.CheckProjectExists(c, r.db, projectId)
 
 	if err != nil {
 		slog.Error("Error fetching project")
@@ -171,12 +170,12 @@ func (r *DatabaseService) UpdateDatabase(c context.Context, projectId uuid.UUID,
 		return models.Database{}, err
 	}
 
-	database, err := r.db.UpdateDatabase(c, mapper.ToUpdateDatabaseParams(databaseId, dto))
+	database, err := r.db.UpdateDatabase(c, ToUpdateDatabaseParams(databaseId, dto))
 
 	if err != nil {
 		slog.Error("Error updating database", "err", err)
 		return models.Database{}, err
 	}
 
-	return mapper.ToDomainDatabase(database), nil
+	return ToDomainDatabase(database), nil
 }

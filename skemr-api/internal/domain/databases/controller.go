@@ -1,4 +1,4 @@
-package controller
+package databases
 
 import (
 	"encoding/json"
@@ -6,17 +6,16 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
-	"github.com/walmaa/skemr-api/internal/dto"
 	"github.com/walmaa/skemr-api/internal/errormsg"
-	"github.com/walmaa/skemr-api/internal/service"
+	"github.com/walmaa/skemr-api/internal/requestparams"
 	"github.com/walmaa/skemr-api/internal/validation"
 )
 
 type DatabaseController struct {
-	Service *service.DatabaseService
+	Service *DatabaseService
 }
 
-func NewDatabaseController(s *service.DatabaseService) *DatabaseController {
+func NewDatabaseController(s *DatabaseService) *DatabaseController {
 	return &DatabaseController{Service: s}
 }
 
@@ -34,7 +33,7 @@ func (h *DatabaseController) RegisterRoutes(r chi.Router) {
 func (h *DatabaseController) deleteDatabase(w http.ResponseWriter, r *http.Request) {
 
 	// TODO: scope this to the project
-	databaseId, ok := ParseUUIDParam(w, r, "databaseId")
+	databaseId, ok := requestparams.ParseUUIDParam(w, r, "databaseId")
 	if !ok {
 		return
 	}
@@ -47,7 +46,7 @@ func (h *DatabaseController) deleteDatabase(w http.ResponseWriter, r *http.Reque
 }
 
 func (h *DatabaseController) listDatabasesByProject(w http.ResponseWriter, r *http.Request) {
-	projectId, ok := ParseUUIDParam(w, r, "projectId")
+	projectId, ok := requestparams.ParseUUIDParam(w, r, "projectId")
 	if !ok {
 		return
 	}
@@ -61,12 +60,12 @@ func (h *DatabaseController) listDatabasesByProject(w http.ResponseWriter, r *ht
 }
 
 func (h *DatabaseController) createDatabase(w http.ResponseWriter, r *http.Request) {
-	projectId, ok := ParseUUIDParam(w, r, "projectId")
+	projectId, ok := requestparams.ParseUUIDParam(w, r, "projectId")
 	if !ok {
 		return
 	}
 
-	var body dto.DatabaseCreationDto
+	var body DatabaseCreationDto
 
 	err := render.Decode(r, &body)
 	if err != nil {
@@ -91,17 +90,17 @@ func (h *DatabaseController) createDatabase(w http.ResponseWriter, r *http.Reque
 }
 
 func (h *DatabaseController) updateDatabase(w http.ResponseWriter, r *http.Request) {
-	projectId, ok := ParseUUIDParam(w, r, "projectId")
+	projectId, ok := requestparams.ParseUUIDParam(w, r, "projectId")
 	if !ok {
 		return
 	}
 
-	databaseId, ok := ParseUUIDParam(w, r, "databaseId")
+	databaseId, ok := requestparams.ParseUUIDParam(w, r, "databaseId")
 	if !ok {
 		return
 	}
 
-	var body dto.DatabaseUpdateDto
+	var body DatabaseUpdateDto
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -115,12 +114,12 @@ func (h *DatabaseController) updateDatabase(w http.ResponseWriter, r *http.Reque
 }
 
 func (h *DatabaseController) syncDatabase(w http.ResponseWriter, r *http.Request) {
-	projectId, ok := ParseUUIDParam(w, r, "projectId")
+	projectId, ok := requestparams.ParseUUIDParam(w, r, "projectId")
 	if !ok {
 		return
 	}
 
-	databaseId, ok := ParseUUIDParam(w, r, "databaseId")
+	databaseId, ok := requestparams.ParseUUIDParam(w, r, "databaseId")
 	if !ok {
 		return
 	}
@@ -136,7 +135,7 @@ func (h *DatabaseController) syncDatabase(w http.ResponseWriter, r *http.Request
 func (h *DatabaseController) getDatabase(w http.ResponseWriter, r *http.Request) {
 
 	// TODO: scope this to the project
-	databaseId, ok := ParseUUIDParam(w, r, "databaseId")
+	databaseId, ok := requestparams.ParseUUIDParam(w, r, "databaseId")
 	if !ok {
 		return
 	}

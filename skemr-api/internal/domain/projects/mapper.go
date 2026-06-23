@@ -1,7 +1,8 @@
-package mapper
+package projects
 
 import (
 	"github.com/walmaa/skemr-api/db/sqlc"
+	"github.com/walmaa/skemr-api/internal/mapper"
 	"github.com/walmaa/skemr-common/models"
 )
 
@@ -9,8 +10,8 @@ func ToDomainProject(project sqlc.Project) models.Project {
 	return models.Project{
 		ID:        project.ID,
 		Name:      project.Name,
-		CreatedAt: Time(&project.CreatedAt),
-		UpdatedAt: Time(&project.UpdatedAt),
+		CreatedAt: mapper.Time(&project.CreatedAt),
+		UpdatedAt: mapper.Time(&project.UpdatedAt),
 	}
 }
 

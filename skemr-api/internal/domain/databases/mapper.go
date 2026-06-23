@@ -1,9 +1,9 @@
-package mapper
+package databases
 
 import (
 	"github.com/google/uuid"
 	"github.com/walmaa/skemr-api/db/sqlc"
-	"github.com/walmaa/skemr-api/internal/dto"
+	"github.com/walmaa/skemr-api/internal/mapper"
 	"github.com/walmaa/skemr-common/models"
 )
 
@@ -20,8 +20,8 @@ func ToDomainDatabase(e sqlc.Database) models.Database {
 		DatabaseType:             models.DatabaseType(e.DatabaseType.DatabaseType),
 		ProjectID:                e.ProjectID,
 		FailedConnectionAttempts: e.FailedConnectionAttempts,
-		LastSyncedAt:             TimePtr(&e.LastSyncedAt),
-		LastSyncError:            TextPtr(&e.LastSyncError),
+		LastSyncedAt:             mapper.TimePtr(&e.LastSyncedAt),
+		LastSyncError:            mapper.TextPtr(&e.LastSyncError),
 	}
 }
 
@@ -33,28 +33,28 @@ func ToDomainDatabases(d []sqlc.Database) []models.Database {
 	return databases
 }
 
-func ToUpdateDatabaseParams(databaseId uuid.UUID, dto dto.DatabaseUpdateDto) sqlc.UpdateDatabaseParams {
+func ToUpdateDatabaseParams(databaseId uuid.UUID, dto DatabaseUpdateDto) sqlc.UpdateDatabaseParams {
 	return sqlc.UpdateDatabaseParams{
 		DatabaseID:  databaseId,
-		DisplayName: Text(dto.DisplayName),
-		DbName:      Text(dto.DbName),
-		Username:    Text(dto.Username),
-		Password:    Text(dto.Password),
-		Host:        Text(dto.Host),
-		Port:        Int4(dto.Port),
-		SslMode:     Text(dto.SslMode),
+		DisplayName: mapper.Text(dto.DisplayName),
+		DbName:      mapper.Text(dto.DbName),
+		Username:    mapper.Text(dto.Username),
+		Password:    mapper.Text(dto.Password),
+		Host:        mapper.Text(dto.Host),
+		Port:        mapper.Int4(dto.Port),
+		SslMode:     mapper.Text(dto.SslMode),
 	}
 }
 
-func ToCreateDatabaseParams(projectId uuid.UUID, dto dto.DatabaseCreationDto) sqlc.CreateDatabaseParams {
+func ToCreateDatabaseParams(projectId uuid.UUID, dto DatabaseCreationDto) sqlc.CreateDatabaseParams {
 	return sqlc.CreateDatabaseParams{
 		ProjectID:    projectId,
 		DisplayName:  dto.DisplayName,
-		DbName:       Text(dto.DbName),
-		Username:     Text(dto.Username),
-		Password:     Text(dto.Password),
-		Host:         Text(dto.Host),
-		Port:         Int4(&dto.Port),
-		DatabaseType: NullDatabaseType(dto.DatabaseType),
+		DbName:       mapper.Text(dto.DbName),
+		Username:     mapper.Text(dto.Username),
+		Password:     mapper.Text(dto.Password),
+		Host:         mapper.Text(dto.Host),
+		Port:         mapper.Int4(&dto.Port),
+		DatabaseType: mapper.NullDatabaseType(dto.DatabaseType),
 	}
 }

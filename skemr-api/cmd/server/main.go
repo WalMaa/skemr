@@ -17,6 +17,10 @@ import (
 	"github.com/walmaa/skemr-api/config"
 	"github.com/walmaa/skemr-api/db/sqlc"
 	"github.com/walmaa/skemr-api/internal/ai"
+	"github.com/walmaa/skemr-api/internal/domain/databases"
+	"github.com/walmaa/skemr-api/internal/domain/entities"
+	"github.com/walmaa/skemr-api/internal/domain/projects"
+	"github.com/walmaa/skemr-api/internal/domain/rules"
 	"github.com/walmaa/skemr-api/internal/routers"
 	"github.com/walmaa/skemr-api/internal/service"
 	"github.com/walmaa/skemr-api/internal/tasks"
@@ -107,13 +111,13 @@ func main() {
 	)
 	aiClient := ai.NewOpenAIClient(toolRegistry)
 	scopeResolver := service.NewScopeResolver(queries)
-	projectService := service.NewProjectService(queries)
+	projectService := projects.NewProjectService(queries)
 	databaseChangeService := service.NewDatabaseChangeService(queries, scopeResolver)
-	databaseService := service.NewDatabaseService(queries, taskClient)
+	databaseService := databases.NewDatabaseService(queries, taskClient)
 	webhookService := service.NewWebhookService(queries)
 	projectSecretsService := service.NewAccessTokenService(queries)
-	ruleService := service.NewRuleService(queries, scopeResolver)
-	databaseEntityService := service.NewDatabaseEntityService(queries)
+	ruleService := rules.NewRuleService(queries, scopeResolver)
+	databaseEntityService := entities.NewDatabaseEntityService(queries)
 	pipelineRunService := service.NewPipelineRunService(queries, scopeResolver)
 	integrationService := service.NewIntegrationService(ruleService, pipelineRunService)
 

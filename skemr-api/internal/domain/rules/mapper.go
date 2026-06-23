@@ -1,4 +1,4 @@
-package mapper
+package rules
 
 import (
 	"encoding/json"
@@ -6,7 +6,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/walmaa/skemr-api/db/sqlc"
-	"github.com/walmaa/skemr-api/internal/dto"
+	"github.com/walmaa/skemr-api/internal/domain/entities"
+	"github.com/walmaa/skemr-api/internal/mapper"
 	"github.com/walmaa/skemr-common/models"
 )
 
@@ -16,7 +17,7 @@ func ToDomainRule(e sqlc.Rule) models.Rule {
 		Name:       e.Name,
 		RuleType:   models.RuleType(e.Type),
 		Attributes: ToRuleAttributes(e.Attributes),
-		CreatedAt:  Time(&e.CreatedAt),
+		CreatedAt:  mapper.Time(&e.CreatedAt),
 	}
 }
 
@@ -40,8 +41,8 @@ func ToDomainRuleWithEntity(e sqlc.GetRuleWithEntityRow) models.Rule {
 		Name:           e.Rule.Name,
 		Attributes:     ToRuleAttributes(e.Rule.Attributes),
 		RuleType:       models.RuleType(e.Rule.Type),
-		DataBaseEntity: ToDomainDatabaseEntity(e.DatabaseEntity),
-		CreatedAt:      Time(&e.Rule.CreatedAt),
+		DataBaseEntity: entities.ToDomainDatabaseEntity(e.DatabaseEntity),
+		CreatedAt:      mapper.Time(&e.Rule.CreatedAt),
 	}
 }
 
@@ -61,12 +62,12 @@ func ToDomainRulesWithEntity(r []sqlc.GetRulesWithEntitiesRow) []models.Rule {
 	return rules
 }
 
-func ToSqlcCreateRule(databaseId uuid.UUID, dto dto.RuleCreationDto) sqlc.CreateRuleParams {
+func ToSqlcCreateRule(databaseId uuid.UUID, dto RuleCreationDto) sqlc.CreateRuleParams {
 	return sqlc.CreateRuleParams{
 		Name:             dto.Name,
 		Type:             sqlc.RuleType(dto.RuleType),
 		DatabaseID:       databaseId,
-		Attributes:       ToBytes(dto.Attributes),
+		Attributes:       mapper.ToBytes(dto.Attributes),
 		DatabaseEntityID: dto.DataBaseEntityId,
 	}
 }

@@ -6,7 +6,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/walmaa/skemr-api/db/sqlc"
-	"github.com/walmaa/skemr-api/internal/mapper"
+	"github.com/walmaa/skemr-api/internal/domain/databases"
+	"github.com/walmaa/skemr-api/internal/domain/entities"
 	"github.com/walmaa/skemr-common/models"
 )
 
@@ -21,7 +22,7 @@ func NewToolService(db sqlc.Querier) *ToolService {
 func (s *ToolService) GetDatabaseEntities(ctx context.Context, databaseId uuid.UUID, actor Actor) ([]models.DatabaseEntity, error) {
 	slog.Info("ToolService: GetDatabaseEntities", "actor", actor)
 
-	entities, err := s.db.GetDatabaseEntities(ctx, sqlc.GetDatabaseEntitiesParams{
+	databaseEntities, err := s.db.GetDatabaseEntities(ctx, sqlc.GetDatabaseEntitiesParams{
 		DatabaseID: databaseId,
 	})
 
@@ -30,18 +31,18 @@ func (s *ToolService) GetDatabaseEntities(ctx context.Context, databaseId uuid.U
 		return nil, err
 	}
 
-	return mapper.ToDomainDatabaseEntities(entities), nil
+	return entities.ToDomainDatabaseEntities(databaseEntities), nil
 
 }
 
 func (s *ToolService) GetDatabases(ctx context.Context, actor Actor) ([]models.Database, error) {
 	slog.Info("ToolService: GetDatabases", "actor", actor)
 
-	databases, err := s.db.GetDatabasesByProjectId(ctx, actor.ProjectID)
+	databaseRows, err := s.db.GetDatabasesByProjectId(ctx, actor.ProjectID)
 	if err != nil {
 		slog.Error("Error getting databases", "error", err)
 		return nil, err
 	}
 
-	return mapper.ToDomainDatabases(databases), nil
+	return databases.ToDomainDatabases(databaseRows), nil
 }

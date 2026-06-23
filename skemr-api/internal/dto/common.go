@@ -1,48 +1,8 @@
 package dto
 
 import (
-	"github.com/google/uuid"
 	"github.com/walmaa/skemr-common/models"
 )
-
-type ProjectCreationDto struct {
-	Name string `json:"name" validate:"required,min=3,max=100"`
-}
-
-type DatabaseCreationDto struct {
-	DisplayName  string       `json:"displayName" validate:"required"`
-	DbName       *string      `json:"dbName"`
-	Username     *string      `json:"username"`
-	Password     *string      `json:"password"`
-	Host         *string      `json:"host"`
-	Port         int32        `json:"port"`
-	SslMode      *string      `json:"sslMode"`
-	DatabaseType DatabaseType `json:"databaseType" validate:"required,oneof=postgres"`
-}
-
-type DatabaseUpdateDto struct {
-	DisplayName  *string       `json:"displayName"`
-	DbName       *string       `json:"dbName"`
-	Username     *string       `json:"username"`
-	Password     *string       `json:"password"`
-	Host         *string       `json:"host"`
-	Port         *int32        `json:"port"`
-	SslMode      *string       `json:"sslMode"`
-	DatabaseType *DatabaseType `json:"databaseType"`
-}
-
-type DatabaseType string
-
-const (
-	Postgres DatabaseType = "postgres"
-)
-
-type RuleCreationDto struct {
-	Name             string
-	RuleType         models.RuleType       `json:"ruleType" validate:"required,oneof=locked deprecated advisory warning"`
-	Attributes       models.RuleAttributes `json:"attributes" validate:"omitempty,json"`
-	DataBaseEntityId uuid.UUID             `json:"databaseEntityId" validate:"required,uuid4"`
-}
 
 type SecretCreationDto struct {
 	Name      string `json:"name" validate:"required,min=2,max=100"`

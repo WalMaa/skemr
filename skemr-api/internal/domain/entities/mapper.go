@@ -1,7 +1,8 @@
-package mapper
+package entities
 
 import (
 	"github.com/walmaa/skemr-api/db/sqlc"
+	"github.com/walmaa/skemr-api/internal/mapper"
 	"github.com/walmaa/skemr-common/models"
 )
 
@@ -12,10 +13,10 @@ func ToDomainDatabaseEntity(e sqlc.DatabaseEntity) models.DatabaseEntity {
 		ParentId:    e.ParentID,
 		Name:        e.Name,
 		Status:      models.DatabaseEntityStatus(e.Status),
-		Attributes:  ToMap(e.Attributes),
-		DeletedAt:   TimePtr(&e.DeletedAt),
-		FirstSeenAt: Time(&e.FirstSeenAt),
-		CreatedAt:   Time(&e.CreatedAt),
+		Attributes:  mapper.ToMap(e.Attributes),
+		DeletedAt:   mapper.TimePtr(&e.DeletedAt),
+		FirstSeenAt: mapper.Time(&e.FirstSeenAt),
+		CreatedAt:   mapper.Time(&e.CreatedAt),
 	}
 }
 

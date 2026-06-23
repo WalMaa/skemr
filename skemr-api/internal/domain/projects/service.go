@@ -1,4 +1,4 @@
-package service
+package projects
 
 import (
 	"context"
@@ -8,9 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/walmaa/skemr-api/db/sqlc"
-	"github.com/walmaa/skemr-api/internal/dto"
 	"github.com/walmaa/skemr-api/internal/errormsg"
-	"github.com/walmaa/skemr-api/internal/mapper"
 	"github.com/walmaa/skemr-common/models"
 )
 
@@ -38,10 +36,10 @@ func CheckProjectExists(c context.Context, db sqlc.Querier, projectID uuid.UUID)
 		}
 	}
 
-	return mapper.ToDomainProject(project), nil
+	return ToDomainProject(project), nil
 }
 
-func (r *ProjectService) CreateProject(c context.Context, dto dto.ProjectCreationDto) (models.Project, error) {
+func (r *ProjectService) CreateProject(c context.Context, dto ProjectCreationDto) (models.Project, error) {
 
 	slog.Info("Creating project", "name", dto.Name)
 	project, err := r.db.CreateProject(c, dto.Name)
@@ -49,7 +47,7 @@ func (r *ProjectService) CreateProject(c context.Context, dto dto.ProjectCreatio
 		slog.Error("Error creating project", "name", dto.Name, "err", err)
 		return models.Project{}, err
 	}
-	return mapper.ToDomainProject(project), nil
+	return ToDomainProject(project), nil
 }
 
 func (r *ProjectService) GetProjects(c context.Context) ([]models.Project, error) {
@@ -59,7 +57,7 @@ func (r *ProjectService) GetProjects(c context.Context) ([]models.Project, error
 		slog.Error("Error fetching projects", "err", err)
 		return nil, err
 	}
-	return mapper.ToDomainProjects(projects), nil
+	return ToDomainProjects(projects), nil
 }
 
 func (r *ProjectService) GetProject(c context.Context, projectId uuid.UUID) (models.Project, error) {
@@ -71,7 +69,7 @@ func (r *ProjectService) GetProject(c context.Context, projectId uuid.UUID) (mod
 		return models.Project{}, err
 	}
 
-	return mapper.ToDomainProject(project), nil
+	return ToDomainProject(project), nil
 }
 
 func (r *ProjectService) DeleteProject(c context.Context, id uuid.UUID) error {

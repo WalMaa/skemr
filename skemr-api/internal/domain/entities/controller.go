@@ -1,4 +1,4 @@
-package controller
+package entities
 
 import (
 	"net/http"
@@ -6,15 +6,15 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
-	"github.com/walmaa/skemr-api/internal/service"
+	"github.com/walmaa/skemr-api/internal/requestparams"
 	"github.com/walmaa/skemr-common/models"
 )
 
 type DatabaseEntityController struct {
-	Service *service.DatabaseEntityService
+	Service *DatabaseEntityService
 }
 
-func NewDatabaseEntityController(s *service.DatabaseEntityService) *DatabaseEntityController {
+func NewDatabaseEntityController(s *DatabaseEntityService) *DatabaseEntityController {
 	return &DatabaseEntityController{Service: s}
 }
 
@@ -30,17 +30,17 @@ type Query struct {
 }
 
 func (h *DatabaseEntityController) GetDatabaseEntity(w http.ResponseWriter, r *http.Request) {
-	projectId, ok := ParseUUIDParam(w, r, "projectId")
+	projectId, ok := requestparams.ParseUUIDParam(w, r, "projectId")
 	if !ok {
 		return
 	}
 
-	databaseId, ok := ParseUUIDParam(w, r, "databaseId")
+	databaseId, ok := requestparams.ParseUUIDParam(w, r, "databaseId")
 	if !ok {
 		return
 	}
 
-	entityId, ok := ParseUUIDParam(w, r, "entityId")
+	entityId, ok := requestparams.ParseUUIDParam(w, r, "entityId")
 	if !ok {
 		return
 	}
@@ -57,12 +57,12 @@ func (h *DatabaseEntityController) GetDatabaseEntity(w http.ResponseWriter, r *h
 func (h *DatabaseEntityController) GetDatabaseEntities(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	projectId, ok := ParseUUIDParam(w, r, "projectId")
+	projectId, ok := requestparams.ParseUUIDParam(w, r, "projectId")
 	if !ok {
 		return
 	}
 
-	databaseId, ok := ParseUUIDParam(w, r, "databaseId")
+	databaseId, ok := requestparams.ParseUUIDParam(w, r, "databaseId")
 	if !ok {
 		return
 	}
