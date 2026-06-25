@@ -48,17 +48,17 @@ func (r *RuleService) GetRule(c context.Context, projectID uuid.UUID, databaseID
 	return ToDomainRuleWithEntity(rule), nil
 }
 
-func (r *RuleService) CreateRule(c context.Context, projectID uuid.UUID, databaseId uuid.UUID, dto RuleCreationDto) (models.Rule, error) {
+func (s *RuleService) CreateRule(c context.Context, projectID uuid.UUID, databaseId uuid.UUID, dto RuleCreationDto) (models.Rule, error) {
 	slog.Info("Creating rule", "name", dto.Name, "databaseID", databaseId, "projectID", projectID)
 
-	_, err := r.scopeResolver.RequireDatabase(c, projectID, databaseId)
+	_, err := s.scopeResolver.RequireDatabase(c, projectID, databaseId)
 
 	if err != nil {
 		slog.Error("Error fetching database", "err", err)
 		return models.Rule{}, err
 	}
 
-	_, err = r.scopeResolver.RequireDatabaseEntity(c, projectID, databaseId, dto.DataBaseEntityId)
+	_, err = s.scopeResolver.RequireDatabaseEntity(c, projectID, databaseId, dto.DataBaseEntityId)
 
 	if err != nil {
 		slog.Error("Error fetching database entity", "err", err)
@@ -66,7 +66,7 @@ func (r *RuleService) CreateRule(c context.Context, projectID uuid.UUID, databas
 	}
 
 	// Check if a rule with the same name already exists
-	exists, err := r.ruleStore.GetRuleByDatabaseAndName(c, sqlc.GetRuleByDatabaseAndNameParams{
+	exists, err := s.ruleStore.GetRuleByDatabaseAndName(c, sqlc.GetRuleByDatabaseAndNameParams{
 		DatabaseID: databaseId,
 		Name:       dto.Name,
 	})
@@ -84,7 +84,7 @@ func (r *RuleService) CreateRule(c context.Context, projectID uuid.UUID, databas
 		}
 	}
 
-	rule, err := r.ruleStore.CreateRule(c, ToSqlcCreateRule(databaseId, dto))
+	rule, err := s.ruleStore.CreateRule(c, ToSqlcCreateRule(databaseId, dto))
 	if err != nil {
 		slog.Error("Unable to create a Rule", "err", err)
 		return models.Rule{}, err

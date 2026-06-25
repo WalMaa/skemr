@@ -58,10 +58,12 @@ func (ns NullDatabaseEntityStatus) Value() (driver.Value, error) {
 type DatabaseEntityType string
 
 const (
-	DatabaseEntityTypeDatabase DatabaseEntityType = "database"
-	DatabaseEntityTypeSchema   DatabaseEntityType = "schema"
-	DatabaseEntityTypeTable    DatabaseEntityType = "table"
-	DatabaseEntityTypeColumn   DatabaseEntityType = "column"
+	DatabaseEntityTypeDatabase   DatabaseEntityType = "database"
+	DatabaseEntityTypeSchema     DatabaseEntityType = "schema"
+	DatabaseEntityTypeTable      DatabaseEntityType = "table"
+	DatabaseEntityTypeColumn     DatabaseEntityType = "column"
+	DatabaseEntityTypeIndex      DatabaseEntityType = "index"
+	DatabaseEntityTypeConstraint DatabaseEntityType = "constraint"
 )
 
 func (e *DatabaseEntityType) Scan(src interface{}) error {

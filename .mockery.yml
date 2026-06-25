@@ -7,11 +7,13 @@ packages:
       Querier:
         config:
           filename: querier_mock.go
-  github.com/walmaa/skemr-api/internal/service:
+  github.com/walmaa/skemr-api/internal/scope:
     interfaces:
-      ScopeResolver:
+      Resolver:
         config:
           filename: scope_resolver_mock.go
+  github.com/walmaa/skemr-api/internal/domain/rules:
+    interfaces:
       RuleStore:
         config:
           filename: rule_store_mock.go

@@ -90,7 +90,7 @@ func (c *OpenAIClient) collectAndRunToolCalls(ctx context.Context, response *res
 func (c *OpenAIClient) Complete(ctx context.Context, msgs []Message, actor Actor) (Completion, error) {
 	slog.Info("Completing with OpenAI", "actor", actor, "messages", msgs)
 
-		if len(msgs) == 0 {
+	if len(msgs) == 0 {
 		return Completion{}, fmt.Errorf("no messages provided")
 	}
 
@@ -142,9 +142,9 @@ func (c *OpenAIClient) Complete(ctx context.Context, msgs []Message, actor Actor
 
 		}
 		toolCallResponseParams := responses.ResponseNewParams{
-			Instructions: openai.String(systemPrompt),
+			Instructions:       openai.String(systemPrompt),
 			Model:              defaultModel,
-			Tools: c.toolRegistry.toToolUnionParams(),
+			Tools:              c.toolRegistry.toToolUnionParams(),
 			PreviousResponseID: openai.String(response.ID),
 			Input: responses.ResponseNewParamsInputUnion{
 				OfInputItemList: outputs,

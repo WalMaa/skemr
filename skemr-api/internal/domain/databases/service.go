@@ -68,7 +68,7 @@ func (s *DatabaseService) CreateDatabase(c context.Context, projectId uuid.UUID,
 func (s *DatabaseService) createDatabaseSyncTask(databaseId uuid.UUID) {
 
 	// TODO: rate limiting
-	slog.Info("Creating a Datbaase sync task", "databaseId", databaseId)
+	slog.Info("Creating a Database sync task", "databaseId", databaseId)
 	task, err := tasks.NewDatabaseSyncTask(databaseId)
 	if err != nil {
 		slog.Error("Unable to create database sync task")

@@ -5,7 +5,9 @@ CREATE TYPE database_entity_type AS ENUM (
     'database',
     'schema',
     'table',
-    'column'
+    'column',
+    'index',
+    'constraint'
     );
 
 CREATE TYPE migration_status AS ENUM (

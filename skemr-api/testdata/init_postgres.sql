@@ -8,7 +8,7 @@ CREATE SCHEMA IF NOT EXISTS public;
 CREATE TABLE IF NOT EXISTS public.customers
 (
     id         BIGSERIAL PRIMARY KEY,
-    email      TEXT        NOT NULL UNIQUE,
+        email      TEXT        NOT NULL UNIQUE,
     name       TEXT        NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT pg_catalog.now()
 );
