@@ -12,14 +12,15 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/walmaa/skemr-api/db/sqlc"
-	"github.com/walmaa/skemr-api/internal/domain/projects"
 	"github.com/walmaa/skemr-api/internal/errormsg"
+	"github.com/walmaa/skemr-api/internal/service"
 	"github.com/walmaa/skemr-api/internal/tokens"
 	"github.com/walmaa/skemr-common/models"
 )
 
 type AccessTokenService struct {
-	db sqlc.Querier
+	db            sqlc.Querier
+	scopeResolver service.ScopeResolver
 }
 
 const prefixLength = 9
@@ -32,7 +33,7 @@ func NewAccessTokenService(q sqlc.Querier) *AccessTokenService {
 func (s *AccessTokenService) CreateToken(c context.Context, projectId uuid.UUID, dto AccessTokenCreationDto) (string, error) {
 	slog.Info("Creating a secret", "projectId", projectId, "name", dto.Name)
 
-	project, err := projects.CheckProjectExists(c, s.db, projectId)
+	project, err := s.scopeResolver.RequireProject(c, projectId)
 
 	if err != nil {
 		slog.Error("Unable to get project", "err", err)
@@ -95,7 +96,7 @@ func (s *AccessTokenService) CreateToken(c context.Context, projectId uuid.UUID,
 
 func (s *AccessTokenService) GetTokens(c context.Context, projectId uuid.UUID) ([]models.ProjectAccessToken, error) {
 	slog.Info("Getting tokens", "projectId", projectId)
-	project, err := projects.CheckProjectExists(c, s.db, projectId)
+	project, err := s.scopeResolver.RequireProject(c, projectId)
 
 	if err != nil {
 		slog.Error("Unable to get project", "err", err)
@@ -115,7 +116,7 @@ func (s *AccessTokenService) GetTokens(c context.Context, projectId uuid.UUID) (
 func (s *AccessTokenService) DeleteToken(c context.Context, projectId uuid.UUID, secretId uuid.UUID) error {
 	slog.Info("Deleting token", "projectId", projectId, "secretId", secretId)
 
-	project, err := projects.CheckProjectExists(c, s.db, projectId)
+	project, err := s.scopeResolver.RequireProject(c, projectId)
 
 	if err != nil {
 		slog.Error("Unable to get project", "err", err)

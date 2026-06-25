@@ -10,12 +10,13 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/walmaa/skemr-api/db/sqlc"
 	"github.com/walmaa/skemr-api/internal/errormsg"
+	"github.com/walmaa/skemr-api/internal/service"
 	"github.com/walmaa/skemr-common/models"
 )
 
 type RuleService struct {
 	ruleStore     RuleStore
-	scopeResolver ScopeResolver
+	scopeResolver service.ScopeResolver
 }
 
 type RuleStore interface {
@@ -26,12 +27,7 @@ type RuleStore interface {
 	DeleteRule(ctx context.Context, params sqlc.DeleteRuleParams) error
 }
 
-type ScopeResolver interface {
-	RequireDatabase(c context.Context, projectID uuid.UUID, databaseID uuid.UUID) (models.Database, error)
-	RequireDatabaseEntity(c context.Context, projectID uuid.UUID, databaseID uuid.UUID, entityID uuid.UUID) (models.DatabaseEntity, error)
-}
-
-func NewRuleService(ruleStore RuleStore, resolver ScopeResolver) *RuleService {
+func NewRuleService(ruleStore RuleStore, resolver service.ScopeResolver) *RuleService {
 	return &RuleService{ruleStore: ruleStore, scopeResolver: resolver}
 }
 

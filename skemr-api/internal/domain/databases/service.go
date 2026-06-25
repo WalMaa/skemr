@@ -10,52 +10,33 @@ import (
 	"github.com/hibiken/asynq"
 	"github.com/jackc/pgx/v5"
 	"github.com/walmaa/skemr-api/db/sqlc"
-	"github.com/walmaa/skemr-api/internal/domain/projects"
 	"github.com/walmaa/skemr-api/internal/errormsg"
+	"github.com/walmaa/skemr-api/internal/service"
 	"github.com/walmaa/skemr-api/internal/tasks"
 	"github.com/walmaa/skemr-common/models"
 )
 
 type DatabaseService struct {
-	db         sqlc.Querier
-	taskClient *asynq.Client
+	db            sqlc.Querier
+	taskClient    *asynq.Client
+	scopeResolver service.ScopeResolver
 }
 
-func NewDatabaseService(q sqlc.Querier, c *asynq.Client) *DatabaseService {
-	return &DatabaseService{db: q, taskClient: c}
+func NewDatabaseService(q sqlc.Querier, c *asynq.Client, scopeResolver service.ScopeResolver) *DatabaseService {
+	return &DatabaseService{db: q, taskClient: c, scopeResolver: scopeResolver}
 }
 
-func CheckDatabaseExists(c context.Context, db sqlc.Querier, projectId uuid.UUID, dbId uuid.UUID) (models.Database, error) {
-	slog.Info("Checking if database exists", "database_id", dbId)
-
-	// Check if the database exists
-	database, err := db.GetDatabaseByIdAndProject(c, sqlc.GetDatabaseByIdAndProjectParams{
-		ID:        dbId,
-		ProjectID: projectId,
-	})
-	if err != nil {
-		slog.Error("Error getting database", "database_id", dbId, "err", err)
-		return models.Database{}, &models.ErrorResponse{
-			Message: errormsg.ErrDatabaseNotFound,
-			Errors:  nil,
-			Status:  http.StatusNotFound,
-		}
-	}
-
-	return ToDomainDatabase(database), nil
-}
-
-func (r *DatabaseService) CreateDatabase(c context.Context, projectId uuid.UUID, dto DatabaseCreationDto) (models.Database, error) {
+func (s *DatabaseService) CreateDatabase(c context.Context, projectId uuid.UUID, dto DatabaseCreationDto) (models.Database, error) {
 	slog.Info("Creating database", "name", dto)
 
 	// Check if the project exists
-	_, err := projects.CheckProjectExists(c, r.db, projectId)
+	_, err := s.scopeResolver.RequireProject(c, projectId)
 	if err != nil {
 		return models.Database{}, err
 	}
 
-	// Check a database with the given name already exists
-	exists, err := r.db.GetDatabaseByNameAndProject(c, sqlc.GetDatabaseByNameAndProjectParams{
+	// Check if a database with the given name already exists
+	exists, err := s.db.GetDatabaseByNameAndProject(c, sqlc.GetDatabaseByNameAndProjectParams{
 		ProjectID:   projectId,
 		DisplayName: dto.DisplayName,
 	})
@@ -72,77 +53,83 @@ func (r *DatabaseService) CreateDatabase(c context.Context, projectId uuid.UUID,
 			Status:  http.StatusConflict,
 		}
 	}
-	database, err := r.db.CreateDatabase(c, ToCreateDatabaseParams(projectId, dto))
+	database, err := s.db.CreateDatabase(c, ToCreateDatabaseParams(projectId, dto))
 
 	if err != nil {
 		slog.Error("Error creating database", "err", err)
 		return models.Database{}, err
 	}
 
-	r.createDatabaseSyncTask(database.ID)
+	s.createDatabaseSyncTask(database.ID)
 	return ToDomainDatabase(database), nil
 }
 
 // CreateDatabaseSyncTask Creates a Database sync task for Asynq background processing.
-func (r *DatabaseService) createDatabaseSyncTask(databaseId uuid.UUID) {
+func (s *DatabaseService) createDatabaseSyncTask(databaseId uuid.UUID) {
+
 	// TODO: rate limiting
-	slog.Info("Creating a Datbase sync task", "databaseId", databaseId)
+	slog.Info("Creating a Datbaase sync task", "databaseId", databaseId)
 	task, err := tasks.NewDatabaseSyncTask(databaseId)
 	if err != nil {
 		slog.Error("Unable to create database sync task")
 	}
-	_, err = r.taskClient.Enqueue(task)
+	_, err = s.taskClient.Enqueue(task)
 	if err != nil {
 		slog.Error("Error in task", "err", err)
 	}
 
 }
 
-func (r *DatabaseService) EnqueueManualDatabaseSync(c context.Context, projectId uuid.UUID, databaseId uuid.UUID) error {
+func (s *DatabaseService) EnqueueManualDatabaseSync(c context.Context, projectId uuid.UUID, databaseId uuid.UUID) error {
 	slog.Info("Enqueuing manual database sync", "projectId", projectId, "databaseId", databaseId)
 
-	project, err := projects.CheckProjectExists(c, r.db, projectId)
-
-	if err != nil {
-		slog.Error("Error fetching project", "err", err)
-		return err
-	}
-
-	database, err := CheckDatabaseExists(c, r.db, project.ID, databaseId)
+	database, err := s.scopeResolver.RequireDatabase(c, projectId, databaseId)
 
 	if err != nil {
 		slog.Error("Error getting database", "err", err)
 		return err
 	}
 
-	r.createDatabaseSyncTask(database.ID)
+	s.createDatabaseSyncTask(database.ID)
 
 	return nil
 }
 
-func (r *DatabaseService) GetDatabase(c context.Context, databaseId uuid.UUID) (models.Database, error) {
+func (s *DatabaseService) GetDatabase(c context.Context, projectId uuid.UUID, databaseId uuid.UUID) (models.Database, error) {
 	slog.Info("Getting database", "databaseId", databaseId)
-	database, err := r.db.GetDatabase(c, databaseId)
+
+	project, err := s.scopeResolver.RequireProject(c, projectId)
+	if err != nil {
+		slog.Error("Error fetching project", "err", err)
+		return models.Database{}, err
+	}
+
+	database, err := s.db.GetDatabaseByIDAndProjectID(c, sqlc.GetDatabaseByIDAndProjectIDParams{
+		ID:        databaseId,
+		ProjectID: project.ID,
+	})
+
 	if err != nil {
 		slog.Error("Unable to get database", "databaseId", databaseId, "err", err)
 		return models.Database{}, err
 	}
+
 	return ToDomainDatabase(database), nil
 }
 
-func (r *DatabaseService) DeleteDatabase(c context.Context, id uuid.UUID) error {
+func (s *DatabaseService) DeleteDatabase(c context.Context, id uuid.UUID) error {
 	slog.Info("Deleting database", "id", id)
-	return r.db.DeleteDatabase(c, id)
+	return s.db.DeleteDatabase(c, id)
 }
 
-func (r *DatabaseService) ListDatabasesByProject(c context.Context, projectId uuid.UUID) ([]models.Database, error) {
+func (s *DatabaseService) ListDatabasesByProject(c context.Context, projectId uuid.UUID) ([]models.Database, error) {
 	slog.Info("Listing databases for project", "project_id", projectId)
-	project, err := projects.CheckProjectExists(c, r.db, projectId)
+	project, err := s.scopeResolver.RequireProject(c, projectId)
 	if err != nil {
 		slog.Error("Could not get project")
 		return nil, err
 	}
-	databases, err := r.db.GetDatabasesByProjectId(c, project.ID)
+	databases, err := s.db.GetDatabasesByProjectId(c, project.ID)
 
 	if err != nil {
 		slog.Error("Unable to get databases", "project_id", projectId, "err", err)
@@ -152,30 +139,23 @@ func (r *DatabaseService) ListDatabasesByProject(c context.Context, projectId uu
 	return ToDomainDatabases(databases), nil
 }
 
-func (r *DatabaseService) UpdateDatabase(c context.Context, projectId uuid.UUID, databaseId uuid.UUID, dto DatabaseUpdateDto) (models.Database, error) {
+func (s *DatabaseService) UpdateDatabase(c context.Context, projectId uuid.UUID, databaseId uuid.UUID, dto DatabaseUpdateDto) (models.Database, error) {
 
 	slog.Info("Updating database", "id", databaseId)
 
-	project, err := projects.CheckProjectExists(c, r.db, projectId)
-
-	if err != nil {
-		slog.Error("Error fetching project")
-		return models.Database{}, err
-	}
-
-	_, err = CheckDatabaseExists(c, r.db, project.ID, databaseId)
+	database, err := s.scopeResolver.RequireDatabase(c, projectId, databaseId)
 
 	if err != nil {
 		slog.Error("Error getting database")
 		return models.Database{}, err
 	}
 
-	database, err := r.db.UpdateDatabase(c, ToUpdateDatabaseParams(databaseId, dto))
+	updatedDatabase, err := s.db.UpdateDatabase(c, ToUpdateDatabaseParams(database.ID, dto))
 
 	if err != nil {
 		slog.Error("Error updating database", "err", err)
 		return models.Database{}, err
 	}
 
-	return ToDomainDatabase(database), nil
+	return ToDomainDatabase(updatedDatabase), nil
 }

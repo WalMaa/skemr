@@ -12,6 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/walmaa/skemr-api/db/sqlc"
 	"github.com/walmaa/skemr-api/internal/errormsg"
+	"github.com/walmaa/skemr-api/internal/service"
 	"github.com/walmaa/skemr-common/models"
 )
 
@@ -21,16 +22,12 @@ type PipelineRunStore interface {
 	CreatePipelineRun(ctx context.Context, pipelineRun sqlc.CreatePipelineRunParams) (sqlc.PipelineRun, error)
 }
 
-type ScopeResolver interface {
-	RequireDatabase(c context.Context, projectID uuid.UUID, databaseID uuid.UUID) (models.Database, error)
-}
-
 type PipelineRunService struct {
 	store         PipelineRunStore
-	scopeResolver ScopeResolver
+	scopeResolver service.ScopeResolver
 }
 
-func NewPipelineRunService(store PipelineRunStore, resolver ScopeResolver) *PipelineRunService {
+func NewPipelineRunService(store PipelineRunStore, resolver service.ScopeResolver) *PipelineRunService {
 	return &PipelineRunService{store: store, scopeResolver: resolver}
 }
 

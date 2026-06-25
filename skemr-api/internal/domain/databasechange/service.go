@@ -11,6 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/walmaa/skemr-api/db/sqlc"
 	"github.com/walmaa/skemr-api/internal/errormsg"
+	"github.com/walmaa/skemr-api/internal/service"
 	"github.com/walmaa/skemr-common/models"
 )
 
@@ -19,16 +20,12 @@ type DatabaseChangeStore interface {
 	GetDatabaseChangesByDatabaseIdAndId(c context.Context, params sqlc.GetDatabaseChangesByDatabaseIdAndIdParams) ([]sqlc.DatabaseChange, error)
 }
 
-type ScopeResolver interface {
-	RequireDatabase(c context.Context, projectID uuid.UUID, databaseID uuid.UUID) (models.Database, error)
-}
-
 type DatabaseChangeService struct {
 	store         DatabaseChangeStore
-	scopeResolver ScopeResolver
+	scopeResolver service.ScopeResolver
 }
 
-func NewDatabaseChangeService(store DatabaseChangeStore, resolver ScopeResolver) *DatabaseChangeService {
+func NewDatabaseChangeService(store DatabaseChangeStore, resolver service.ScopeResolver) *DatabaseChangeService {
 	return &DatabaseChangeService{store: store, scopeResolver: resolver}
 }
 

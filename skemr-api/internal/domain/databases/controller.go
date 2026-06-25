@@ -133,14 +133,17 @@ func (h *DatabaseController) syncDatabase(w http.ResponseWriter, r *http.Request
 }
 
 func (h *DatabaseController) getDatabase(w http.ResponseWriter, r *http.Request) {
+	projectId, ok := requestparams.ParseUUIDParam(w, r, "projectId")
+	if !ok {
+		return
+	}
 
-	// TODO: scope this to the project
 	databaseId, ok := requestparams.ParseUUIDParam(w, r, "databaseId")
 	if !ok {
 		return
 	}
 
-	database, err := h.Service.GetDatabase(r.Context(), databaseId)
+	database, err := h.Service.GetDatabase(r.Context(), projectId, databaseId)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

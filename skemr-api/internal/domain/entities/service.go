@@ -6,31 +6,27 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/walmaa/skemr-api/db/sqlc"
-	"github.com/walmaa/skemr-api/internal/domain/databases"
-	"github.com/walmaa/skemr-api/internal/domain/projects"
+	"github.com/walmaa/skemr-api/internal/service"
 	"github.com/walmaa/skemr-common/models"
 )
 
 type DatabaseEntityService struct {
-	db sqlc.Querier
+	db            sqlc.Querier
+	scopeResolver service.ScopeResolver
 }
 
-func NewDatabaseEntityService(q sqlc.Querier) *DatabaseEntityService {
+func NewDatabaseEntityService(q sqlc.Querier, scopeResolver service.ScopeResolver) *DatabaseEntityService {
 	{
-		return &DatabaseEntityService{db: q}
+		return &DatabaseEntityService{db: q, scopeResolver: scopeResolver}
 	}
 }
 
 func (s *DatabaseEntityService) GetDatabaseEntityByID(c context.Context, projectId uuid.UUID, databaseId uuid.UUID, entityId uuid.UUID) (models.DatabaseEntity, error) {
 	slog.Info("Getting database entity", "projectId", projectId, "database", databaseId, "entityId", entityId)
-	project, err := projects.CheckProjectExists(c, s.db, projectId)
 
+	_, err := s.scopeResolver.RequireDatabase(c, projectId, databaseId)
 	if err != nil {
-		return models.DatabaseEntity{}, err
-	}
-
-	_, err = databases.CheckDatabaseExists(c, s.db, project.ID, databaseId)
-	if err != nil {
+		slog.Error("Error getting database", "err", err)
 		return models.DatabaseEntity{}, err
 	}
 
@@ -41,15 +37,10 @@ func (s *DatabaseEntityService) GetDatabaseEntityByID(c context.Context, project
 
 func (s *DatabaseEntityService) ListDatabaseEntitiesByDatabase(c context.Context, projectId uuid.UUID, databaseId uuid.UUID, entityType *models.DatabaseEntityType, parentId *uuid.UUID) ([]models.DatabaseEntity, error) {
 	slog.Info("Listing database entities", "projectId", projectId, "database", databaseId)
-	project, err := projects.CheckProjectExists(c, s.db, projectId)
-
+	database, err := s.scopeResolver.RequireDatabase(c, projectId, databaseId)
 	if err != nil {
-		return []models.DatabaseEntity{}, err
-	}
-
-	database, err := databases.CheckDatabaseExists(c, s.db, project.ID, databaseId)
-	if err != nil {
-		return []models.DatabaseEntity{}, err
+		slog.Error("Error getting database", "err", err)
+		return nil, err
 	}
 
 	var et sqlc.NullDatabaseEntityType

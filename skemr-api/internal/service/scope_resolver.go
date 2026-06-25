@@ -11,6 +11,7 @@ import (
 	"github.com/walmaa/skemr-api/db/sqlc"
 	"github.com/walmaa/skemr-api/internal/domain/databases"
 	"github.com/walmaa/skemr-api/internal/domain/entities"
+	"github.com/walmaa/skemr-api/internal/domain/projects"
 	"github.com/walmaa/skemr-api/internal/errormsg"
 	"github.com/walmaa/skemr-common/models"
 )
@@ -18,6 +19,7 @@ import (
 type ScopeResolver interface {
 	RequireDatabase(c context.Context, projectId uuid.UUID, databaseId uuid.UUID) (models.Database, error)
 	RequireDatabaseEntity(c context.Context, projectId uuid.UUID, databaseId uuid.UUID, entityId uuid.UUID) (models.DatabaseEntity, error)
+	RequireProject(c context.Context, projectId uuid.UUID) (models.Project, error)
 }
 type SqlcScopeResolver struct {
 	db sqlc.Querier
@@ -25,6 +27,28 @@ type SqlcScopeResolver struct {
 
 func NewScopeResolver(q sqlc.Querier) *SqlcScopeResolver {
 	return &SqlcScopeResolver{db: q}
+}
+
+func (s *SqlcScopeResolver) RequireProject(c context.Context, projectId uuid.UUID) (models.Project, error) {
+	slog.Info("Getting project", "projectId", projectId)
+
+	project, err := s.db.GetProject(c, projectId)
+
+	if errors.Is(err, pgx.ErrNoRows) {
+		slog.Info("Project not found", "projectId", projectId)
+		return models.Project{}, &models.ErrorResponse{
+			Message: errormsg.ErrProjectNotFound,
+			Errors:  nil,
+			Status:  http.StatusBadRequest,
+		}
+	}
+
+	if err != nil {
+		slog.Error("Unable to get project", "projectId", projectId, "err", err)
+		return models.Project{}, err
+	}
+
+	return projects.ToDomainProject(project), nil
 }
 
 func (s *SqlcScopeResolver) RequireDatabase(c context.Context, projectId uuid.UUID, databaseId uuid.UUID) (models.Database, error) {

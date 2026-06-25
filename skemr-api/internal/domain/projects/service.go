@@ -2,47 +2,27 @@ package projects
 
 import (
 	"context"
-	"errors"
 	"log/slog"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 	"github.com/walmaa/skemr-api/db/sqlc"
-	"github.com/walmaa/skemr-api/internal/errormsg"
+	"github.com/walmaa/skemr-api/internal/service"
 	"github.com/walmaa/skemr-common/models"
 )
 
 type ProjectService struct {
-	db sqlc.Querier
+	db            sqlc.Querier
+	scopeResolver service.ScopeResolver
 }
 
-func NewProjectService(q sqlc.Querier) *ProjectService {
-	return &ProjectService{db: q}
+func NewProjectService(q sqlc.Querier, scopeResolver service.ScopeResolver) *ProjectService {
+	return &ProjectService{db: q, scopeResolver: scopeResolver}
 }
 
-// CheckProjectExists checks if a project with the given ID exists in the database.
-// Used when validating the operation on resources that are tied to a project.
-func CheckProjectExists(c context.Context, db sqlc.Querier, projectID uuid.UUID) (models.Project, error) {
-	slog.Info("Checking if project exists", "project_id", projectID)
-
-	// Check if the project exists
-	project, err := db.GetProject(c, projectID)
-	if err != nil {
-		slog.Error("Error getting project", "project_id", projectID, "err", err)
-		return models.Project{}, &models.ErrorResponse{
-			Message: errormsg.ErrProjectNotFound,
-			Errors:  nil,
-			Status:  404,
-		}
-	}
-
-	return ToDomainProject(project), nil
-}
-
-func (r *ProjectService) CreateProject(c context.Context, dto ProjectCreationDto) (models.Project, error) {
+func (s *ProjectService) CreateProject(c context.Context, dto ProjectCreationDto) (models.Project, error) {
 
 	slog.Info("Creating project", "name", dto.Name)
-	project, err := r.db.CreateProject(c, dto.Name)
+	project, err := s.db.CreateProject(c, dto.Name)
 	if err != nil {
 		slog.Error("Error creating project", "name", dto.Name, "err", err)
 		return models.Project{}, err
@@ -72,15 +52,15 @@ func (r *ProjectService) GetProject(c context.Context, projectId uuid.UUID) (mod
 	return ToDomainProject(project), nil
 }
 
-func (r *ProjectService) DeleteProject(c context.Context, id uuid.UUID) error {
+func (s *ProjectService) DeleteProject(c context.Context, id uuid.UUID) error {
 	slog.Info("Deleting project", "id", id)
 	// Check if the project exists
-	_, err := CheckProjectExists(c, r.db, id)
+	_, err := s.scopeResolver.RequireProject(c, id)
 
-	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
-		slog.Error("Error checking if project exists", "id", id, "err", err)
+	if err != nil {
+		slog.Error("Error getting project", "err", err)
 		return err
 	}
 
-	return r.db.DeleteProject(c, id)
+	return s.db.DeleteProject(c, id)
 }
