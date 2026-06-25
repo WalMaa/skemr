@@ -29,9 +29,9 @@ func GenerateNamespaceFingerprint(schemaRef SchemaRef) string {
 
 // GenerateIndexFingerprint generates a unique identifier for an index based on its properties.
 // The principle is to create a stable identifier that remains consistent across index renames and db instance changes (backup restores).
-// The format is index:{schema_id}:{index_type}:{is_primary}:{is_unique}:{index_name}
-func GenerateIndexFingerprint(indexRef IndexRef, schemaId uuid.UUID) string {
-	return fmt.Sprintf("index:%s:%s:%t:%t:%s", schemaId.String(), indexRef.IndexType, indexRef.IsPrimary, indexRef.IsUnique, indexRef.IndexName)
+// The format is index:{relation_id}:{index_type}:{is_primary}:{is_unique}:{index_name}
+func GenerateIndexFingerprint(indexRef IndexRef, relationId uuid.UUID) string {
+	return fmt.Sprintf("index:%s:%s:%t:%t:%s", relationId.String(), indexRef.IndexType, indexRef.IsPrimary, indexRef.IsUnique, indexRef.IndexName)
 }
 
 // GenerateConstraintFingerprint generates a unique identifier for a constraint based on its properties.

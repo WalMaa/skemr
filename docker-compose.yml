@@ -7,6 +7,14 @@ services:
       - "POSTGRES_DB=postgres"
       - "POSTGRES_PASSWORD=pass"
       - "POSTGRES_USER=postgres"
+    command:
+      - "postgres"
+      - "-c"
+      - "shared_preload_libraries=pg_stat_statements"
+      - "-c"
+      - "pg_stat_statements.track=all"
+      - "-c"
+      - "pg_stat_statements.max=10000"
   test-postgres:
     image: "postgres:latest"
     ports:

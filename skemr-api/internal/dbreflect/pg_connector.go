@@ -109,7 +109,6 @@ ORDER BY ordinal_position;
 
 const indexRefQuery = `
 SELECT
-    tbl.relname AS table_name,
     idx.relname AS index_name,
     am.amname AS index_type,
     ix.indisprimary AS is_primary,
@@ -123,11 +122,9 @@ JOIN pg_class idx
     ON idx.oid = ix.indexrelid
 JOIN pg_class tbl
     ON tbl.oid = ix.indrelid
-JOIN pg_namespace ns
-    ON ns.oid = tbl.relnamespace
 JOIN pg_am am
     ON am.oid = idx.relam
-WHERE ns.nspname = $1
+WHERE tbl.relname = $1
 ORDER BY idx.relname;
 `
 
@@ -161,7 +158,6 @@ type ConstraintRef struct {
 }
 
 type IndexRef struct {
-	TableName       string
 	IndexName       string
 	IndexType       string
 	IsPrimary       bool
@@ -198,7 +194,7 @@ type DatabaseConnector interface {
 	Disconnect(ctx context.Context, conn *pgx.Conn) error
 	TestConnection(ctx context.Context) error
 	GetSchemas(ctx context.Context, conn *pgx.Conn) ([]SchemaRef, error)
-	GetIndexesInSchema(ctx context.Context, conn *pgx.Conn, schema string) ([]IndexRef, error)
+	GetIndexesInRelation(ctx context.Context, conn *pgx.Conn, relation string) ([]IndexRef, error)
 	GetConstraintsInTable(ctx context.Context, conn *pgx.Conn, schema string) ([]ConstraintRef, error)
 	GetTablesInSchema(ctx context.Context, conn *pgx.Conn, schema string) ([]TableRef, error)
 	ListColumnsInTable(ctx context.Context, conn *pgx.Conn, tableRef TableRef) ([]ColumnRef, error)
@@ -230,17 +226,17 @@ func (dc *PostgresConnector) ListColumnsInTable(ctx context.Context, conn *pgx.C
 	return columns, rows.Err()
 }
 
-func (dc *PostgresConnector) GetIndexesInSchema(ctx context.Context, conn *pgx.Conn, schema string) ([]IndexRef, error) {
-	indexes, err := conn.Query(ctx, indexRefQuery, schema)
+func (dc *PostgresConnector) GetIndexesInRelation(ctx context.Context, conn *pgx.Conn, relation string) ([]IndexRef, error) {
+	indexes, err := conn.Query(ctx, indexRefQuery, relation)
 	if err != nil {
-		slog.Error("Error querying indexes", "schema", schema, "err", err)
+		slog.Error("Error querying indexes", "relaton", relation, "err", err)
 		return nil, err
 	}
 	defer indexes.Close()
 	var indexRefs []IndexRef
 	for indexes.Next() {
 		var indexRef IndexRef
-		if err := indexes.Scan(&indexRef.TableName, &indexRef.IndexName, &indexRef.IndexType, &indexRef.IsPrimary, &indexRef.IsUnique, &indexRef.IsValid, &indexRef.IsReady, &indexRef.IndexSize, &indexRef.IndexDefinition); err != nil {
+		if err := indexes.Scan(&indexRef.IndexName, &indexRef.IndexType, &indexRef.IsPrimary, &indexRef.IsUnique, &indexRef.IsValid, &indexRef.IsReady, &indexRef.IndexSize, &indexRef.IndexDefinition); err != nil {
 			slog.Error("Error scanning index", "err", err)
 			return nil, err
 		}

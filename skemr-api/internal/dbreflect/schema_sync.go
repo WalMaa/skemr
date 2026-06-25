@@ -130,22 +130,6 @@ func (s *SchemaSyncService) SyncSchema(c context.Context, database models.Databa
 		slog.Debug("Adding schema to current entity ids", "schemaName", schema.Name, "schemaId", schema.ID)
 		currentEntityIds = append(currentEntityIds, schema.ID)
 
-		// Indexes
-		indexes, err := connector.GetIndexesInSchema(c, conn, schema.Name)
-		if err != nil {
-			return fmt.Errorf("error getting indexes in schema %q: %w", schema.Name, err)
-		}
-
-		for _, indexRef := range indexes {
-			index, err := s.updateIndex(c, indexRef, database, schema.ID)
-			if err != nil {
-				return fmt.Errorf("error updating indexes: %w", err)
-			}
-			// Add index ID to current entity ids
-			slog.Debug("Adding index to current entity ids", "indexName", index.Name, "indexId", index.ID)
-			currentEntityIds = append(currentEntityIds, index.ID)
-		}
-
 		// Tables
 		tables, err := connector.GetTablesInSchema(c, conn, schema.Name)
 		if err != nil {
@@ -166,6 +150,22 @@ func (s *SchemaSyncService) SyncSchema(c context.Context, database models.Databa
 		constraints, err := connector.GetConstraintsInTable(c, conn, tableRef.Name)
 		if err != nil {
 			return fmt.Errorf("error getting constraints in schema %q: %w", schema.Name, err)
+		}
+
+		// Indexes
+		indexes, err := connector.GetIndexesInRelation(c, conn, table.Name)
+		if err != nil {
+			return fmt.Errorf("error getting indexes in relation %q: %w", table.Name, err)
+		}
+
+		for _, indexRef := range indexes {
+			index, err := s.updateIndex(c, indexRef, database, table.ID)
+			if err != nil {
+				return fmt.Errorf("error updating indexes: %w", err)
+			}
+			// Add index ID to current entity ids
+			slog.Debug("Adding index to current entity ids", "indexName", index.Name, "indexId", index.ID)
+			currentEntityIds = append(currentEntityIds, index.ID)
 		}
 
 		for _, constraintRef := range constraints {
@@ -220,12 +220,12 @@ func (s *SchemaSyncService) updateConstraint(c context.Context, constraintRef Co
 	})
 }
 
-func (s *SchemaSyncService) updateIndex(c context.Context, indexRef IndexRef, database models.Database, schemaId uuid.UUID) (sqlc.DatabaseEntity, error) {
+func (s *SchemaSyncService) updateIndex(c context.Context, indexRef IndexRef, database models.Database, relationId uuid.UUID) (sqlc.DatabaseEntity, error) {
 	return s.updateEntity(c, database, entitySyncInput{
 		Name:        indexRef.IndexName,
 		EntityType:  sqlc.DatabaseEntityTypeIndex,
-		ParentID:    &schemaId,
-		Fingerprint: GenerateIndexFingerprint(indexRef, schemaId),
+		ParentID:    &relationId,
+		Fingerprint: GenerateIndexFingerprint(indexRef, relationId),
 	})
 }
 
