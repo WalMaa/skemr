@@ -16,11 +16,6 @@ import (
 	"github.com/walmaa/skemr-common/models"
 )
 
-type ScopeResolver interface {
-	RequireDatabase(c context.Context, projectId uuid.UUID, databaseId uuid.UUID) (models.Database, error)
-	RequireDatabaseEntity(c context.Context, projectId uuid.UUID, databaseId uuid.UUID, entityId uuid.UUID) (models.DatabaseEntity, error)
-	RequireProject(c context.Context, projectId uuid.UUID) (models.Project, error)
-}
 type SqlcScopeResolver struct {
 	db sqlc.Querier
 }

@@ -13,21 +13,21 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/walmaa/skemr-api/db/sqlc"
 	"github.com/walmaa/skemr-api/internal/errormsg"
-	"github.com/walmaa/skemr-api/internal/service"
+	"github.com/walmaa/skemr-api/internal/scope"
 	"github.com/walmaa/skemr-api/internal/tokens"
 	"github.com/walmaa/skemr-common/models"
 )
 
 type AccessTokenService struct {
 	db            sqlc.Querier
-	scopeResolver service.ScopeResolver
+	scopeResolver scope.ProjectResolver
 }
 
 const prefixLength = 9
 const secretLength = 32
 
-func NewAccessTokenService(q sqlc.Querier) *AccessTokenService {
-	return &AccessTokenService{db: q}
+func NewAccessTokenService(q sqlc.Querier, scopeResolver scope.ProjectResolver) *AccessTokenService {
+	return &AccessTokenService{db: q, scopeResolver: scopeResolver}
 }
 
 func (s *AccessTokenService) CreateToken(c context.Context, projectId uuid.UUID, dto AccessTokenCreationDto) (string, error) {

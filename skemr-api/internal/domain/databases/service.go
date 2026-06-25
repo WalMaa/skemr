@@ -11,7 +11,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/walmaa/skemr-api/db/sqlc"
 	"github.com/walmaa/skemr-api/internal/errormsg"
-	"github.com/walmaa/skemr-api/internal/service"
+	"github.com/walmaa/skemr-api/internal/scope"
 	"github.com/walmaa/skemr-api/internal/tasks"
 	"github.com/walmaa/skemr-common/models"
 )
@@ -19,10 +19,10 @@ import (
 type DatabaseService struct {
 	db            sqlc.Querier
 	taskClient    *asynq.Client
-	scopeResolver service.ScopeResolver
+	scopeResolver scope.DatabaseScopeResolver
 }
 
-func NewDatabaseService(q sqlc.Querier, c *asynq.Client, scopeResolver service.ScopeResolver) *DatabaseService {
+func NewDatabaseService(q sqlc.Querier, c *asynq.Client, scopeResolver scope.DatabaseScopeResolver) *DatabaseService {
 	return &DatabaseService{db: q, taskClient: c, scopeResolver: scopeResolver}
 }
 

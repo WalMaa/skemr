@@ -12,7 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/walmaa/skemr-api/db/sqlc"
 	"github.com/walmaa/skemr-api/internal/errormsg"
-	"github.com/walmaa/skemr-api/internal/service"
+	"github.com/walmaa/skemr-api/internal/scope"
 	"github.com/walmaa/skemr-common/models"
 )
 
@@ -24,10 +24,10 @@ type PipelineRunStore interface {
 
 type PipelineRunService struct {
 	store         PipelineRunStore
-	scopeResolver service.ScopeResolver
+	scopeResolver scope.DatabaseResolver
 }
 
-func NewPipelineRunService(store PipelineRunStore, resolver service.ScopeResolver) *PipelineRunService {
+func NewPipelineRunService(store PipelineRunStore, resolver scope.DatabaseResolver) *PipelineRunService {
 	return &PipelineRunService{store: store, scopeResolver: resolver}
 }
 

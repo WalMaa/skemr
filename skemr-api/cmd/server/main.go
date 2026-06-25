@@ -118,7 +118,7 @@ func main() {
 	databaseChangeService := databasechange.NewDatabaseChangeService(queries, scopeResolver)
 	databaseService := databases.NewDatabaseService(queries, taskClient, scopeResolver)
 	webhookService := service.NewWebhookService(queries)
-	projectSecretsService := accesstoken.NewAccessTokenService(queries)
+	projectSecretsService := accesstoken.NewAccessTokenService(queries, scopeResolver)
 	ruleService := rules.NewRuleService(queries, scopeResolver)
 	databaseEntityService := entities.NewDatabaseEntityService(queries, scopeResolver)
 	pipelineRunService := pipelinerun.NewPipelineRunService(queries, scopeResolver)

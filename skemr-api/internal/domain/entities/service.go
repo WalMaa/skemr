@@ -6,16 +6,16 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/walmaa/skemr-api/db/sqlc"
-	"github.com/walmaa/skemr-api/internal/service"
+	"github.com/walmaa/skemr-api/internal/scope"
 	"github.com/walmaa/skemr-common/models"
 )
 
 type DatabaseEntityService struct {
 	db            sqlc.Querier
-	scopeResolver service.ScopeResolver
+	scopeResolver scope.DatabaseResolver
 }
 
-func NewDatabaseEntityService(q sqlc.Querier, scopeResolver service.ScopeResolver) *DatabaseEntityService {
+func NewDatabaseEntityService(q sqlc.Querier, scopeResolver scope.DatabaseResolver) *DatabaseEntityService {
 	{
 		return &DatabaseEntityService{db: q, scopeResolver: scopeResolver}
 	}

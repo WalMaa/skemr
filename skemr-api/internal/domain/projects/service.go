@@ -6,16 +6,16 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/walmaa/skemr-api/db/sqlc"
-	"github.com/walmaa/skemr-api/internal/service"
+	"github.com/walmaa/skemr-api/internal/scope"
 	"github.com/walmaa/skemr-common/models"
 )
 
 type ProjectService struct {
 	db            sqlc.Querier
-	scopeResolver service.ScopeResolver
+	scopeResolver scope.ProjectResolver
 }
 
-func NewProjectService(q sqlc.Querier, scopeResolver service.ScopeResolver) *ProjectService {
+func NewProjectService(q sqlc.Querier, scopeResolver scope.ProjectResolver) *ProjectService {
 	return &ProjectService{db: q, scopeResolver: scopeResolver}
 }
 

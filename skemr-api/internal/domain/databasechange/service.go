@@ -11,7 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/walmaa/skemr-api/db/sqlc"
 	"github.com/walmaa/skemr-api/internal/errormsg"
-	"github.com/walmaa/skemr-api/internal/service"
+	"github.com/walmaa/skemr-api/internal/scope"
 	"github.com/walmaa/skemr-common/models"
 )
 
@@ -22,10 +22,10 @@ type DatabaseChangeStore interface {
 
 type DatabaseChangeService struct {
 	store         DatabaseChangeStore
-	scopeResolver service.ScopeResolver
+	scopeResolver scope.DatabaseResolver
 }
 
-func NewDatabaseChangeService(store DatabaseChangeStore, resolver service.ScopeResolver) *DatabaseChangeService {
+func NewDatabaseChangeService(store DatabaseChangeStore, resolver scope.DatabaseResolver) *DatabaseChangeService {
 	return &DatabaseChangeService{store: store, scopeResolver: resolver}
 }
 
