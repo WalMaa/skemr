@@ -11,9 +11,7 @@ import (
 	"github.com/walmaa/skemr-common/models"
 )
 
-type PostgresConnector struct {
-	models.Database
-}
+
 
 const tableDefQuery = `
 WITH rels AS ( --- Get all user-defined tables and their OIDs
@@ -189,6 +187,10 @@ type SchemaRef struct {
 	Fingerprint string
 }
 
+type PostgresConnector struct {
+	models.Database
+}
+
 type DatabaseConnector interface {
 	Connect(ctx context.Context) (*pgx.Conn, error)
 	Disconnect(ctx context.Context, conn *pgx.Conn) error
@@ -349,15 +351,20 @@ func (dc *PostgresConnector) TestConnection(ctx context.Context) error {
 }
 
 // getConnectionString returns the connection string for the database.
-func (dc *PostgresConnector) getConnectionString() (string, error) {
+func (dc *PostgresConnector) getConnectionString(readOnly bool) (string, error) {
 	host := dc.Database.Host
 	port := dc.Database.Port
 	sslMode := dc.Database.SslMode
+	readonlyParam := ""
 	if sslMode == "" {
 		sslMode = "prefer"
 	}
 	if host == nil || port == 0 || dc.DbName == nil {
 		return "", errors.New("Missing database connection parameters")
+	}
+
+	if readOnly {
+		readonlyParam = "&options=default_transaction_read_only=on"
 	}
 
 	credentials := ""
@@ -369,6 +376,7 @@ func (dc *PostgresConnector) getConnectionString() (string, error) {
 
 	switch dc.Database.DatabaseType {
 	case "postgres":
+		return fmt.Sprintf("postgresql://%s%s:%d/%s?sslmode=%s%s", credentials, host, port, *&dc.Database.DbName, sslMode, readonlyParam), nil
 		return "postgresql://" + credentials + *host + ":" + strconv.Itoa(int(port)) + "/" + *dc.Database.DbName + "?sslmode=" + sslMode, nil
 	}
 	return "", errors.New("DB not supported")

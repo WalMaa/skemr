@@ -13,6 +13,7 @@ import (
 
 type ToolService struct {
 	db sqlc.Querier
+	connectorFactory func(database models.Database) DatabaseReader
 }
 
 func NewToolService(db sqlc.Querier) *ToolService {
@@ -43,4 +44,11 @@ func (s *ToolService) GetDatabases(ctx context.Context, actor Actor) ([]models.D
 	}
 
 	return databases.ToDomainDatabases(databaseRows), nil
+}
+
+func (s *ToolService) queryDatabase(ctx context.Context, databaseId uuid.UUID, query string, actor Actor) (string, error) {
+	slog.Info("ToolService: queryDatabase", "actor", actor, "databaseId", databaseId, "query", query)
+
+
+
 }
