@@ -6,18 +6,18 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/walmaa/skemr-api/internal/controller"
+	"github.com/walmaa/skemr-api/internal/domain/accesstoken"
 	"github.com/walmaa/skemr-api/internal/errormsg"
-	"github.com/walmaa/skemr-api/internal/service"
+	"github.com/walmaa/skemr-api/internal/requestparams"
 	"github.com/walmaa/skemr-common/models"
 )
 
-func AccessTokenMiddleware(service *service.AccessTokenService) func(next http.Handler) http.Handler {
+func AccessTokenMiddleware(tokenService *accesstoken.AccessTokenService) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			c := r.Context()
 
-			projectId, ok := controller.ParseUUIDParam(w, r, "projectId")
+			projectId, ok := requestparams.ParseUUIDParam(w, r, "projectId")
 			if !ok {
 				return
 			}
@@ -33,7 +33,7 @@ func AccessTokenMiddleware(service *service.AccessTokenService) func(next http.H
 			}
 			token := tokenHeaderValue[len("Bearer "):]
 
-			ok, err := authenticateToken(c, service, projectId, strings.TrimSpace(token))
+			ok, err := authenticateToken(c, tokenService, projectId, strings.TrimSpace(token))
 
 			if err != nil {
 				errormsg.WriteErrorResponse(w, r, &models.ErrorResponse{
@@ -56,9 +56,9 @@ func AccessTokenMiddleware(service *service.AccessTokenService) func(next http.H
 	}
 }
 
-func authenticateToken(c context.Context, service *service.AccessTokenService, projectId uuid.UUID, token string) (bool, error) {
+func authenticateToken(c context.Context, tokenService *accesstoken.AccessTokenService, projectId uuid.UUID, token string) (bool, error) {
 	// Check if the token is valid using the service
-	ok, err := service.ValidateToken(c, projectId, token)
+	ok, err := tokenService.ValidateToken(c, projectId, token)
 
 	if err != nil {
 		return false, err

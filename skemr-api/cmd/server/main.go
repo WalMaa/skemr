@@ -16,6 +16,14 @@ import (
 	"github.com/pressly/goose/v3"
 	"github.com/walmaa/skemr-api/config"
 	"github.com/walmaa/skemr-api/db/sqlc"
+	"github.com/walmaa/skemr-api/internal/domain/accesstoken"
+	"github.com/walmaa/skemr-api/internal/domain/ai"
+	"github.com/walmaa/skemr-api/internal/domain/databasechange"
+	"github.com/walmaa/skemr-api/internal/domain/databases"
+	"github.com/walmaa/skemr-api/internal/domain/entities"
+	"github.com/walmaa/skemr-api/internal/domain/pipelinerun"
+	"github.com/walmaa/skemr-api/internal/domain/projects"
+	"github.com/walmaa/skemr-api/internal/domain/rules"
 	"github.com/walmaa/skemr-api/internal/routers"
 	"github.com/walmaa/skemr-api/internal/service"
 	"github.com/walmaa/skemr-api/internal/tasks"
@@ -98,15 +106,22 @@ func main() {
 	}
 
 	queries := sqlc.New(conn)
+
+	toolService := ai.NewToolService(queries)
+	toolRegistry := ai.NewToolRegistry(
+		ai.NewDatabaseEntityTool(toolService),
+		ai.NewDatabaseTool(toolService),
+	)
+	aiClient := ai.NewOpenAIClient(toolRegistry)
 	scopeResolver := service.NewScopeResolver(queries)
-	projectService := service.NewProjectService(queries)
-	databaseChangeService := service.NewDatabaseChangeService(queries, scopeResolver)
-	databaseService := service.NewDatabaseService(queries, taskClient)
+	projectService := projects.NewProjectService(queries, scopeResolver)
+	databaseChangeService := databasechange.NewDatabaseChangeService(queries, scopeResolver)
+	databaseService := databases.NewDatabaseService(queries, taskClient, scopeResolver)
 	webhookService := service.NewWebhookService(queries)
-	projectSecretsService := service.NewAccessTokenService(queries)
-	ruleService := service.NewRuleService(queries, scopeResolver)
-	databaseEntityService := service.NewDatabaseEntityService(queries)
-	pipelineRunService := service.NewPipelineRunService(queries, scopeResolver)
+	projectSecretsService := accesstoken.NewAccessTokenService(queries, scopeResolver)
+	ruleService := rules.NewRuleService(queries, scopeResolver)
+	databaseEntityService := entities.NewDatabaseEntityService(queries, scopeResolver)
+	pipelineRunService := pipelinerun.NewPipelineRunService(queries, scopeResolver)
 	integrationService := service.NewIntegrationService(ruleService, pipelineRunService)
 
 	// Initialize services
@@ -120,6 +135,7 @@ func main() {
 		IntegrationService:    integrationService,
 		DatabaseChangeService: databaseChangeService,
 		PipelineRunService:    pipelineRunService,
+		AIClient:              aiClient,
 	}
 
 	worker.StartTaskWorkers(queries, cfg)

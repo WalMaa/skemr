@@ -1,0 +1,23 @@
+@host = http://localhost:8080
+@apiBaseUrl = {{host}}/api/v1
+@jwt = replace-with-jwt
+@projectId = aaaabbbb-aaaa-aaaa-aaaa-aaaabbbbcccc
+@databaseId = 11112222-3333-4444-5555-666677778888
+@databaseEntityId = 22223333-4444-4aaa-8bbb-777788889999
+@parentEntityId = 33334444-5555-4aaa-8bbb-888899990000
+
+### List all entities discovered in a database
+GET {{apiBaseUrl}}/projects/{{projectId}}/databases/{{databaseId}}/entities
+Authorization: Bearer {{jwt}}
+
+### List table entities
+GET {{apiBaseUrl}}/projects/{{projectId}}/databases/{{databaseId}}/entities?type=table
+Authorization: Bearer {{jwt}}
+
+### List entities below a parent entity
+GET {{apiBaseUrl}}/projects/{{projectId}}/databases/{{databaseId}}/entities?parentId={{parentEntityId}}
+Authorization: Bearer {{jwt}}
+
+### Get an entity
+GET {{apiBaseUrl}}/projects/{{projectId}}/databases/{{databaseId}}/entities/{{databaseEntityId}}
+Authorization: Bearer {{jwt}}

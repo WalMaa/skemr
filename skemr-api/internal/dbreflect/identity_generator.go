@@ -26,3 +26,17 @@ func GenerateTableFingerprint(tableRef TableRef) string {
 func GenerateNamespaceFingerprint(schemaRef SchemaRef) string {
 	return fmt.Sprintf("namespace:%s", schemaRef.Fingerprint)
 }
+
+// GenerateIndexFingerprint generates a unique identifier for an index based on its properties.
+// The principle is to create a stable identifier that remains consistent across index renames and db instance changes (backup restores).
+// The format is index:{relation_id}:{index_type}:{is_primary}:{is_unique}:{index_name}
+func GenerateIndexFingerprint(indexRef IndexRef, relationId uuid.UUID) string {
+	return fmt.Sprintf("index:%s:%s:%t:%t:%s", relationId.String(), indexRef.IndexType, indexRef.IsPrimary, indexRef.IsUnique, indexRef.IndexName)
+}
+
+// GenerateConstraintFingerprint generates a unique identifier for a constraint based on its properties.
+// The principle is to create a stable identifier that remains consistent across constraint renames and db instance changes (backup restores).
+// The format is constraint:{table_id}:{constraint_type}:{constraint_name}
+func GenerateConstraintFingerprint(constraintRef ConstraintRef, tableId uuid.UUID) string {
+	return fmt.Sprintf("constraint:%s:%s:%s", tableId.String(), constraintRef.ConstraintType, constraintRef.ConstraintName)
+}

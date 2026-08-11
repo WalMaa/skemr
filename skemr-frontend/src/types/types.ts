@@ -92,7 +92,7 @@ export interface DatabaseEntity {
   attributes: Record<string, string> | ColumnAttributes;
 }
 
-export type DatabaseEntityType = "database" | "schema" | "table" | "column";
+export type DatabaseEntityType = "database" | "schema" | "table" | "column" | "index" | "constraint";
 
 export interface AccessToken {
   id: string;

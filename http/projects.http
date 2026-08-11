@@ -1,0 +1,22 @@
+@host = http://localhost:8080
+@apiBaseUrl = {{host}}/api/v1
+@jwt = replace-with-jwt
+@projectId = aaaabbbb-aaaa-aaaa-aaaa-aaaabbbbcccc
+
+### List projects
+GET {{apiBaseUrl}}/projects
+Authorization: Bearer {{jwt}}
+
+### Create a project
+# @name createProject
+POST {{apiBaseUrl}}/projects
+Authorization: Bearer {{jwt}}
+Content-Type: application/json
+
+{
+  "name": "Example project"
+}
+
+### Get a project
+GET {{apiBaseUrl}}/projects/{{projectId}}
+Authorization: Bearer {{jwt}}

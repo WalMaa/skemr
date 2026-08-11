@@ -1,11 +1,15 @@
 -- +goose Up
 CREATE SCHEMA IF NOT EXISTS public;
 
+CREATE EXTENSION IF NOT EXISTS "pg_stat_statements" WITH SCHEMA public;
+
 CREATE TYPE database_entity_type AS ENUM (
     'database',
     'schema',
     'table',
-    'column'
+    'column',
+    'index',
+    'constraint'
     );
 
 CREATE TYPE migration_status AS ENUM (

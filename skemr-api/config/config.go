@@ -33,6 +33,9 @@ type Config struct {
 		Password string
 		DB       int
 	}
+	OpenAI struct {
+		APIKey string
+	}
 }
 
 func LoadConfig() (*Config, error) {
@@ -64,6 +67,8 @@ func LoadConfig() (*Config, error) {
 	viper.SetDefault("redis.port", defaultRedisPort)
 	viper.SetDefault("redis.password", "")
 	viper.SetDefault("redis.db", 0)
+	// OpenAI defaults
+	viper.SetDefault("openai.api_key", "")
 
 	// Enable reading from environment variables
 	viper.AutomaticEnv()
@@ -105,6 +110,10 @@ func LoadConfig() (*Config, error) {
 		return nil, err
 	}
 	if err := viper.BindEnv("redis.db", "REDIS_DB"); err != nil {
+		return nil, err
+	}
+
+	if err := viper.BindEnv("openai.api_key", "OPENAI_API_KEY"); err != nil {
 		return nil, err
 	}
 

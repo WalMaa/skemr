@@ -5,8 +5,9 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
-	"github.com/walmaa/skemr-api/internal/dto"
+	"github.com/walmaa/skemr-api/internal/domain/pipelinerun"
 	"github.com/walmaa/skemr-api/internal/errormsg"
+	"github.com/walmaa/skemr-api/internal/requestparams"
 	"github.com/walmaa/skemr-api/internal/service"
 	"github.com/walmaa/skemr-api/internal/validation"
 	"github.com/walmaa/skemr-common/models"
@@ -27,12 +28,12 @@ func (h *IntegrationController) RegisterRoutes(r chi.Router) {
 }
 
 func (h *IntegrationController) listRulesByDatabase(w http.ResponseWriter, r *http.Request) {
-	projectId, ok := ParseUUIDParam(w, r, "projectId")
+	projectId, ok := requestparams.ParseUUIDParam(w, r, "projectId")
 	if !ok {
 		return
 	}
 
-	databaseId, ok := ParseUUIDParam(w, r, "databaseId")
+	databaseId, ok := requestparams.ParseUUIDParam(w, r, "databaseId")
 	if !ok {
 		return
 	}
@@ -52,17 +53,17 @@ func (h *IntegrationController) listRulesByDatabase(w http.ResponseWriter, r *ht
 
 func (h *IntegrationController) createPipelineRun(w http.ResponseWriter, r *http.Request) {
 
-	projectId, ok := ParseUUIDParam(w, r, "projectId")
+	projectId, ok := requestparams.ParseUUIDParam(w, r, "projectId")
 	if !ok {
 		return
 	}
 
-	databaseId, ok := ParseUUIDParam(w, r, "databaseId")
+	databaseId, ok := requestparams.ParseUUIDParam(w, r, "databaseId")
 	if !ok {
 		return
 	}
 
-	var req dto.PipelineRunCreationDto
+	var req pipelinerun.PipelineRunCreationDto
 	if err := render.DecodeJSON(r.Body, &req); err != nil {
 		errormsg.WriteInvalidRequestBodyErrorResponse(w, r)
 		return

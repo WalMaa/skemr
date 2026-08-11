@@ -9,21 +9,41 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/walmaa/skemr-api/db/sqlc"
+	"github.com/walmaa/skemr-api/internal/domain/databases"
+	"github.com/walmaa/skemr-api/internal/domain/entities"
+	"github.com/walmaa/skemr-api/internal/domain/projects"
 	"github.com/walmaa/skemr-api/internal/errormsg"
-	"github.com/walmaa/skemr-api/internal/mapper"
 	"github.com/walmaa/skemr-common/models"
 )
 
-type ScopeResolver interface {
-	RequireDatabase(c context.Context, projectId uuid.UUID, databaseId uuid.UUID) (models.Database, error)
-	RequireDatabaseEntity(c context.Context, projectId uuid.UUID, databaseId uuid.UUID, entityId uuid.UUID) (models.DatabaseEntity, error)
-}
 type SqlcScopeResolver struct {
 	db sqlc.Querier
 }
 
 func NewScopeResolver(q sqlc.Querier) *SqlcScopeResolver {
 	return &SqlcScopeResolver{db: q}
+}
+
+func (s *SqlcScopeResolver) RequireProject(c context.Context, projectId uuid.UUID) (models.Project, error) {
+	slog.Info("Getting project", "projectId", projectId)
+
+	project, err := s.db.GetProject(c, projectId)
+
+	if errors.Is(err, pgx.ErrNoRows) {
+		slog.Info("Project not found", "projectId", projectId)
+		return models.Project{}, &models.ErrorResponse{
+			Message: errormsg.ErrProjectNotFound,
+			Errors:  nil,
+			Status:  http.StatusBadRequest,
+		}
+	}
+
+	if err != nil {
+		slog.Error("Unable to get project", "projectId", projectId, "err", err)
+		return models.Project{}, err
+	}
+
+	return projects.ToDomainProject(project), nil
 }
 
 func (s *SqlcScopeResolver) RequireDatabase(c context.Context, projectId uuid.UUID, databaseId uuid.UUID) (models.Database, error) {
@@ -48,7 +68,7 @@ func (s *SqlcScopeResolver) RequireDatabase(c context.Context, projectId uuid.UU
 		return models.Database{}, err
 	}
 
-	return mapper.ToDomainDatabase(database), nil
+	return databases.ToDomainDatabase(database), nil
 }
 
 func (s *SqlcScopeResolver) RequireDatabaseEntity(c context.Context, projectId uuid.UUID, databaseId uuid.UUID, entityId uuid.UUID) (models.DatabaseEntity, error) {
@@ -74,5 +94,5 @@ func (s *SqlcScopeResolver) RequireDatabaseEntity(c context.Context, projectId u
 		return models.DatabaseEntity{}, err
 	}
 
-	return mapper.ToDomainDatabaseEntity(entity), nil
+	return entities.ToDomainDatabaseEntity(entity), nil
 }

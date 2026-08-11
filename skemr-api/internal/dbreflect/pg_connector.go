@@ -11,9 +11,7 @@ import (
 	"github.com/walmaa/skemr-common/models"
 )
 
-type PostgresConnector struct {
-	models.Database
-}
+
 
 const tableDefQuery = `
 WITH rels AS ( --- Get all user-defined tables and their OIDs
@@ -107,6 +105,67 @@ WHERE table_schema = $1 AND table_name = $2
 ORDER BY ordinal_position;
 `
 
+const indexRefQuery = `
+SELECT
+    idx.relname AS index_name,
+    am.amname AS index_type,
+    ix.indisprimary AS is_primary,
+    ix.indisunique AS is_unique,
+    ix.indisvalid AS is_valid,
+    ix.indisready AS is_ready,
+    pg_size_pretty(pg_relation_size(idx.oid)) AS index_size,
+    pg_get_indexdef(idx.oid) AS index_definition
+FROM pg_index ix
+JOIN pg_class idx
+    ON idx.oid = ix.indexrelid
+JOIN pg_class tbl
+    ON tbl.oid = ix.indrelid
+JOIN pg_am am
+    ON am.oid = idx.relam
+WHERE tbl.relname = $1
+ORDER BY idx.relname;
+`
+
+const contraintRefQuery = `
+SELECT
+    con.conname AS constraint_name,
+    CASE con.contype
+        WHEN 'p' THEN 'primary key'
+        WHEN 'f' THEN 'foreign key'
+        WHEN 'u' THEN 'unique'
+        WHEN 'c' THEN 'check'
+        WHEN 'x' THEN 'exclusion'
+        WHEN 'n' THEN 'not null'
+        ELSE con.contype::text
+    END AS constraint_type,
+    pg_get_constraintdef(con.oid) AS constraint_definition
+FROM pg_constraint con
+JOIN pg_namespace n
+    ON n.oid = con.connamespace
+LEFT JOIN pg_class c
+    ON c.oid = con.conrelid
+WHERE c.relname = $1
+ORDER BY
+    constraint_name;
+`
+
+type ConstraintRef struct {
+	ConstraintName       string
+	ConstraintType       string
+	ConstraintDefinition string
+}
+
+type IndexRef struct {
+	IndexName       string
+	IndexType       string
+	IsPrimary       bool
+	IsUnique        bool
+	IsValid         bool
+	IsReady         bool
+	IndexSize       string
+	IndexDefinition string
+}
+
 type TableRef struct {
 	Schema      string // The parent Schema
 	Name        string // The name of the table itself
@@ -128,11 +187,17 @@ type SchemaRef struct {
 	Fingerprint string
 }
 
+type PostgresConnector struct {
+	models.Database
+}
+
 type DatabaseConnector interface {
 	Connect(ctx context.Context) (*pgx.Conn, error)
 	Disconnect(ctx context.Context, conn *pgx.Conn) error
 	TestConnection(ctx context.Context) error
 	GetSchemas(ctx context.Context, conn *pgx.Conn) ([]SchemaRef, error)
+	GetIndexesInRelation(ctx context.Context, conn *pgx.Conn, relation string) ([]IndexRef, error)
+	GetConstraintsInTable(ctx context.Context, conn *pgx.Conn, schema string) ([]ConstraintRef, error)
 	GetTablesInSchema(ctx context.Context, conn *pgx.Conn, schema string) ([]TableRef, error)
 	ListColumnsInTable(ctx context.Context, conn *pgx.Conn, tableRef TableRef) ([]ColumnRef, error)
 	getConnectionString() (string, error)
@@ -161,6 +226,44 @@ func (dc *PostgresConnector) ListColumnsInTable(ctx context.Context, conn *pgx.C
 		columns = append(columns, columnRef)
 	}
 	return columns, rows.Err()
+}
+
+func (dc *PostgresConnector) GetIndexesInRelation(ctx context.Context, conn *pgx.Conn, relation string) ([]IndexRef, error) {
+	indexes, err := conn.Query(ctx, indexRefQuery, relation)
+	if err != nil {
+		slog.Error("Error querying indexes", "relaton", relation, "err", err)
+		return nil, err
+	}
+	defer indexes.Close()
+	var indexRefs []IndexRef
+	for indexes.Next() {
+		var indexRef IndexRef
+		if err := indexes.Scan(&indexRef.IndexName, &indexRef.IndexType, &indexRef.IsPrimary, &indexRef.IsUnique, &indexRef.IsValid, &indexRef.IsReady, &indexRef.IndexSize, &indexRef.IndexDefinition); err != nil {
+			slog.Error("Error scanning index", "err", err)
+			return nil, err
+		}
+		indexRefs = append(indexRefs, indexRef)
+	}
+	return indexRefs, indexes.Err()
+}
+
+func (dc *PostgresConnector) GetConstraintsInTable(ctx context.Context, conn *pgx.Conn, table string) ([]ConstraintRef, error) {
+	constraints, err := conn.Query(ctx, contraintRefQuery, table)
+	if err != nil {
+		slog.Error("Error querying constraints", "table", table, "err", err)
+		return nil, err
+	}
+	defer constraints.Close()
+	var constraintRefs []ConstraintRef
+	for constraints.Next() {
+		var constraintRef ConstraintRef
+		if err := constraints.Scan(&constraintRef.ConstraintName, &constraintRef.ConstraintType, &constraintRef.ConstraintDefinition); err != nil {
+			slog.Error("Error scanning constraint", "err", err)
+			return nil, err
+		}
+		constraintRefs = append(constraintRefs, constraintRef)
+	}
+	return constraintRefs, constraints.Err()
 }
 
 func (dc *PostgresConnector) GetTablesInSchema(ctx context.Context, conn *pgx.Conn, schema string) ([]TableRef, error) {
@@ -248,15 +351,20 @@ func (dc *PostgresConnector) TestConnection(ctx context.Context) error {
 }
 
 // getConnectionString returns the connection string for the database.
-func (dc *PostgresConnector) getConnectionString() (string, error) {
+func (dc *PostgresConnector) getConnectionString(readOnly bool) (string, error) {
 	host := dc.Database.Host
 	port := dc.Database.Port
 	sslMode := dc.Database.SslMode
+	readonlyParam := ""
 	if sslMode == "" {
 		sslMode = "prefer"
 	}
 	if host == nil || port == 0 || dc.DbName == nil {
 		return "", errors.New("Missing database connection parameters")
+	}
+
+	if readOnly {
+		readonlyParam = "&options=default_transaction_read_only=on"
 	}
 
 	credentials := ""
@@ -268,6 +376,7 @@ func (dc *PostgresConnector) getConnectionString() (string, error) {
 
 	switch dc.Database.DatabaseType {
 	case "postgres":
+		return fmt.Sprintf("postgresql://%s%s:%d/%s?sslmode=%s%s", credentials, host, port, *&dc.Database.DbName, sslMode, readonlyParam), nil
 		return "postgresql://" + credentials + *host + ":" + strconv.Itoa(int(port)) + "/" + *dc.Database.DbName + "?sslmode=" + sslMode, nil
 	}
 	return "", errors.New("DB not supported")

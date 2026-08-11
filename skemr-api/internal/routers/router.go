@@ -9,20 +9,29 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/go-chi/render"
 	"github.com/walmaa/skemr-api/internal/controller"
+	"github.com/walmaa/skemr-api/internal/domain/accesstoken"
+	"github.com/walmaa/skemr-api/internal/domain/ai"
+	"github.com/walmaa/skemr-api/internal/domain/databasechange"
+	"github.com/walmaa/skemr-api/internal/domain/databases"
+	"github.com/walmaa/skemr-api/internal/domain/entities"
+	"github.com/walmaa/skemr-api/internal/domain/pipelinerun"
+	"github.com/walmaa/skemr-api/internal/domain/projects"
+	"github.com/walmaa/skemr-api/internal/domain/rules"
 	"github.com/walmaa/skemr-api/internal/middleware"
 	"github.com/walmaa/skemr-api/internal/service"
 )
 
 type Services struct {
-	ProjectService        *service.ProjectService
-	DatabaseService       *service.DatabaseService
-	RuleService           *service.RuleService
+	ProjectService        *projects.ProjectService
+	DatabaseService       *databases.DatabaseService
+	RuleService           *rules.RuleService
 	WebhookService        *service.WebhookService
-	AccessTokenService    *service.AccessTokenService
-	DatabaseEntityService *service.DatabaseEntityService
+	AccessTokenService    *accesstoken.AccessTokenService
+	DatabaseEntityService *entities.DatabaseEntityService
 	IntegrationService    *service.IntegrationService
-	DatabaseChangeService *service.DatabaseChangeService
-	PipelineRunService    *service.PipelineRunService
+	DatabaseChangeService *databasechange.DatabaseChangeService
+	PipelineRunService    *pipelinerun.PipelineRunService
+	AIClient              ai.Model
 }
 
 func InitRouter(services *Services) http.Handler {
@@ -66,7 +75,7 @@ func InitRouter(services *Services) http.Handler {
 	// JWT Protected (frontend) routes
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Use(middleware.AuthMiddleware)
-		projectController := controller.NewProjectController(services.ProjectService)
+		projectController := projects.NewProjectController(services.ProjectService)
 
 		r.Get("/projects", projectController.GetProjects)
 		r.Post("/projects", projectController.CreateProject)
@@ -76,12 +85,13 @@ func InitRouter(services *Services) http.Handler {
 			r.Use(middleware.ProjectIDMiddleware)
 
 			// define controllers
-			databaseController := controller.NewDatabaseController(services.DatabaseService)
-			projectSecretsController := controller.NewProjectSecretsController(services.AccessTokenService)
-			ruleController := controller.NewRuleController(services.RuleService)
-			databaseEntityController := controller.NewDatabaseEntityController(services.DatabaseEntityService)
-			databaseChangeController := controller.NewDatabaseChangeController(services.DatabaseChangeService)
-			pipelineRunController := controller.NewPipelineRunController(services.PipelineRunService)
+			databaseController := databases.NewDatabaseController(services.DatabaseService)
+			projectSecretsController := accesstoken.NewProjectSecretsController(services.AccessTokenService)
+			ruleController := rules.NewRuleController(services.RuleService)
+			databaseEntityController := entities.NewDatabaseEntityController(services.DatabaseEntityService)
+			databaseChangeController := databasechange.NewDatabaseChangeController(services.DatabaseChangeService)
+			pipelineRunController := pipelinerun.NewPipelineRunController(services.PipelineRunService)
+			aiController := ai.NewAIController(services.AIClient)
 
 			// register routes
 			databaseController.RegisterRoutes(r)
@@ -90,6 +100,7 @@ func InitRouter(services *Services) http.Handler {
 			databaseEntityController.RegisterRoutes(r)
 			databaseChangeController.RegisterRoutes(r)
 			pipelineRunController.RegisterRoutes(r)
+			aiController.RegisterRoutes(r)
 
 			r.Get("/", projectController.GetProject)
 			r.Delete("/", projectController.DeleteProject)

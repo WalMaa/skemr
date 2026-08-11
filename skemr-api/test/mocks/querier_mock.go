@@ -1729,6 +1729,74 @@ func (_c *MockQuerier_GetDatabaseEntityByProjectIdDatabaseIdAndId_Call) RunAndRe
 	return _c
 }
 
+// GetDatabasesByProjectId provides a mock function for the type MockQuerier
+func (_mock *MockQuerier) GetDatabasesByProjectId(ctx context.Context, projectID uuid.UUID) ([]sqlc.Database, error) {
+	ret := _mock.Called(ctx, projectID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetDatabasesByProjectId")
+	}
+
+	var r0 []sqlc.Database
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) ([]sqlc.Database, error)); ok {
+		return returnFunc(ctx, projectID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) []sqlc.Database); ok {
+		r0 = returnFunc(ctx, projectID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]sqlc.Database)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
+		r1 = returnFunc(ctx, projectID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockQuerier_GetDatabasesByProjectId_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetDatabasesByProjectId'
+type MockQuerier_GetDatabasesByProjectId_Call struct {
+	*mock.Call
+}
+
+// GetDatabasesByProjectId is a helper method to define mock.On call
+//   - ctx context.Context
+//   - projectID uuid.UUID
+func (_e *MockQuerier_Expecter) GetDatabasesByProjectId(ctx interface{}, projectID interface{}) *MockQuerier_GetDatabasesByProjectId_Call {
+	return &MockQuerier_GetDatabasesByProjectId_Call{Call: _e.mock.On("GetDatabasesByProjectId", ctx, projectID)}
+}
+
+func (_c *MockQuerier_GetDatabasesByProjectId_Call) Run(run func(ctx context.Context, projectID uuid.UUID)) *MockQuerier_GetDatabasesByProjectId_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockQuerier_GetDatabasesByProjectId_Call) Return(databases []sqlc.Database, err error) *MockQuerier_GetDatabasesByProjectId_Call {
+	_c.Call.Return(databases, err)
+	return _c
+}
+
+func (_c *MockQuerier_GetDatabasesByProjectId_Call) RunAndReturn(run func(ctx context.Context, projectID uuid.UUID) ([]sqlc.Database, error)) *MockQuerier_GetDatabasesByProjectId_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetHashByPrefixAndProjectID provides a mock function for the type MockQuerier
 func (_mock *MockQuerier) GetHashByPrefixAndProjectID(ctx context.Context, arg sqlc.GetHashByPrefixAndProjectIDParams) (string, error) {
 	ret := _mock.Called(ctx, arg)
@@ -2519,74 +2587,6 @@ func (_c *MockQuerier_GetRulesWithEntities_Call) Return(getRulesWithEntitiesRows
 }
 
 func (_c *MockQuerier_GetRulesWithEntities_Call) RunAndReturn(run func(ctx context.Context, arg sqlc.GetRulesWithEntitiesParams) ([]sqlc.GetRulesWithEntitiesRow, error)) *MockQuerier_GetRulesWithEntities_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// ListDatabasesByProject provides a mock function for the type MockQuerier
-func (_mock *MockQuerier) ListDatabasesByProject(ctx context.Context, projectID uuid.UUID) ([]sqlc.Database, error) {
-	ret := _mock.Called(ctx, projectID)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListDatabasesByProject")
-	}
-
-	var r0 []sqlc.Database
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) ([]sqlc.Database, error)); ok {
-		return returnFunc(ctx, projectID)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) []sqlc.Database); ok {
-		r0 = returnFunc(ctx, projectID)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]sqlc.Database)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
-		r1 = returnFunc(ctx, projectID)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockQuerier_ListDatabasesByProject_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListDatabasesByProject'
-type MockQuerier_ListDatabasesByProject_Call struct {
-	*mock.Call
-}
-
-// ListDatabasesByProject is a helper method to define mock.On call
-//   - ctx context.Context
-//   - projectID uuid.UUID
-func (_e *MockQuerier_Expecter) ListDatabasesByProject(ctx interface{}, projectID interface{}) *MockQuerier_ListDatabasesByProject_Call {
-	return &MockQuerier_ListDatabasesByProject_Call{Call: _e.mock.On("ListDatabasesByProject", ctx, projectID)}
-}
-
-func (_c *MockQuerier_ListDatabasesByProject_Call) Run(run func(ctx context.Context, projectID uuid.UUID)) *MockQuerier_ListDatabasesByProject_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 uuid.UUID
-		if args[1] != nil {
-			arg1 = args[1].(uuid.UUID)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockQuerier_ListDatabasesByProject_Call) Return(databases []sqlc.Database, err error) *MockQuerier_ListDatabasesByProject_Call {
-	_c.Call.Return(databases, err)
-	return _c
-}
-
-func (_c *MockQuerier_ListDatabasesByProject_Call) RunAndReturn(run func(ctx context.Context, projectID uuid.UUID) ([]sqlc.Database, error)) *MockQuerier_ListDatabasesByProject_Call {
 	_c.Call.Return(run)
 	return _c
 }
