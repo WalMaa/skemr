@@ -23,7 +23,7 @@ WORKDIR /app/skemr-api
 RUN go mod download
 
 # Build the Go binary
-RUN go build -o skemr-api cmd/server/main.go
+RUN go build -o skemr cmd/server/main.go
 
 # Final lightweight stage
 FROM alpine:3.21 AS final
@@ -31,7 +31,7 @@ FROM alpine:3.21 AS final
 WORKDIR /app
 
 # Copy the compiled binary from the builder stage
-COPY --from=builder /app/skemr-api/skemr-api /usr/local/bin/skemr-api
+COPY --from=builder /app/skemr-api/skemr /usr/local/bin/skemr-api
 
 EXPOSE 8080
 
